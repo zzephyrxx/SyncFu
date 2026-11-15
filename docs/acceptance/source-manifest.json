@@ -1,11 +1,11 @@
 {
-  "buildId": "ca8815e93805ae752be3",
+  "buildId": "53ac2f06d7643f4049ac",
   "protocol": 4,
   "schema": 3,
   "identifier": "org.syncfu.acceptance.p2",
   "productName": "SyncFu Acceptance",
   "version": "0.2.0-board.1",
-  "createdAt": "2026-11-15T09:01:56.068Z",
+  "createdAt": "2026-11-15T09:06:28.137Z",
   "hashPurpose": "Cross-device source consistency, not a publisher signature",
   "sha256": {
     ".editorconfig": "2d719bb63dd05719c4e7df02ef0434ffae1fb5d960aba48208f99ec65f8a4fc8",
@@ -335,7 +335,7 @@
     "src/desktop/views/devices.css": "c8568b11e670a160dc847c9d61bb4765ee2235bdf9a4ccabc9f831a7a24171e2",
     "src/desktop/views/Devices.tsx": "bd030c9a53d509351575185b771236a4fc21f6384905b34c25daf7524c2f2f57",
     "src/desktop/views/Overview.tsx": "0cc60f42f0c83b71b74a53ef0b9cbbb723c9b0e675af10794d803f3640399ec1",
-    "src/desktop/workspace.css": "03322abfd37fc6c0c65b61b1decc9499a49dded1e3797bd2b317c881cabdbebc",
+    "src/desktop/workspace.css": "dbd789e7df035f8872523cfafb8b67d45f1c0c553ecaa395e8634aa6a7c409f6",
     "src/DiffView.tsx": "aced3fea7415a0175cfa4044fa4b7dcc4c1b3217a6c876590bf37db98cc85dee",
     "src/generated/policy-fixtures.ts": "18f02aab5d8a7bbed4ad7efa186adcd7d1b86ba4e7a3a6de894cbc19bc826bd5",
     "src/generated/policy.ts": "fd0b678259005de1f31e7b757b8c47835c4a5e911bb58d47c8f3e46870b0daa7",

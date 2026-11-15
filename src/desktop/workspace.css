@@ -4,7 +4,8 @@
 [data-surface="desktop"] body{overscroll-behavior:none;user-select:none}
 [data-surface="desktop"] :is(input,textarea,[contenteditable="true"],.sf-full-path,.sf-route-folder-path){user-select:text}
 .board-app{--sidebar-width:224px;display:grid;grid-template-rows:52px minmax(0,1fr);height:100dvh;overflow:hidden;background:var(--sf-sidebar);color:var(--sf-ink)}
-.board-app.native-mac{grid-template-rows:52px minmax(0,1fr)}
+/* Native traffic-light centers sit 19px below the window edge. */
+.board-app.native-mac{grid-template-rows:38px minmax(0,1fr)}
 .sf-window-toolbar{display:flex;align-items:stretch;min-width:0;background:var(--sf-sidebar);user-select:none}
 .sf-toolbar-leading{display:flex;align-items:center;gap:10px;flex:none;width:var(--sidebar-width);padding:0 16px}
 .sf-toolbar-leading>.bui-icon-button{width:28px;height:28px;color:var(--sf-muted)}
