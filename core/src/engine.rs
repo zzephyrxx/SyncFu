@@ -336,12 +336,7 @@ impl Engine {
         valid_id(&work.batch.id)?;
         let risk = self.preflight(work)?;
         self.require_risk_permit(work, &risk)?;
-        ensure!(
-            work.ops.len() <= files::LIMIT
-                && work.common.len() <= files::LIMIT
-                && work.batch.total == work.ops.len(),
-            "批次条目数量无效"
-        );
+        ensure!(work.batch.total == work.ops.len(), "批次条目数量无效");
         ensure!(
             self.store.get::<Work>("work", &work.batch.id)?.is_none(),
             "此批次已存在，请核对结果"
@@ -532,7 +527,7 @@ impl Engine {
             .filter(|r| is_hash(&r.file_name().to_string_lossy()))
             .filter_map(|r| r.metadata().ok())
             .map(|m| m.len())
-            .sum();
+            .fold(0u64, u64::saturating_add);
         let mut missing = BTreeMap::new();
         for op in work.ops.iter().filter(|op| op.change.target == 0) {
             if let Some(Entry::File { sha256, bytes }) = &op.change.before {
@@ -548,7 +543,9 @@ impl Engine {
                 }
             }
         }
-        let needed: u64 = missing.values().map(|(size, _)| size).sum();
+        let needed = missing.values().try_fold(0u64, |total, (size, _)| {
+            total.checked_add(*size).context("备份总容量超出可处理范围")
+        })?;
         ensure!(
             needed == 0
                 || (usage.saturating_add(needed) <= settings.quota
@@ -672,6 +669,14 @@ impl Engine {
     }
 
     pub fn apply(&self, work: &Work) -> Result<Option<String>> {
+        self.apply_with_progress(work, |_, _| {})
+    }
+
+    pub fn apply_with_progress(
+        &self,
+        work: &Work,
+        mut progress: impl FnMut(&Operation, Step),
+    ) -> Result<Option<String>> {
         self.verify_frozen_work(work)?;
         let task = self.task(&work.batch.task)?;
         let root = self.root(&task.local, &task.peer)?;
@@ -696,11 +701,15 @@ impl Engine {
                 continue;
             }
             if let Err(error) = self.apply_item(work, op, &root) {
-                if self.step(work, op)? == Step::Prepared {
+                let mut step = self.step(work, op)?;
+                if step == Step::Prepared {
                     self.set_step(work, op, Step::Failed)?;
+                    step = Step::Failed;
                 }
+                progress(op, step);
                 return Ok(Some(format!("{}：{error:#}", op.change.path)));
             }
+            progress(op, Step::Applied);
         }
         Ok(None)
     }
@@ -935,6 +944,146 @@ pub fn require_selected_dependencies(ops: &[Operation]) -> Result<()> {
 mod tests {
     use super::*;
 
+    #[test]
+    fn work_and_common_baseline_can_exceed_twenty_thousand_entries() -> Result<()> {
+        // The local side has already removed these directories. Model the remote
+        // deletions without creating thousands of files just to test plan limits.
+        const COUNT: usize = 20_001;
+        let temp = tempfile::tempdir()?;
+        let root_path = temp.path().join("files");
+        fs::create_dir(&root_path)?;
+        let engine = Engine::open(&temp.path().join("state"))?;
+        let local = "a".repeat(64);
+        let peer = "b".repeat(64);
+        engine.bind_device(&local)?;
+        let grant = engine.grant(&peer, &root_path)?;
+        let remote = id();
+        let mut grants = [grant.id.clone(), remote.clone()];
+        grants.sort();
+        let task = Task {
+            id: digest(&grants)?,
+            peer: peer.clone(),
+            local: grant.id,
+            remote,
+            label: "large work".into(),
+            local_path: grant.path,
+            remote_path: "remote".into(),
+        };
+        engine.link_task(&task)?;
+        let policy = engine.policy_state(&task.id)?.current;
+        let ops: Vec<_> = (0..COUNT)
+            .map(|index| Operation {
+                id: Uuid::from_u128(index as u128 + 1).to_string(),
+                change: Change {
+                    path: format!("removed-{index:05}"),
+                    action: Action::Delete,
+                    target: 1,
+                    before: Some(Entry::Directory),
+                    after: None,
+                },
+                previous: Some(Entry::Directory),
+                previous_known: true,
+            })
+            .collect();
+        let baseline = PairState {
+            base: ops
+                .iter()
+                .map(|op| (op.change.path.clone(), op.previous.clone()))
+                .collect(),
+            stamps: BTreeMap::new(),
+        };
+        engine.store.put("baseline", &task.id, &baseline)?;
+        let local_proof = crate::policy::ManifestProof::new(
+            &policy.filter(&engine.root(&task.local, &task.peer)?.scan()),
+        )?;
+        let remote_manifest = Manifest {
+            entries: ops
+                .iter()
+                .map(|op| (op.change.path.clone(), Entry::Directory))
+                .collect(),
+            ..Manifest::default()
+        };
+        let remote_proof = crate::policy::ManifestProof::new(&remote_manifest)?;
+        let mut work = Work {
+            batch: Batch {
+                id: id(),
+                task: task.id.clone(),
+                label: task.label,
+                created: now(),
+                status: "pending".into(),
+                undo_of: None,
+                done: 0,
+                total: COUNT,
+                skipped: 0,
+                message: None,
+                undo_available: false,
+            },
+            owner: local.clone(),
+            digest: String::new(),
+            authorization: Some(crate::policy::WorkAuthorization {
+                version: crate::policy::SCHEMA_VERSION,
+                policy_digest: policy.fingerprint()?,
+                baseline_digest: digest(&baseline)?,
+                origin: crate::policy::ExecutionOrigin::Manual,
+                facts: BTreeMap::from([(local, local_proof), (peer, remote_proof)]),
+                planned: ops.iter().map(|op| op.change.clone()).collect(),
+                resolutions: vec![],
+            }),
+            ops,
+            common: (0..COUNT)
+                .map(|index| (format!("already-removed-{index:05}"), None))
+                .collect(),
+        };
+        work.digest = engine.work_digest(&work)?;
+
+        // A duplicate beyond the old limit must still be rejected, not truncated.
+        let mut duplicate = work.clone();
+        let auth = duplicate.authorization.as_mut().unwrap();
+        auth.planned.push(auth.planned[0].clone());
+        duplicate.digest = engine.work_digest(&duplicate)?;
+        assert!(
+            engine
+                .preflight(&duplicate)
+                .unwrap_err()
+                .to_string()
+                .contains("重复路径")
+        );
+
+        engine.begin(&work, &baseline)?;
+        let stored = engine.work(&work.batch.id)?;
+        assert_eq!(stored.ops.len(), COUNT);
+        assert_eq!(stored.common.len(), COUNT);
+        assert_eq!(stored.authorization.as_ref().unwrap().planned.len(), COUNT);
+        engine.seal(&work)?;
+        assert!(engine.apply(&work)?.is_none());
+        let applied: Vec<_> = work.ops.iter().map(|op| op.id.clone()).collect();
+        let finished = engine.finish(&work, &applied, "completed", None)?;
+        assert_eq!(finished.done, COUNT);
+        let saved = engine.pair_state(&task.id)?;
+        assert_eq!(saved.base.len(), 2 * COUNT);
+        assert_eq!(saved.stamps.len(), COUNT);
+        assert_eq!(saved.base.get("removed-20000"), Some(&None));
+        assert_eq!(saved.base.get("already-removed-20000"), Some(&None));
+
+        // Lifting the item limit must not let a large plan wrap the byte budget.
+        for (index, op) in work.ops.iter_mut().enumerate() {
+            op.change.target = 0;
+            op.change.before = Some(Entry::File {
+                sha256: format!("{index:064x}"),
+                bytes: (1u64 << 50) - 1,
+            });
+        }
+        let root = engine.root(&task.local, &task.peer)?;
+        assert!(
+            engine
+                .backup(&work, &root)
+                .unwrap_err()
+                .to_string()
+                .contains("备份总容量")
+        );
+        Ok(())
+    }
+
     fn prepare(directory: &Path) -> Result<(Engine, Work, Operation, PathBuf)> {
         prepare_payload(directory, b"new")
     }
@@ -1033,12 +1182,58 @@ mod tests {
     fn exact_chunk_boundary_and_remainder_preserve_content_and_backup() -> Result<()> {
         let temp = tempfile::tempdir()?;
         let payload = vec![0xa5; TRANSFER_CHUNK_BYTES + 17];
-        let (engine, work, _, path) = prepare_payload(temp.path(), &payload)?;
+        let (engine, work, op, path) = prepare_payload(temp.path(), &payload)?;
         assert_eq!(fs::read(path.join("document.md"))?, b"old");
-        let applied = engine.apply(&work)?;
+        let mut progress = vec![];
+        let applied = engine.apply_with_progress(&work, |op, step| {
+            assert_eq!(engine.step(&work, op).unwrap(), step);
+            progress.push((op.id.clone(), step));
+        })?;
         assert!(applied.is_none(), "application failed: {applied:?}");
+        assert_eq!(progress, vec![(op.id.clone(), Step::Applied)]);
+        assert!(
+            engine
+                .apply_with_progress(&work, |_, _| panic!("completed items must not repeat"))?
+                .is_none()
+        );
         assert_eq!(fs::read(path.join("document.md"))?, payload);
         assert_eq!(TRANSFER_ENCODED_LIMIT, TRANSFER_CHUNK_BYTES.div_ceil(3) * 4);
+        Ok(())
+    }
+
+    #[test]
+    fn apply_progress_reports_failed_and_uncertain_items_without_success() -> Result<()> {
+        for moved in [false, true] {
+            let temp = tempfile::tempdir()?;
+            let (engine, work, op, path) = prepare(temp.path())?;
+            if moved {
+                let task = engine.task(&work.batch.task)?;
+                let stage = engine.root(&task.local, &task.peer)?.stage()?;
+                stage.remove_file(incoming(&work, &op))?;
+            } else {
+                fs::write(path.join("document.md"), b"changed after preparation")?;
+            }
+            let mut progress = vec![];
+            assert!(
+                engine
+                    .apply_with_progress(&work, |op, step| {
+                        assert_eq!(engine.step(&work, op).unwrap(), step);
+                        progress.push((op.id.clone(), step));
+                    })?
+                    .is_some()
+            );
+            let expected = if moved { Step::Moving } else { Step::Failed };
+            assert_eq!(progress, vec![(op.id.clone(), expected)]);
+            if moved {
+                assert_eq!(engine.outcome(&work)?, vec![(op.id, Step::Failed)]);
+                assert_eq!(fs::read(path.join("document.md"))?, b"old");
+            } else {
+                assert_eq!(
+                    fs::read(path.join("document.md"))?,
+                    b"changed after preparation"
+                );
+            }
+        }
         Ok(())
     }
 

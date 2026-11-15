@@ -1,0 +1,82 @@
+/* Optional optical surfaces, inspired by SemiDone's separation of backdrop and
+   content. Only a few outer surfaces blur; text, file rows and cards never do. */
+.sf-material-setting{flex-wrap:wrap;row-gap:12px}
+.sf-material-setting>div:first-child{flex:1;min-width:180px}
+.sf-material-setting p{max-width:330px;margin-top:6px;color:var(--sf-muted);font-size:11px;line-height:1.65}
+.sf-material-options{flex:none;max-width:100%}
+.sf-material-options .bui-button{height:34px;min-height:34px;padding-inline:11px}
+.sf-material-swatch{display:inline-block;flex:none;width:15px;height:15px;border:1px solid var(--input);border-radius:4px;background:var(--sf-panel)}
+.sf-material-swatch[data-material="glass"]{background:linear-gradient(145deg,#fff 0%,#e7edf3 48%,#d8e3ee 49%,#f6f8fb 100%);border-color:#bdcbd9;box-shadow:inset 0 1px 0 #fff}
+[data-theme="dark"] .sf-material-swatch[data-material="glass"]{background:linear-gradient(145deg,#69717e 0%,#323a47 48%,#556273 49%,#303641 100%);border-color:#778394;box-shadow:inset 0 1px 0 #aab7c54d}
+
+:root[data-surface="desktop"][data-material="glass"]{
+  --glass-chrome:rgb(248 250 253 / .72);
+  --glass-floating:rgb(255 255 255 / .88);
+  --glass-footer:rgb(252 253 255 / .86);
+  --glass-rim:rgb(255 255 255 / .88);
+  --glass-edge:rgb(49 67 90 / .15);
+  --glass-shadow:rgb(24 38 58 / .12);
+  --glass-wash:linear-gradient(135deg,#e8eef5 0%,#f3f5f8 46%,#e9eef4 100%);
+  --glass-sheen:linear-gradient(135deg,rgb(255 255 255 / .35),rgb(255 255 255 / 0) 65%);
+}
+:root[data-surface="desktop"][data-material="glass"][data-theme="dark"]{
+  --glass-chrome:rgb(27 31 38 / .76);
+  --glass-floating:rgb(30 34 41 / .91);
+  --glass-footer:rgb(28 31 37 / .90);
+  --glass-rim:rgb(204 222 245 / .13);
+  --glass-edge:rgb(158 178 204 / .20);
+  --glass-shadow:rgb(0 0 0 / .32);
+  --glass-wash:linear-gradient(135deg,#263140 0%,#191e27 46%,#222b38 100%);
+  --glass-sheen:linear-gradient(135deg,rgb(198 217 243 / .06),rgb(198 217 243 / 0) 65%);
+}
+
+/* WebKit on macOS and Chromium/WebView2 on Windows use the same treatment.
+   Unsupported browsers retain the original solid surfaces. */
+@supports ((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))){
+  :root[data-surface="desktop"][data-material="glass"] .board-app{background:var(--glass-wash)}
+  :root[data-surface="desktop"][data-material="glass"] :is(.sf-window-toolbar,.sf-sidebar){
+    background-color:var(--glass-chrome);
+    background-image:var(--glass-sheen);
+    -webkit-backdrop-filter:blur(18px) saturate(1.12);
+    backdrop-filter:blur(18px) saturate(1.12);
+  }
+  :root[data-surface="desktop"][data-material="glass"] .sf-window-toolbar{box-shadow:inset 0 1px 0 var(--glass-rim)}
+  :root[data-surface="desktop"][data-material="glass"] .sf-sidebar{box-shadow:inset 1px 0 0 var(--glass-rim)}
+  :root[data-surface="desktop"][data-material="glass"] .sf-main{border-color:var(--glass-edge);background:var(--sf-panel);box-shadow:0 2px 10px rgb(30 47 68 / .035)}
+  :root[data-surface="desktop"][data-material="glass"] .sf-sync-footer{
+    background-color:var(--glass-footer);
+    background-image:var(--glass-sheen);
+    border-top-color:var(--glass-edge);
+    box-shadow:inset 0 1px 0 var(--glass-rim);
+    -webkit-backdrop-filter:blur(18px) saturate(1.12);
+    backdrop-filter:blur(18px) saturate(1.12);
+  }
+  :root[data-surface="desktop"][data-material="glass"] :is(.sfu-dialog-content,.sfu-menu,.sfu-popover,.sf-select-content[data-slot="select-content"]){
+    background-color:var(--glass-floating);
+    background-image:var(--glass-sheen);
+    border-color:var(--glass-edge);
+    box-shadow:inset 0 1px 0 var(--glass-rim),0 12px 36px var(--glass-shadow);
+    -webkit-backdrop-filter:blur(18px) saturate(1.12);
+    backdrop-filter:blur(18px) saturate(1.12);
+  }
+}
+
+/* Accessibility overrides the saved material without changing the preference. */
+@media (prefers-reduced-transparency:reduce),(prefers-contrast:more){
+  :root[data-surface="desktop"][data-material="glass"] .board-app{background:var(--sf-sidebar)}
+  :root[data-surface="desktop"][data-material="glass"] :is(.sf-window-toolbar,.sf-sidebar,.sf-sync-footer,.sfu-dialog-content,.sfu-menu,.sfu-popover,.sf-select-content[data-slot="select-content"]){
+    background:var(--sf-panel);border-color:var(--sf-border-strong);box-shadow:none;
+    -webkit-backdrop-filter:none;backdrop-filter:none;
+  }
+  :root[data-surface="desktop"][data-material="glass"] :is(.sf-window-toolbar,.sf-sidebar){background:var(--sf-sidebar)}
+  :root[data-surface="desktop"][data-material="glass"] .sf-main{border-color:var(--sf-border-strong);box-shadow:none}
+}
+@media (forced-colors:active){
+  :root[data-surface="desktop"][data-material="glass"] .board-app{background:Canvas}
+  :root[data-surface="desktop"][data-material="glass"] :is(.sf-window-toolbar,.sf-sidebar,.sf-main,.sf-sync-footer,.sfu-dialog-content,.sfu-menu,.sfu-popover,.sf-select-content[data-slot="select-content"]){
+    background:Canvas;color:CanvasText;border-color:CanvasText;box-shadow:none;
+    -webkit-backdrop-filter:none;backdrop-filter:none;
+  }
+  .sf-material-swatch,.sf-material-swatch[data-material="glass"]{background:Canvas;border-color:CanvasText;box-shadow:none}
+  .sf-material-options [aria-pressed="true"]{outline:1px solid Highlight;outline-offset:-1px}
+}

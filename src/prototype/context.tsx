@@ -23,10 +23,10 @@ export function PrototypeProvider({ children, mode = 'prototype' }: { children: 
   useLayoutEffect(() => {
     document.documentElement.dataset.prototype = 'v2'; document.documentElement.dataset.surface = mode; document.documentElement.dataset.accent = prefs.accent;
     document.documentElement.dataset.motion = prefs.motion; document.documentElement.dataset.theme = dark ? 'dark' : 'light';
-    delete document.documentElement.dataset.material;
+    document.documentElement.dataset.material = prefs.material;
     document.documentElement.lang = prefs.locale;
-  }, [dark, prefs.locale, prefs.accent, prefs.motion, mode]);
-  useEffect(() => () => { delete document.documentElement.dataset.surface; delete document.documentElement.dataset.prototype; delete document.documentElement.dataset.accent; delete document.documentElement.dataset.motion; }, []);
+  }, [dark, prefs.locale, prefs.accent, prefs.motion, prefs.material, mode]);
+  useEffect(() => () => { delete document.documentElement.dataset.surface; delete document.documentElement.dataset.prototype; delete document.documentElement.dataset.accent; delete document.documentElement.dataset.motion; delete document.documentElement.dataset.material; }, []);
   useEffect(() => { try { setStorageFailed(!persistPreferences(window.localStorage, prefs, storageKey)); } catch { setStorageFailed(true); } }, [prefs]);
   return <PreferencesContext.Provider value={{ prefs, dark, storageFailed,
     setPref: (key, value) => setPrefs(old => ({ ...old, [key]: value })), resetPrefs: () => setPrefs({ ...defaults }),

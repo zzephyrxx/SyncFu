@@ -310,7 +310,6 @@ impl Engine {
         local: &str,
     ) -> Result<BTreeMap<String, Change>> {
         let auth = work.authorization.as_ref().context("缺少工作授权")?;
-        ensure!(auth.resolutions.len() <= files::LIMIT, "冲突决策过多");
         if !auth.resolutions.is_empty() {
             ensure!(
                 work.batch.undo_of.is_none() && policy.can_manage(&work.owner),

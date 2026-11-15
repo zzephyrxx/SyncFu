@@ -61,6 +61,61 @@ fn op(change: Change) -> Operation {
 }
 
 #[test]
+fn large_deletion_plans_and_processing_batches_keep_the_full_risk_budget() {
+    const COUNT: usize = 20_001;
+    const BATCH_SIZE: usize = 500;
+    let planned: Vec<_> = (0..COUNT)
+        .map(|index| deletion(&format!("{index:05}.txt")))
+        .collect();
+    let rules = DeleteRules {
+        max_files: COUNT as u32,
+        relative_min: COUNT as u32,
+        percent: 100,
+        ..DeleteRules::default()
+    };
+    let snapshot = || RiskSnapshot {
+        files: COUNT * 2,
+        source_empty: false,
+        now: 100,
+    };
+    // Selecting only the last item must still count every deletion in the plan.
+    let selected = [op(planned.last().unwrap().clone())];
+    let complete = assess(
+        "device",
+        &planned,
+        &selected,
+        snapshot(),
+        &DeletionWindow::default(),
+        &rules,
+    );
+    assert_eq!(complete.planned_deletions, COUNT);
+    assert_eq!(complete.selected_deletions, 1);
+    assert!(complete.reasons.contains(&RiskReason::LargeDeletion));
+
+    // Even separately reviewed plans share a persistent deletion window.
+    let mut window = DeletionWindow::default().current(100, COUNT * 2, &rules);
+    for (index, batch) in planned[..COUNT - 1].chunks(BATCH_SIZE).enumerate() {
+        let ops: Vec<_> = batch.iter().cloned().map(op).collect();
+        let risk = assess("device", batch, &ops, snapshot(), &window, &rules);
+        assert!(risk.reasons.is_empty());
+        let id = format!("batch-{index}");
+        window.reserve(&id, ops.len()).unwrap();
+        window.reserve(&id, ops.len()).unwrap();
+        window = serde_json::from_str(&serde_json::to_string(&window).unwrap()).unwrap();
+    }
+    let last = assess(
+        "device",
+        &planned[COUNT - 1..],
+        &selected,
+        snapshot(),
+        &window,
+        &rules,
+    );
+    assert_eq!(last.recent_deletions, COUNT - 1);
+    assert!(last.reasons.contains(&RiskReason::LargeDeletion));
+}
+
+#[test]
 fn policy_and_device_ids_are_strictly_bound() {
     let mut p = policy();
     p.validate().unwrap();

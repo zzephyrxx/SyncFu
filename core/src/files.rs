@@ -18,7 +18,8 @@ use std::{
 use unicode_normalization::UnicodeNormalization;
 
 pub const STAGE: &str = ".syncfu-stage";
-pub const LIMIT: usize = 20_000;
+/// Maximum queued file paths, not a limit on task size.
+pub const SCAN_BATCH_SIZE: usize = 256;
 
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "snake_case")]
@@ -38,6 +39,11 @@ pub struct ScanProgress {
     pub files_total: u64,
     pub files_hashed: u64,
     pub bytes_hashed: u64,
+    /// Until discovery finishes, `files_total` is the observed count so far.
+    #[serde(default)]
+    pub discovery_complete: bool,
+    #[serde(default)]
+    pub queued_files: u64,
 }
 
 pub fn portable_key(path: &str) -> String {
@@ -170,69 +176,16 @@ impl Root {
         let mut out = Manifest::default();
         let mut progress = ScanProgress::default();
         report(&progress);
-        let jobs = collect_scan(self, &mut out, &mut progress, &mut report);
-        if !jobs.is_empty() {
-            progress.phase = ScanPhase::Hashing;
-            progress.current_path.clear();
-            report(&progress);
-            let workers = workers.clamp(1, 4).min(jobs.len());
-            let next = AtomicUsize::new(0);
-            std::thread::scope(|scope| {
-                // Bound both active filesystem reads and pending reports. A slow
-                // observer applies backpressure instead of growing a queue.
-                let (sender, receiver) = sync_channel(workers * 2);
-                let mut handles = Vec::with_capacity(workers);
-                for _ in 0..workers {
-                    let sender = sender.clone();
-                    let jobs = &jobs;
-                    let next = &next;
-                    handles.push(scope.spawn(move || {
-                        let mut buffer = vec![0u8; 128 * 1024];
-                        while let Some(path) = jobs.get(next.fetch_add(1, Ordering::Relaxed)) {
-                            let result = self
-                                .parent(path)
-                                .and_then(|(dir, name)| open_checked(&dir, &name, false))
-                                .and_then(|file| {
-                                    hash_buffered(file, &mut buffer, |bytes| {
-                                        let _ = sender.send(HashEvent::Bytes(path.clone(), bytes));
-                                    })
-                                });
-                            if sender
-                                .send(HashEvent::Finished(path.clone(), result))
-                                .is_err()
-                            {
-                                return;
-                            }
-                        }
-                    }));
-                }
-                drop(sender);
-                for event in receiver {
-                    match event {
-                        HashEvent::Bytes(path, bytes) => {
-                            progress.current_path = path;
-                            progress.bytes_hashed = progress.bytes_hashed.saturating_add(bytes);
-                        }
-                        HashEvent::Finished(path, result) => {
-                            progress.current_path = path.clone();
-                            match result {
-                                Ok(entry) => {
-                                    progress.files_hashed += 1;
-                                    out.entries.insert(path, entry);
-                                }
-                                Err(error) => push_scan_issue(&mut out, format!("{path}：{error}")),
-                            }
-                        }
-                    }
-                    report(&progress);
-                }
-                for handle in handles {
-                    if handle.join().is_err() {
-                        push_scan_issue(&mut out, "文件校验线程异常，检查未完成".into());
-                    }
-                }
-            });
-        }
+        let mut jobs = Vec::with_capacity(SCAN_BATCH_SIZE);
+        progress.discovery_complete = collect_scan(
+            self,
+            &mut out,
+            &mut progress,
+            &mut report,
+            &mut jobs,
+            workers,
+        );
+        hash_scan_batch(self, &jobs, &mut out, &mut progress, &mut report, workers);
         progress.phase = ScanPhase::Complete;
         progress.current_path.clear();
         report(&progress);
@@ -379,18 +332,95 @@ fn push_scan_issue(out: &mut Manifest, issue: String) {
     }
 }
 
+/// Flush a bounded chunk before collecting any more file paths. Directory
+/// traversal retains only its current iterator while workers reopen paths from
+/// the authorized root; neither queued work nor depth retains file handles.
+fn hash_scan_batch(
+    root: &Root,
+    jobs: &[String],
+    out: &mut Manifest,
+    progress: &mut ScanProgress,
+    report: &mut impl FnMut(&ScanProgress),
+    workers: usize,
+) {
+    if jobs.is_empty() {
+        return;
+    }
+    progress.phase = ScanPhase::Hashing;
+    progress.current_path.clear();
+    report(progress);
+    let workers = workers.clamp(1, 4).min(jobs.len());
+    let next = AtomicUsize::new(0);
+    std::thread::scope(|scope| {
+        // A slow observer applies backpressure instead of growing reports.
+        let (sender, receiver) = sync_channel(workers * 2);
+        let mut handles = Vec::with_capacity(workers);
+        for _ in 0..workers {
+            let sender = sender.clone();
+            let next = &next;
+            handles.push(scope.spawn(move || {
+                let mut buffer = vec![0u8; 128 * 1024];
+                while let Some(path) = jobs.get(next.fetch_add(1, Ordering::Relaxed)) {
+                    let result = root
+                        .parent(path)
+                        .and_then(|(dir, name)| open_checked(&dir, &name, false))
+                        .and_then(|file| {
+                            hash_buffered(file, &mut buffer, |bytes| {
+                                let _ = sender.send(HashEvent::Bytes(path.clone(), bytes));
+                            })
+                        });
+                    if sender
+                        .send(HashEvent::Finished(path.clone(), result))
+                        .is_err()
+                    {
+                        return;
+                    }
+                }
+            }));
+        }
+        drop(sender);
+        for event in receiver {
+            match event {
+                HashEvent::Bytes(path, bytes) => {
+                    progress.current_path = path;
+                    progress.bytes_hashed = progress.bytes_hashed.saturating_add(bytes);
+                }
+                HashEvent::Finished(path, result) => {
+                    progress.current_path = path.clone();
+                    progress.queued_files = progress.queued_files.saturating_sub(1);
+                    match result {
+                        Ok(entry) => {
+                            progress.files_hashed += 1;
+                            out.entries.insert(path, entry);
+                        }
+                        Err(error) => push_scan_issue(out, format!("{path}：{error}")),
+                    }
+                }
+            }
+            report(progress);
+        }
+        for handle in handles {
+            if handle.join().is_err() {
+                push_scan_issue(out, "文件校验线程异常，检查未完成".into());
+            }
+        }
+    });
+    progress.queued_files = 0;
+}
+
 fn collect_scan(
     root: &Root,
     out: &mut Manifest,
     progress: &mut ScanProgress,
     report: &mut impl FnMut(&ScanProgress),
-) -> Vec<String> {
-    let mut jobs = Vec::new();
+    jobs: &mut Vec<String>,
+    workers: usize,
+) -> bool {
     let mut directories = vec![(String::new(), 0usize)];
     while let Some((prefix, depth)) = directories.pop() {
         if out.issues.len() >= 200 {
             push_scan_issue(out, String::new());
-            break;
+            return false;
         }
         if depth > 96 {
             push_scan_issue(out, format!("目录层级过深：{prefix}"));
@@ -421,7 +451,7 @@ fn collect_scan(
         for item in entries {
             if out.issues.len() >= 200 {
                 push_scan_issue(out, String::new());
-                return jobs;
+                return false;
             }
             let item = match item {
                 Ok(item) => item,
@@ -438,13 +468,6 @@ fn collect_scan(
             if ignored(name) {
                 out.ignored += 1;
                 continue;
-            }
-            if out.entries.len() + jobs.len() >= LIMIT {
-                push_scan_issue(
-                    out,
-                    format!("扫描超过 {LIMIT} 个文件和目录的当前上限，请拆分同步任务"),
-                );
-                return jobs;
             }
             let path = if prefix.is_empty() {
                 name.to_owned()
@@ -471,14 +494,22 @@ fn collect_scan(
             } else if metadata.is_file() {
                 jobs.push(path);
                 progress.files_total += 1;
+                progress.queued_files = jobs.len() as u64;
             } else {
                 push_scan_issue(out, format!("不是普通文件：{path}"));
             }
             report(progress);
+            if jobs.len() == SCAN_BATCH_SIZE {
+                hash_scan_batch(root, jobs, out, progress, report, workers);
+                jobs.clear();
+                progress.phase = ScanPhase::Discovering;
+                progress.current_path.clone_from(&prefix);
+                report(progress);
+            }
         }
         // `entries` and `dir` close here before the next directory is opened.
     }
-    jobs
+    out.issues.is_empty()
 }
 
 #[cfg(test)]

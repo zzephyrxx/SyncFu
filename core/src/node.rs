@@ -25,7 +25,7 @@ use std::{
     time::{Duration, Instant},
 };
 use tokio::{
-    io::{AsyncRead, AsyncReadExt, AsyncWrite, AsyncWriteExt},
+    io::{AsyncRead, AsyncReadExt, AsyncWrite},
     net::{TcpListener, TcpStream},
     sync::{Semaphore, oneshot},
     time::timeout,
@@ -33,8 +33,10 @@ use tokio::{
 use tokio_rustls::{TlsAcceptor, TlsConnector, client::TlsStream};
 
 const SERVICE: &str = "_syncfu._tcp.local.";
-pub const PROTOCOL: u8 = 4;
-const FRAME_LIMIT: usize = 32 * 1024 * 1024;
+mod progress;
+use progress::ExecutionLog;
+pub use progress::{ExecutionProgress, FileProgress, ProgressPage};
+pub const PROTOCOL: u8 = 5;
 const TIMEOUT: Duration = Duration::from_secs(90);
 // A full content scan can legitimately take minutes on large or slow volumes.
 // Other RPCs keep their short deadline; scan status travels on a separate session.
@@ -86,6 +88,8 @@ pub struct Snapshot {
     pub phase: Option<String>,
     #[serde(default)]
     pub scan: Option<ScanActivity>,
+    #[serde(default)]
+    pub execution: Option<ExecutionProgress>,
     pub network_error: Option<String>,
     pub policy_states: Vec<PolicyView>,
     pub paused_all: bool,
@@ -156,6 +160,10 @@ enum Rpc {
     ApproveRisk(Work),
     Scan(String),
     ScanStatus(String),
+    Progress {
+        ticket: Ticket,
+        after: usize,
+    },
     PreviewFile(PreviewRequest),
     State(String),
     Observe {
@@ -214,7 +222,18 @@ type Reply = std::result::Result<serde_json::Value, String>;
 struct Session(TlsStream<TcpStream>);
 impl Session {
     async fn call<T: DeserializeOwned>(&mut self, request: Rpc) -> Result<T> {
-        let deadline = if matches!(&request, Rpc::Scan(_)) {
+        let deadline = if matches!(
+            &request,
+            Rpc::Scan(_)
+                | Rpc::Preflight(_)
+                | Rpc::ApproveRisk(_)
+                | Rpc::Begin { .. }
+                | Rpc::Seal(_)
+                | Rpc::Apply(_)
+                | Rpc::Outcome(_)
+                | Rpc::Finish { .. }
+                | Rpc::Observe { .. }
+        ) {
             SCAN_TIMEOUT
         } else {
             TIMEOUT
@@ -244,6 +263,7 @@ pub struct Node {
     scan_gate: Mutex<()>,
     scan_report: Mutex<Option<GrantScanReport>>,
     scan_activity: Mutex<Option<ScanActivity>>,
+    execution: Mutex<Option<ExecutionLog>>,
     incoming: Mutex<Option<(String, String)>>,
     network_error: Mutex<Option<String>>,
     dirty: Mutex<BTreeMap<String, u64>>,
@@ -290,6 +310,7 @@ impl Node {
             scan_gate: Mutex::new(()),
             scan_report: Mutex::new(None),
             scan_activity: Mutex::new(None),
+            execution: Mutex::new(None),
             incoming: Mutex::new(None),
             network_error: Mutex::new(None),
             dirty: Mutex::new(BTreeMap::new()),
@@ -551,6 +572,9 @@ impl Node {
                 })
             }),
             tasks,
+            execution: lock(&self.execution)
+                .as_ref()
+                .map(|log| log.summary.clone()),
             history: self.engine.history()?,
             phase: lock(&self.phase).clone().or_else(|| {
                 lock(&self.incoming)
@@ -873,9 +897,10 @@ impl Node {
         let authenticated =
             leaf.and_then(|leaf| peers.into_iter().find(|p| p.leaf == leaf.as_ref()));
         if let Some(peer) = authenticated {
-            let activity = Incoming::new(&self.incoming);
+            let activity = Incoming::new(&self.incoming, &self.execution);
             loop {
-                let request: Rpc = timeout(TIMEOUT, receive(&mut stream)).await??;
+                let request: Rpc =
+                    framing::receive_request(&mut stream, PROTOCOL, SCAN_TIMEOUT).await?;
                 if self.peer(&peer.id).is_err() {
                     bail!("授权已撤销");
                 }
@@ -902,13 +927,14 @@ impl Node {
                         activity.finish(&id);
                     }
                 }
-                timeout(TIMEOUT, send(&mut stream, &answer)).await??;
+                send(&mut stream, &answer).await?;
             }
         }
         if let Some((candidate, _)) = approved
             && leaf.is_some_and(|leaf| candidate.leaf == leaf.as_ref())
         {
-            let request: Rpc = timeout(Duration::from_secs(6), receive(&mut stream)).await??;
+            let request: Rpc =
+                timeout(Duration::from_secs(6), receive_small(&mut stream)).await??;
             ensure!(matches!(request, Rpc::Ping), "配对尚未完成");
             {
                 let mut approved = lock(&self.approved);
@@ -1432,6 +1458,8 @@ impl Node {
                 directories: remote.entries.len() as u64 - files,
                 files_total: files,
                 files_hashed: files,
+                discovery_complete: remote.issues.is_empty(),
+                queued_files: 0,
                 bytes_hashed: remote.entries.values().fold(0u64, |total, entry| {
                     total.saturating_add(match entry {
                         Entry::File { bytes, .. } => *bytes,
@@ -1479,9 +1507,7 @@ impl Node {
         let _gate = lock(&self.engine.gate);
         let mut state = self.engine.pair_state(task)?;
         ensure!(
-            self.engine.active()?.is_none()
-                && &state == expected
-                && common.len() <= crate::files::LIMIT,
+            self.engine.active()?.is_none() && &state == expected,
             "基线已变化，请重新检查"
         );
         for (p, v) in common {
@@ -1507,21 +1533,26 @@ impl Node {
         } else {
             vec![]
         };
+        let conflict_fingerprints: BTreeMap<_, _> = conflicts
+            .iter()
+            .map(|c| (c.path.as_str(), c.fingerprint.as_str()))
+            .collect();
         let review_notes = self
             .engine
             .review_notes(&task.id)?
             .into_iter()
             .filter(|note| {
-                conflicts
-                    .iter()
-                    .any(|c| c.path == note.path && c.fingerprint == note.fingerprint)
+                conflict_fingerprints.get(note.path.as_str()) == Some(&note.fingerprint.as_str())
             })
             .collect::<Vec<_>>();
-        comparison.changes.retain(|c| {
-            !review_notes
-                .iter()
-                .any(|note| note.path == c.path && note.ignored)
-        });
+        let ignored: BTreeSet<_> = review_notes
+            .iter()
+            .filter(|note| note.ignored)
+            .map(|note| note.path.as_str())
+            .collect();
+        comparison
+            .changes
+            .retain(|c| !ignored.contains(c.path.as_str()));
         let id = engine::id();
         let policy_digest = policy.fingerprint()?;
         ensure!(
@@ -1574,10 +1605,7 @@ impl Node {
         requests: Vec<DecisionRequest>,
     ) -> Result<Plan> {
         let _coordinator = self.coordinator.try_lock().context("请先结束当前操作")?;
-        ensure!(
-            !requests.is_empty() && requests.len() <= crate::files::LIMIT,
-            "请选择需要处理的冲突"
-        );
+        ensure!(!requests.is_empty(), "请选择需要处理的冲突");
         let (mut plan, expected) = lock(&self.plans)
             .get(plan_id)
             .cloned()
@@ -1605,14 +1633,20 @@ impl Node {
         let mut seen = BTreeSet::new();
         for request in &requests {
             ensure!(seen.insert(&request.path), "重复的冲突决定");
-            let conflict = plan
-                .conflicts
-                .iter()
-                .find(|c| c.path == request.path)
-                .context("路径不是此预览的冲突")?
-                .clone();
-            plan.resolutions.retain(|r| r.conflict.path != request.path);
-            plan.review_notes.retain(|n| n.path != request.path);
+        }
+        plan.resolutions
+            .retain(|r| !seen.contains(&r.conflict.path));
+        plan.review_notes.retain(|n| !seen.contains(&n.path));
+        let conflicts_by_path: BTreeMap<_, _> = plan
+            .conflicts
+            .iter()
+            .map(|c| (c.path.as_str(), c))
+            .collect();
+        for request in &requests {
+            let conflict = (*conflicts_by_path
+                .get(request.path.as_str())
+                .context("路径不是此预览的冲突")?)
+            .clone();
             match &request.decision {
                 Decision::Use { source_device } => {
                     ensure!(policy.can_manage(&self.device.id), "此端不能批准冲突覆盖");
@@ -1634,23 +1668,25 @@ impl Node {
             }
         }
         plan.comparison.changes = plan.original_changes.clone();
+        let mut resolved_changes = BTreeMap::new();
         for resolution in &plan.resolutions {
             let change = resolution.change(&policy, &self.device.id)?;
-            if let Some(old) = plan
-                .comparison
-                .changes
-                .iter_mut()
-                .find(|c| c.path == change.path)
-            {
-                *old = change;
+            resolved_changes.insert(change.path.clone(), change);
+        }
+        for change in &mut plan.comparison.changes {
+            if let Some(resolved) = resolved_changes.remove(&change.path) {
+                *change = resolved;
             }
         }
-        plan.comparison.changes.retain(|c| {
-            !plan
-                .review_notes
-                .iter()
-                .any(|n| n.path == c.path && n.ignored)
-        });
+        let ignored: BTreeSet<_> = plan
+            .review_notes
+            .iter()
+            .filter(|n| n.ignored)
+            .map(|n| n.path.as_str())
+            .collect();
+        plan.comparison
+            .changes
+            .retain(|c| !ignored.contains(c.path.as_str()));
         self.engine.save_review_notes(
             &plan.task.id,
             &requests.iter().map(|r| r.path.clone()).collect::<Vec<_>>(),
@@ -2046,6 +2082,8 @@ impl Node {
         let remote_work = mirror(&work);
         let ticket = Ticket::from(&work);
         let phase = Phase::new(&self.phase, "正在保存同步前备份");
+        self.start_progress(&work);
+        let _progress_guard = progress::ProgressGuard(&self.execution, &ticket.id);
         let node = self.clone();
         let local_work = work.clone();
         let local_expected = expected.clone();
@@ -2064,12 +2102,14 @@ impl Node {
                 })
                 .await?;
             phase.set("正在传输和校验已批准文件");
+            self.progress_stage(&ticket.id, "transfer");
             if work.batch.undo_of.is_none() {
                 for op in &work.ops {
                     let Some(Entry::File { bytes, .. }) = op.change.after else {
                         continue;
                     };
                     let mut offset = 0;
+                    self.transfer_progress(&ticket.id, &op.change.path, 0, bytes);
                     while offset < bytes {
                         ensure!(!self.engine.cancelled.load(Ordering::Acquire), "已取消");
                         if op.change.target == 0 {
@@ -2110,9 +2150,12 @@ impl Node {
                                 .await?;
                             offset += length as u64;
                         }
+                        self.transfer_progress(&ticket.id, &op.change.path, offset, bytes);
                     }
+                    self.record_progress(&ticket.id, &op.change.path, "transferred");
                 }
             }
+            self.progress_stage(&ticket.id, "verify");
             self.local_unit(Rpc::Seal(ticket.clone()))
                 .await
                 .context("本机准备文件失败")?;
@@ -2122,28 +2165,50 @@ impl Node {
                 .context("对端准备文件失败")?;
             ensure!(!self.engine.cancelled.load(Ordering::Acquire), "已取消");
             phase.set("正在应用并核验变更");
+            self.progress_stage(&ticket.id, "apply");
             let local: Option<String> = self.local(Rpc::Apply(ticket.clone())).await?;
             if local.is_some() {
                 return Ok(local);
             }
-            session
-                .call::<Option<String>>(Rpc::Apply(ticket.clone()))
+            self.remote_apply(&mut session, &ticket, &self.peer(&plan.task.peer)?)
                 .await
         }
         .await;
         phase.set("正在核对两端结果");
+        self.progress_stage(&ticket.id, "reconcile");
         let message = match execution {
             Ok(message) => message,
             Err(e) => Some(format!("{e:#}")),
         };
         match self.finish_pair(&work, message.clone()).await {
             Ok(batch) => {
+                let applied: BTreeSet<_> = self.engine.applied(&batch.id)?.into_iter().collect();
+                for op in &work.ops {
+                    if applied.contains(&op.id) {
+                        self.record_progress(&ticket.id, &op.change.path, "applied");
+                    }
+                }
+                if let Some(log) = lock(&self.execution)
+                    .as_mut()
+                    .filter(|l| l.summary.batch == ticket.id)
+                {
+                    log.summary.running = false;
+                    log.summary.stage = batch.status.clone();
+                    log.summary.current_path.clear();
+                }
                 if batch.status == "completed" && batch.skipped == 0 && batch.undo_of.is_none() {
                     lock(&self.review_pending).remove(&batch.task);
                 }
                 Ok(batch)
             }
             Err(error) => {
+                if let Some(log) = lock(&self.execution)
+                    .as_mut()
+                    .filter(|l| l.summary.batch == ticket.id)
+                {
+                    log.summary.running = false;
+                    log.summary.stage = "pending".into();
+                }
                 let mut batch = work.batch;
                 batch.message = Some(match message {
                     Some(message) => format!("{message}。等待两端核对：{error:#}"),
@@ -2370,6 +2435,17 @@ impl Node {
                         .cloned(),
                 );
             }
+            Rpc::Progress { ticket, after } => {
+                let log = lock(&self.execution);
+                let log = log.as_ref().context("找不到批次进度")?;
+                ensure!(
+                    log.summary.batch == ticket.id && log.digest == ticket.digest,
+                    "批次标识或摘要不一致"
+                );
+                self.validate_peer(peer, &log.summary.task)?;
+                let page = log.page(Some(&ticket.id), after);
+                return json(page);
+            }
             Rpc::Cancel(ticket) => {
                 if let Some(work) = self.engine.active()?
                     && work.batch.id == ticket.id
@@ -2428,16 +2504,21 @@ impl Node {
                     )?;
                 }
                 self.engine.begin(&work, &expected)?;
+                self.start_progress(&work);
                 json(())
             }
             Rpc::Read { ticket, op, offset } => {
                 let work = self.get_work(peer, &ticket, true)?.context("批次未执行")?;
-                json(
-                    STANDARD.encode(
-                        self.engine
-                            .read_chunk(&work, find_op(&work, &op)?, offset)?,
-                    ),
-                )
+                let op = find_op(&work, &op)?;
+                let data = self.engine.read_chunk(&work, op, offset)?;
+                self.progress_stage(&ticket.id, "transfer");
+                self.transfer_progress(
+                    &ticket.id,
+                    &op.change.path,
+                    offset + data.len() as u64,
+                    op.change.after.as_ref().map_or(0, Entry::bytes),
+                );
+                json(STANDARD.encode(data))
             }
             Rpc::Chunk {
                 ticket,
@@ -2450,12 +2531,21 @@ impl Node {
                     data.len() <= engine::TRANSFER_ENCODED_LIMIT,
                     "文件片段超出限制"
                 );
-                self.engine
-                    .chunk(&work, find_op(&work, &op)?, offset, &STANDARD.decode(data)?)?;
+                let op = find_op(&work, &op)?;
+                let data = STANDARD.decode(data)?;
+                self.engine.chunk(&work, op, offset, &data)?;
+                self.progress_stage(&ticket.id, "transfer");
+                self.transfer_progress(
+                    &ticket.id,
+                    &op.change.path,
+                    offset + data.len() as u64,
+                    op.change.after.as_ref().map_or(0, Entry::bytes),
+                );
                 json(())
             }
             Rpc::Seal(ticket) => {
                 let work = self.get_work(peer, &ticket, true)?.context("批次未执行")?;
+                self.progress_stage(&ticket.id, "verify");
                 self.engine.seal(&work)?;
                 self.engine.store.put("sealed", &work.batch.id, &true)?;
                 json(())
@@ -2469,7 +2559,18 @@ impl Node {
                         .unwrap_or(false),
                     "批次尚未准备完成"
                 );
-                json(self.engine.apply(&work)?)
+                self.progress_stage(&ticket.id, "apply");
+                json(self.engine.apply_with_progress(&work, |op, step| {
+                    self.record_progress(
+                        &ticket.id,
+                        &op.change.path,
+                        if step == Step::Applied {
+                            "applied"
+                        } else {
+                            "failed"
+                        },
+                    );
+                })?)
             }
             Rpc::Outcome(ticket) => {
                 let Some(work) = self.get_work(peer, &ticket, false)? else {
@@ -2505,17 +2606,30 @@ impl Node {
                     "批次状态无效"
                 );
                 let outcome = self.engine.outcome(&work)?;
+                let applied_ids: BTreeSet<_> = applied.iter().collect();
+                let operation_ids: BTreeSet<_> = work.ops.iter().map(|op| &op.id).collect();
                 ensure!(
                     !outcome.iter().any(|(_, s)| *s == Step::Review)
                         && outcome
                             .iter()
-                            .all(|(id, step)| (*step == Step::Applied) == applied.contains(id))
-                        && applied
-                            .iter()
-                            .all(|id| work.ops.iter().any(|op| &op.id == id)),
+                            .all(|(id, step)| (*step == Step::Applied) == applied_ids.contains(id))
+                        && applied_ids.is_subset(&operation_ids),
                     "操作结果需要核对"
                 );
-                json(self.engine.finish(&work, &applied, &status, message)?)
+                let batch = self.engine.finish(&work, &applied, &status, message)?;
+                for op in &work.ops {
+                    if applied_ids.contains(&op.id) {
+                        self.record_progress(&ticket.id, &op.change.path, "applied");
+                    }
+                }
+                if let Some(log) = lock(&self.execution)
+                    .as_mut()
+                    .filter(|l| l.summary.batch == ticket.id)
+                {
+                    log.summary.running = false;
+                    log.summary.stage = status;
+                }
+                json(batch)
             }
             _ => bail!("未知操作"),
         }
@@ -2560,12 +2674,17 @@ impl Drop for Node {
 
 struct Incoming<'a> {
     slot: &'a Mutex<Option<(String, String)>>,
+    execution: &'a Mutex<Option<ExecutionLog>>,
     connection: String,
 }
 impl<'a> Incoming<'a> {
-    fn new(slot: &'a Mutex<Option<(String, String)>>) -> Self {
+    fn new(
+        slot: &'a Mutex<Option<(String, String)>>,
+        execution: &'a Mutex<Option<ExecutionLog>>,
+    ) -> Self {
         Self {
             slot,
+            execution,
             connection: engine::id(),
         }
     }
@@ -2586,7 +2705,15 @@ impl Drop for Incoming<'_> {
             .as_ref()
             .is_some_and(|(_, connection)| connection == &self.connection)
         {
-            *slot = None;
+            let batch = slot.take().map(|(batch, _)| batch);
+            drop(slot);
+            if let Some(log) = lock(self.execution).as_mut()
+                && batch.as_deref() == Some(log.summary.batch.as_str())
+                && log.summary.running
+            {
+                log.summary.running = false;
+                log.summary.stage = "interrupted".into();
+            }
         }
     }
 }
@@ -2630,6 +2757,8 @@ fn lock<T>(mutex: &Mutex<T>) -> MutexGuard<'_, T> {
     mutex.lock().unwrap_or_else(|e| e.into_inner())
 }
 
+#[cfg(test)]
+mod progress_tests;
 #[cfg(test)]
 mod scan_tests;
 fn find_op<'a>(work: &'a Work, id: &str) -> Result<&'a Operation> {
@@ -2717,31 +2846,16 @@ fn bound_context(
     context
 }
 
+mod framing;
+
 async fn send(stream: &mut (impl AsyncWrite + Unpin), value: &impl Serialize) -> Result<()> {
-    let data = serde_json::to_vec(&(PROTOCOL, value))?;
-    ensure!(data.len() <= FRAME_LIMIT, "消息超过允许大小");
-    stream.write_u32(data.len() as u32).await?;
-    stream.write_all(&data).await?;
-    stream.flush().await?;
-    Ok(())
+    framing::send(stream, PROTOCOL, value).await
 }
 async fn receive<T: DeserializeOwned>(stream: &mut (impl AsyncRead + Unpin)) -> Result<T> {
-    receive_frame(stream, FRAME_LIMIT).await
+    framing::receive(stream, PROTOCOL, None).await
 }
 async fn receive_small<T: DeserializeOwned>(stream: &mut (impl AsyncRead + Unpin)) -> Result<T> {
-    receive_frame(stream, 32 * 1024).await
-}
-async fn receive_frame<T: DeserializeOwned>(
-    stream: &mut (impl AsyncRead + Unpin),
-    limit: usize,
-) -> Result<T> {
-    let len = stream.read_u32().await? as usize;
-    ensure!(len <= limit && len > 0, "消息格式或大小无效");
-    let mut data = vec![0; len];
-    stream.read_exact(&mut data).await?;
-    let (version, value): (u8, T) = serde_json::from_slice(&data)?;
-    ensure!(version == PROTOCOL, "两端 SyncFu 协议版本不一致");
-    Ok(value)
+    framing::receive(stream, PROTOCOL, Some(32 * 1024)).await
 }
 
 #[cfg(test)]

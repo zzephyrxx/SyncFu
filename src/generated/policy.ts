@@ -46,4 +46,4 @@ export const policyCommands = {
   "usage": "usage_report",
   "usageEnabled": "set_usage_enabled"
 } as const;
-export const wireProtocol = 4 as const;
+export const wireProtocol = 5 as const;

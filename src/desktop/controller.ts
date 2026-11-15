@@ -6,10 +6,14 @@ import {syncAttempt,validatePreview,type SyncPayload} from './sync-flow';
 import {command,emptySnapshot,errorText} from '../api';
 import type {Batch,Plan,Snapshot} from '../types';
 import type {DecisionRequest,ExecutionPreview,UsageReport} from '../generated/policy';
+import {useExecutionProgress} from './useExecutionProgress';
 export type Transport=<T>(name:string,args?:Record<string,unknown>)=>Promise<T>;
 export type Activity='idle'|'scan'|'resolve'|'prepare'|'execute'|'policy'|'other';
 export interface Prepared extends SyncPayload {epoch:number}
 export function useDesktopController(transport:Transport=command){
+  const {progress,refreshProgress}=useExecutionProgress(transport);
+  const [dismissedBatch,setDismissedBatch]=useState<string|null>(null);
+  const execution=progress.summary?.batch===dismissedBatch?null:progress.summary;
   const [snapshot,setSnapshot]=useState<Snapshot>(emptySnapshot);const snapshotRef=useRef(snapshot);
   const [active,setActive]=useState('');const activeRef=useRef('');
   const [plan,setPlanState]=useState<Plan|null>(null);const planRef=useRef<Plan|null>(null);
@@ -74,13 +78,18 @@ export function useDesktopController(transport:Transport=command){
     setError('');
   };
   const inspect=(task=activeRef.current,undo?:string)=>run(async()=>{
+    setResult(null);
     if(undo||task!==activeRef.current)resetScope();
     const version=++epoch.current;const previous=lastReview.current;putPrepared(null);putStale(true);
+    const latestProgress=await refreshProgress().catch(()=>null);
+    if(!mounted.current||version!==epoch.current)return;
+    setDismissedBatch(latestProgress?.summary?.batch??snapshotRef.current.execution?.batch??null);
     const next=await transport<Plan>(undo?'inspect_undo':'inspect_task',undo?{batch:undo}:{task});
     if(!mounted.current||version!==epoch.current)return;
     activeRef.current=next.task.id;setActive(next.task.id);putPlan(next);
     putSelected(clipSelection(next,recheckSelection(next,previous),scopeRef.current));putStale(false);
   },'scan');
+  useEffect(()=>{if(execution&&plan?.task.id===execution.task){putStale(true);putPrepared(null);}},[execution?.batch,plan?.id]);
   const setSelected=(value:Set<string>|((old:Set<string>)=>Set<string>))=>{
     const current=planRef.current;if(!current||operation.current||preparedRef.current||staleRef.current)return;
     const next=typeof value==='function'?value(new Set(selectedRef.current)):value;
@@ -106,7 +115,8 @@ export function useDesktopController(transport:Transport=command){
     const old=selectedRef.current;putPlan(next);putSelected(clipSelection(next,decisionSelection(next,old,decisions),scopeRef.current));
   },'resolve');
   const complete=async(batch:Batch)=>{
-    if(!mounted.current)return;setResult(batch);putPlan(null);putPrepared(null);putSelected(new Set());epoch.current++;
+    if(!mounted.current)return;setResult(batch);putStale(true);putPrepared(null);putSelected(new Set());epoch.current++;
+    await refreshProgress().catch(()=>{});
     await refreshUsage().catch(()=>{});
   };
   const synchronize=(forceReview:boolean)=>run(async()=>{
@@ -137,7 +147,7 @@ export function useDesktopController(transport:Transport=command){
     catch(e){if(mounted.current)setError(errorText(e));}
     finally{controlLock.current=false;if(mounted.current)setControlBusy(false);}
   };
-  return {snapshot,active,plan,selected,setSelected,scope,changeScope,checkGeneration,busy,activity,reviewStale,controlBusy,pause,error,setError,result,setResult,usage,usageReady,usageError,prepared,setPrepared,openTask,inspect,decide,prepare,syncSelected,execute,run,refresh,refreshUsage,invalidate,transport};
+  return {execution,progress,snapshot,active,plan,selected,setSelected,scope,changeScope,checkGeneration,busy,activity,reviewStale,controlBusy,pause,error,setError,result,setResult,usage,usageReady,usageError,prepared,setPrepared,openTask,inspect,decide,prepare,syncSelected,execute,run,refresh,refreshUsage,invalidate,transport};
 }
 export type DesktopController=ReturnType<typeof useDesktopController>;
 export function useTaskAutoCheck(c:DesktopController,enabled:boolean){

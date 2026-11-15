@@ -1,7 +1,7 @@
 use anyhow::Result;
 use std::fs;
 use syncfu_core::{
-    files::{Root, ScanPhase, hash_file},
+    files::{Root, SCAN_BATCH_SIZE, ScanPhase, hash_file},
     model::Entry,
 };
 #[test]
@@ -48,19 +48,114 @@ fn parallel_scan_does_not_follow_links_or_hide_invalid_names() -> Result<()> {
     Ok(())
 }
 #[test]
-fn scan_limit_remains_global_across_workers() -> Result<()> {
+fn scan_more_than_twenty_thousand_files_in_bounded_batches() -> Result<()> {
     let temp = tempfile::tempdir()?;
-    for i in 0..syncfu_core::files::LIMIT + 1 {
-        fs::write(temp.path().join(format!("f-{i}")), b"")?;
+    let count = 20_513usize;
+    for i in 0..count {
+        fs::write(temp.path().join(format!("f-{i:05}")), i.to_le_bytes())?;
     }
-    let result = Root::open(&temp.path().canonicalize()?)?.scan_with_workers(4);
-    assert!(result.entries.len() <= syncfu_core::files::LIMIT);
-    assert!(
-        result
-            .issues
-            .iter()
-            .any(|issue| issue.contains("20000") && issue.contains("上限"))
-    );
+    let mut max_queued = 0;
+    let mut batches = 0;
+    let mut hashed_before_discovery_finished = false;
+    let mut last = None;
+    let result = Root::open(&temp.path().canonicalize()?)?.scan_with_progress(|progress| {
+        max_queued = max_queued.max(progress.queued_files);
+        if progress.phase == ScanPhase::Hashing && progress.current_path.is_empty() {
+            batches += 1;
+        }
+        hashed_before_discovery_finished |= !progress.discovery_complete
+            && progress.files_hashed > 0
+            && progress.files_total < count as u64;
+        if let Some(previous) = &last {
+            let previous: &syncfu_core::files::ScanProgress = previous;
+            assert!(progress.files_total >= previous.files_total);
+            assert!(progress.files_hashed >= previous.files_hashed);
+            assert!(progress.bytes_hashed >= previous.bytes_hashed);
+        }
+        last = Some(progress.clone());
+    });
+    assert!(result.issues.is_empty(), "{:?}", result.issues);
+    assert_eq!(result.entries.len(), count);
+    assert_eq!(max_queued, SCAN_BATCH_SIZE as u64);
+    assert_eq!(batches, count.div_ceil(SCAN_BATCH_SIZE));
+    assert!(hashed_before_discovery_finished);
+    let last = last.unwrap();
+    assert_eq!(last.phase, ScanPhase::Complete);
+    assert!(last.discovery_complete);
+    assert_eq!(last.queued_files, 0);
+    assert_eq!(last.files_total, count as u64);
+    assert_eq!(last.files_hashed, count as u64);
+    assert_eq!(last.bytes_hashed, (count * size_of::<usize>()) as u64);
+    // Check content identities across every chunk boundary, not just counts.
+    for i in 0..count {
+        assert_eq!(
+            result.entries.get(&format!("f-{i:05}")),
+            Some(&hash_file(i.to_le_bytes().as_slice())?)
+        );
+    }
+    Ok(())
+}
+
+#[test]
+fn scan_batches_cross_directories_without_losing_or_duplicating_entries() -> Result<()> {
+    let temp = tempfile::tempdir()?;
+    for folder in 0..5 {
+        fs::create_dir(temp.path().join(format!("folder-{folder}")))?;
+    }
+    let count = SCAN_BATCH_SIZE * 3 + 17;
+    for index in 0..count {
+        fs::write(
+            temp.path()
+                .join(format!("folder-{}/item-{index}", index % 5)),
+            b"contents",
+        )?;
+    }
+    let root = Root::open(&temp.path().canonicalize()?)?;
+    let one = root.scan_with_workers(1);
+    let four = root.scan_with_workers(4);
+    assert!(one.issues.is_empty());
+    assert!(four.issues.is_empty());
+    assert_eq!(one.entries, four.entries);
+    assert_eq!(four.entries.len(), count + 5);
+    for index in 0..count {
+        assert_eq!(
+            four.entries
+                .get(&format!("folder-{}/item-{index}", index % 5)),
+            Some(&hash_file(b"contents".as_slice())?)
+        );
+    }
+    Ok(())
+}
+
+#[test]
+fn final_scan_batch_handles_empty_exact_and_partial_boundaries() -> Result<()> {
+    for count in [
+        0,
+        1,
+        SCAN_BATCH_SIZE - 1,
+        SCAN_BATCH_SIZE,
+        SCAN_BATCH_SIZE + 1,
+        SCAN_BATCH_SIZE * 2,
+    ] {
+        let temp = tempfile::tempdir()?;
+        for index in 0..count {
+            fs::write(temp.path().join(format!("entry-{index}")), b"x")?;
+        }
+        let mut last = None;
+        let manifest = Root::open(&temp.path().canonicalize()?)?.scan_with_progress(|progress| {
+            assert!(progress.queued_files <= SCAN_BATCH_SIZE as u64);
+            last = Some(progress.clone());
+        });
+        assert!(manifest.issues.is_empty());
+        assert_eq!(manifest.entries.len(), count);
+        let last = last.unwrap();
+        assert_eq!(last.phase, ScanPhase::Complete);
+        assert!(last.discovery_complete);
+        assert_eq!(last.queued_files, 0);
+        assert_eq!(last.files_hashed, count as u64);
+        assert_eq!(last.files_total, count as u64);
+        assert_eq!(last.bytes_hashed, count as u64);
+    }
     Ok(())
 }
 
@@ -153,6 +248,8 @@ fn scan_progress_reports_real_counts_and_completes_empty_directories() -> Result
     assert_eq!(last.files_hashed, 3);
     assert_eq!(last.bytes_hashed, 8);
     assert!(last.current_path.is_empty());
+    assert!(last.discovery_complete);
+    assert_eq!(last.queued_files, 0);
     let empty = tempfile::tempdir()?;
     reports.clear();
     assert!(

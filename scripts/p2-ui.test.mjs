@@ -17,8 +17,8 @@ test('usage axis scales from bytes through gigabytes instead of hiding small syn
 });
 
 test('desktop refuses a stale native protocol instead of guessing response shapes',()=>{
-  assert.doesNotThrow(()=>requireProtocol(4));
-  for(const version of [undefined,null,1,2,3,5,'4'])assert.throws(()=>requireProtocol(version));
+  assert.doesNotThrow(()=>requireProtocol(5));
+  for(const version of [undefined,null,1,2,3,4,6,'5'])assert.throws(()=>requireProtocol(version));
 });
 
 test('P2 Rust fixtures preserve preview nulls, explicit choices and precise usage bytes',()=>{

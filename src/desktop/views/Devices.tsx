@@ -9,6 +9,7 @@ import {defaultDeviceEmoji} from '../device-avatar-model';
 import {StatusDot} from '../TaskIcon';
 import {deviceDisplayName,validDeviceEmoji,type DeviceKind,type DeviceProfile} from '../device-metadata';
 import {useDeviceProfiles} from '../useDeviceProfiles';
+import {displayPath} from '../display-path';
 import type {Folder as FolderData,Peer} from '../../types';
 import type {DesktopController} from '../controller';
 import './devices.css';
@@ -73,11 +74,11 @@ export function DevicesPage({c,onPair}:{c:DesktopController;onPair:()=>void}){
       <div className="ui-modal-actions"><Button disabled={c.busy} onClick={()=>setUnpair(null)}>{t('cancel')}</Button><Button variant="danger" disabled={unpairBlocked} onClick={()=>void c.run(async()=>{await c.transport('forget_peer',{peer:unpair.id});c.invalidate();setSaved(zh?`已解除与「${deviceDisplayName(unpair,profiles)}」的配对。`:`Unpaired ${deviceDisplayName(unpair,profiles)}.`);setUnpair(null);})}>{c.busy&&<Spinner/>}{t('forget')}</Button></div>
     </Dialog>}
     {peer&&<Dialog className="sf-device-grants" error={c.error} title={`${deviceDisplayName(peer,profiles)} · ${t('grants')}`} description={deviceDisplayName(peer,profiles)!==peer.name?peer.name:undefined} dismissDisabled={c.busy} onClose={closeGrants}>
-      {revoke?<><p className="sf-grant-revoke-path">{folders.find(f=>f.id===revoke)?.path}</p><p className="ui-body-copy">{zh?'撤销后，对端无法继续访问这个文件夹，使用它的相关任务将无法继续同步。你的文件不会删除。':'Revoking access prevents this peer from using the folder, so related tasks can no longer sync it. Your files are kept.'}</p><div className="ui-modal-actions"><Button disabled={c.busy} onClick={()=>setRevoke(null)}>{t('cancel')}</Button><Button variant="danger" disabled={c.busy} onClick={()=>void c.run(async()=>{await c.transport('revoke_folder',{id:revoke});c.invalidate();setFolders(old=>old.filter(f=>f.id!==revoke));setRevoke(null);})}>{t('revoke')}</Button></div></>:<>
+      {revoke?<><p className="sf-grant-revoke-path">{displayPath(folders.find(f=>f.id===revoke)?.path??'')}</p><p className="ui-body-copy">{zh?'撤销后，对端无法继续访问这个文件夹，使用它的相关任务将无法继续同步。你的文件不会删除。':'Revoking access prevents this peer from using the folder, so related tasks can no longer sync it. Your files are kept.'}</p><div className="ui-modal-actions"><Button disabled={c.busy} onClick={()=>setRevoke(null)}>{t('cancel')}</Button><Button variant="danger" disabled={c.busy} onClick={()=>void c.run(async()=>{await c.transport('revoke_folder',{id:revoke});c.invalidate();setFolders(old=>old.filter(f=>f.id!==revoke));setRevoke(null);})}>{t('revoke')}</Button></div></>:<>
         <p className="ui-body-copy sf-grants-help">{t('wizardHelp')}</p>
         {loadingFolders?<p className="sf-device-folders-loading"><Spinner/>{t('loading')}</p>:folders.length?<>
           <div className="sf-grants-toolbar"><h3>{zh?'已授权文件夹':'Shared folders'}<span>{folders.length}</span></h3><Button size="small" variant="ghost" className="sf-grants-add" disabled={c.busy} onClick={grantFolder}><AppIcon name="Plus" size={15}/>{zh?'添加文件夹':'Add folder'}</Button></div>
-          <ul className="sf-grants-list">{folders.map(folder=><li key={folder.id}><AppIcon name="Folder" size={18}/><div><strong>{folder.label}</strong><span title={folder.path}>{folder.path}</span></div><Button size="small" variant="ghost" className="sf-grant-revoke" disabled={c.busy} aria-label={`${t('revoke')} · ${folder.label}`} onClick={()=>setRevoke(folder.id)}>{t('revoke')}</Button></li>)}</ul>
+          <ul className="sf-grants-list">{folders.map(folder=><li key={folder.id}><AppIcon name="Folder" size={18}/><div><strong>{folder.label}</strong><span title={displayPath(folder.path)}>{displayPath(folder.path)}</span></div><Button size="small" variant="ghost" className="sf-grant-revoke" disabled={c.busy} aria-label={`${t('revoke')} · ${folder.label}`} onClick={()=>setRevoke(folder.id)}>{t('revoke')}</Button></li>)}</ul>
         </>:<div className="sf-grants-empty"><AppIcon name="Folder" size={28}/><p>{zh?'尚未向这台设备授权文件夹。':'No folders are shared with this device yet.'}</p><Button variant="primary" disabled={c.busy} onClick={grantFolder}><AppIcon name="Plus" size={16}/>{t('grantLocal')}</Button></div>}
         <div className="ui-modal-actions"><Button onClick={closeGrants} disabled={c.busy}>{t('done')}</Button></div>
       </>}

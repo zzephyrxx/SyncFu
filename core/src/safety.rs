@@ -392,13 +392,7 @@ impl Engine {
         );
         ensure!(work.digest == self.work_digest(work)?, "批次授权摘要不一致");
         let auth = work.authorization.as_ref().context("缺少执行授权")?;
-        ensure!(
-            auth.facts.len() == 2
-                && auth.planned.len() <= files::LIMIT
-                && work.ops.len() <= files::LIMIT
-                && work.common.len() <= files::LIMIT,
-            "计划证明数量无效"
-        );
+        ensure!(auth.facts.len() == 2, "计划证明数量无效");
         let baseline = self.pair_state(&task.id)?;
         ensure!(auth.baseline_digest == digest(&baseline)?, "同步基线已变化");
         let manifest = policy.filter(&self.root(&task.local, &task.peer)?.scan());

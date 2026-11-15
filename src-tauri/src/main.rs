@@ -12,7 +12,7 @@ use syncfu_core::{
     conflicts::{ConflictPreview, DecisionRequest, ReviewNote},
     engine::{Engine, Folder, Settings},
     model::{Batch, Plan, Task},
-    node::{Code, DEFAULT_PORT, FolderList, Node, Snapshot},
+    node::{Code, DEFAULT_PORT, FolderList, Node, ProgressPage, Snapshot},
     pairing::Identity,
     policy::{PolicyState, PolicyView, TaskPolicy},
     risk::ExecutionPreview,
@@ -48,6 +48,11 @@ fn response<T>(res: anyhow::Result<T>) -> Response<T> {
 #[tauri::command]
 fn snapshot(node: Handle<'_>) -> Response<Snapshot> {
     response(node.snapshot())
+}
+
+#[tauri::command]
+fn execution_progress(node: Handle<'_>, batch: Option<String>, after: usize) -> ProgressPage {
+    node.execution_progress(batch.as_deref(), after)
 }
 
 #[derive(Serialize)]
@@ -480,6 +485,7 @@ fn main() {
         })
         .invoke_handler(tauri::generate_handler![
             snapshot,
+            execution_progress,
             check_permissions,
             test_peer_address,
             open_permission_settings,

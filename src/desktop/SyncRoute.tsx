@@ -3,6 +3,7 @@ import { usePrototype } from '../prototype/context';
 import { AppIcon } from './ui/icons';
 import { fileIdentity } from './focus-model';
 import { TaskIcon, StatusDot } from './TaskIcon';
+import { displayPath } from './display-path';
 import './sync-route.css';
 
 export interface SyncRouteProps {
@@ -35,7 +36,8 @@ export function SyncRoute({ localDevice, remoteDevice, localOriginalName, remote
   const endpoint = (local: boolean) => {
     const name = local ? localDevice : remoteDevice;
     const originalName = local ? localOriginalName : remoteOriginalName;
-    const path = local ? localPath : remotePath;
+    const originalPath = local ? localPath : remotePath;
+    const path = originalPath ? displayPath(originalPath) : originalPath;
     const content = local ? localContent : remoteContent;
     const role = mode === 'both' ? '' : (mode === 'send') === local ? copy.source : copy.destination;
     return <div className={`sf-route-endpoint ${local ? 'is-local' : 'is-remote'}`}>

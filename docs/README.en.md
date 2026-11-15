@@ -8,10 +8,12 @@
 ## Features
 
 - Per-task two-way synchronization, one-way updates, or strict mirroring; restrict each run to sending, receiving, or both.
+- No 20,000-entry task cap: scan in batches of 256 files with up to four readers, reporting each device's current path, discovered/checked files and bytes without manually splitting tasks.
+- Live file and byte progress, with waiting, transferred and completed states; a file is marked complete only after confirmed application.
 - Cross-page selection of additions, updates and deletions; compare conflicts, choose versions, defer or exclude paths.
 - Write-time preflight, backup before overwrite/deletion, explicit risk approval, protected undo and interrupted-result reconciliation.
 - LAN-first discovery and five-digit pairing codes, with manual IP entry as a fallback. No cloud account or relay required.
-- A collapsible sidebar, separate usage overview, light/dark themes, device aliases, Fluent Emoji avatars and five interface languages.
+- A collapsible sidebar, separate usage overview with daily byte charts and file-count heatmaps, light/dark themes, optional glass surfaces, device aliases, Fluent Emoji avatars and five interface languages.
 
 | Task workspace | Dark theme |
 | --- | --- |
@@ -28,7 +30,7 @@ The project has one product: **SyncFu 0.1.0**, application identity `org.syncfu.
 | Windows | Windows 10 22H2 / Windows 11 x64, with WebView2 |
 | macOS | macOS 13+, native Apple Silicon or Intel builds |
 | Network | Reachable IPv4 LAN, TCP `47657` by default |
-| Compatibility | Peer protocol **4**, state schema **3**; incompatible with protocol 3 clients |
+| Compatibility | Peer protocol **5**, state schema **3**; upgrade both devices together, incompatible with protocol 4 and earlier clients |
 | Synchronization | Manual writes; automatic checks are read-only |
 
 ## Build from the Windows source archive
@@ -69,6 +71,8 @@ For the browser-only fixture, run `npm run dev` and open `http://localhost:1420/
 
 See the [two-device test guide](testing/README.md). Closing a window may leave the process running in the tray/menu bar; quit older processes before changing builds.
 
+Large scans alternate discovery and bounded hashing batches. Until discovery finishes, progress shows actual counts and activity instead of an invented percentage. An incomplete scan remains visible for diagnosis but cannot authorize synchronization. Large messages use 256 KiB frames and automatically cleaned temporary files for serialization, removing the former 32 MiB whole-message limit.
+
 ## Layout
 
 ```text
@@ -86,6 +90,8 @@ releases/0.1.0/       Generated release artifacts, excluded from version control
 ## Verification and limits
 
 Build checks, browser interactions and physical two-device synchronization are separate validation results. The [UI record](ui/README.md) describes existing UI checks; CI for a specific revision describes its automated checks. Source archives include SHA-256 manifests for integrity checking, not publisher authentication.
+
+Removing the entry cap does not make total memory constant: complete manifests, comparison plans and file-progress state still grow with the number of entries (O(n)). Work queues, file buffers and network frames are bounded; practical task size still depends on memory, temporary disk space and runtime.
 
 Synchronization is not a substitute for independent backups. Active databases, application libraries, NAS, removable media and complete system-metadata preservation are outside the current validation scope. The application has not undergone an independent security audit; see [SECURITY.md](../SECURITY.md). Local builds do not imply Windows code signing or Apple notarization.
 

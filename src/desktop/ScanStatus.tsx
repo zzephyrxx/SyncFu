@@ -15,12 +15,12 @@ export function ScanStatus({activity,localName,remoteName}:{activity:ScanActivit
   useEffect(()=>{const timer=setInterval(()=>setElapsed(Math.floor((Date.now()-started)/1000)),1000);return()=>clearInterval(timer);},[started]);
   const side=(name:string,progress:ScanProgress|null,local:boolean)=>{
     const label=t(progress?.phase==='complete'?'scanComplete':progress?.phase==='hashing'?'scanHashing':progress?'scanDiscovering':'scanWaiting');
-    const known=progress?.phase==='hashing'&&progress.files_total>0;
+    const known=progress?.discovery_complete&&progress.files_total>0;
     return <section className="sf-scan-side" aria-label={name}>
       <div className="sf-scan-side-heading"><strong title={name}>{name}</strong><span>{t(local?'local':'remote')}</span></div>
       <div className="sf-scan-phase"><span>{label}</span>{progress?.phase==='complete'&&<AppIcon name="Check" size={14}/>}</div>
       <progress aria-label={`${name} · ${label}`} max={known?progress.files_total:1} value={progress?.phase==='complete'?1:known?progress.files_hashed:undefined}/>
-      <p className="sf-scan-counts">{progress?t(progress.phase==='discovering'?'scanDiscovered':'scanVerified',{dirs:number(progress.directories),files:number(progress.files_total),done:number(progress.files_hashed),total:number(progress.files_total),bytes:bytes(progress.bytes_hashed)}):'—'}</p>
+      <p className="sf-scan-counts">{progress?t(progress.discovery_complete?'scanVerified':'scanBatched',{dirs:number(progress.directories),files:number(progress.files_total),done:number(progress.files_hashed),total:number(progress.files_total),bytes:bytes(progress.bytes_hashed)}):'—'}</p>
       <p className="sf-scan-path" title={progress?.current_path||undefined}>{progress?.current_path||'—'}</p>
     </section>;
   };

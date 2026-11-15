@@ -1,5 +1,6 @@
 use super::*;
 use std::{fs, path::PathBuf};
+use tokio::io::AsyncWriteExt;
 
 struct Fixture {
     a: Arc<Node>,
@@ -299,11 +300,9 @@ async fn automatic_origin_is_rejected_until_the_scheduler_is_implemented() -> Re
 
 #[tokio::test]
 async fn old_frame_protocol_is_rejected_explicitly() -> Result<()> {
-    for version in [1u8, 2] {
+    for version in 1..PROTOCOL {
         let (mut writer, mut reader) = tokio::io::duplex(1024);
-        let data = serde_json::to_vec(&(version, serde_json::json!({})))?;
-        writer.write_u32(data.len() as u32).await?;
-        writer.write_all(&data).await?;
+        writer.write_all(&[b'S', b'F', b'U', version]).await?;
         let error = receive::<serde_json::Value>(&mut reader)
             .await
             .expect_err("旧协议不应被接受");

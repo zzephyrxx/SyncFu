@@ -23,6 +23,7 @@ export interface Snapshot {
   device: Device; peers: Peer[]; nearby: Nearby[]; pending: Nearby[];
   tasks: Task[]; history: Batch[]; dirty: string[]; phase: string | null; network_error: string | null;
   scan?: ScanActivity | null;
+  execution?: ExecutionProgress | null;
   policy_states: PolicyView[]; paused_all: boolean; automatic_supported: boolean;
 }
 export interface ScanProgress {
@@ -32,7 +33,15 @@ export interface ScanProgress {
   files_total: number;
   files_hashed: number;
   bytes_hashed: number;
+  discovery_complete?: boolean;
+  queued_files?: number;
 }
+export interface ExecutionProgress {
+  batch:string; task:string; total:number; done:number; transferred_bytes:number; total_bytes:number;
+  current_path:string; current_bytes:number; current_total:number; stage:string; running:boolean;
+}
+export type FileProgressState='waiting'|'transferred'|'applied'|'failed';
+export interface ProgressPage {summary:ExecutionProgress|null;events:{path:string;state:FileProgressState}[];cursor:number;more:boolean}
 export interface ScanActivity { task: string; local: ScanProgress | null; remote: ScanProgress | null; incoming: boolean }
 export interface Settings { days: number; quota: number; location: string; autostart: boolean; updates_available: boolean }
 export type Page = 'tasks' | 'devices' | 'history' | 'settings';

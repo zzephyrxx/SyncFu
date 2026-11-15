@@ -3,6 +3,21 @@ export type Locale = keyof typeof languages;
 const order: Locale[] = ['zh-CN', 'zh-TW', 'en', 'ja', 'ko'];
 // Every key is a complete five-language tuple. User filenames/device names are not messages.
 export const messages = {
+  fileUnselected: ['未参与本次', '未參與本次', 'Not included', '今回の対象外', '이번 대상 아님'],
+  scanBatched: ['已发现 {files} 个文件 · 已校验 {done} 个 · {bytes}', '已發現 {files} 個檔案 · 已驗證 {done} 個 · {bytes}', 'Found {files} files · verified {done} · {bytes}', '{files} ファイル検出 · {done} 件検証 · {bytes}', '{files}개 발견 · {done}개 확인 · {bytes}'],
+  syncProgress: ['同步进度', '同步進度', 'Sync progress', '同期の進行状況', '동기화 진행 상황'],
+  fileDone: ['已同步', '已同步', 'Synced', '同期済み', '동기화됨'],
+  fileWaiting: ['待同步', '待同步', 'Pending', '未同期', '대기 중'],
+  fileTransferred: ['已传输 · 待写入', '已傳輸 · 待寫入', 'Transferred · awaiting apply', '転送済み・反映待ち', '전송됨 · 적용 대기'],
+  fileFailed: ['需核对', '需核對', 'Needs review', '確認が必要', '확인 필요'],
+  fileTransferring: ['正在传输', '正在傳輸', 'Transferring', '転送中', '전송 중'],
+  progressBackup: ['正在保存备份', '正在儲存備份', 'Saving backups', 'バックアップ中', '백업 저장 중'],
+  progressVerify: ['正在校验文件', '正在驗證檔案', 'Verifying files', 'ファイル検証中', '파일 확인 중'],
+  progressApply: ['正在写入文件', '正在寫入檔案', 'Applying changes', '変更を反映中', '변경 적용 중'],
+  progressReconcile: ['正在核对两端结果', '正在核對兩端結果', 'Checking both devices', '両端の結果を確認中', '양쪽 결과 확인 중'],
+  progressCount: ['已同步 {done}/{total} 项', '已同步 {done}/{total} 項', '{done}/{total} items synced', '{done}/{total} 件同期済み', '{done}/{total}개 동기화됨'],
+  progressTransfer: ['已传输 {done} / {total}', '已傳輸 {done} / {total}', 'Transferred {done} / {total}', '転送済み {done} / {total}', '전송됨 {done} / {total}'],
+  progressHelp: ['文件写入并校验后才标记为已同步。结束后可在清单中查看结果。', '檔案寫入並驗證後才標記為已同步。結束後可在清單中查看結果。', 'Files are marked synced after they are applied and verified. Results remain in the list.', '書き込みと検証が完了すると同期済みになります。結果は一覧に残ります。', '기록 및 확인 후 동기화됨으로 표시됩니다. 결과는 목록에 남습니다.'],
   destinationShort: ['去向', '去向', 'To', '方向', '대상'],
   actionShort: ['操作', '操作', 'Action', '操作', '작업'],
   compareShort: ['比较', '比較', 'Compare', '比較', '비교'],

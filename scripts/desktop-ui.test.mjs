@@ -8,15 +8,16 @@ test('the original user logo and native icons are byte-for-byte preserved',()=>{
   for(const [file,expected] of Object.entries(checkpoint))assert.equal(createHash('sha256').update(readFileSync(new URL('../'+file,import.meta.url))).digest('hex'),expected,file);
   assert.match(read('src/desktop/Desktop.tsx'),/assets\/syncfu-icon\.svg/);assert.match(read('src/desktop/Desktop.tsx'),/src=\{logo\}/);
 });
-test('production styles use solid neutral surfaces without gradients or glass effects',()=>{
+test('the default production styles keep solid neutral surfaces',()=>{
   for(const file of ['src/desktop/ui/index.css','src/components/ui/tokens.css','src/components/ui/primitives.css','src/desktop/workspace.css']){
     const css=read(file);assert.doesNotMatch(css,/(?:linear|radial|conic)-gradient\s*\(/i);assert.doesNotMatch(css,/backdrop-filter/);
   }
   assert.match(read('src/desktop/ui/index.css'),/source\(none\)/);
 });
-test('the live desktop uses shadcn primitives without the old visual kits or a material chooser',()=>{
+test('the live desktop uses shadcn primitives and the optional glass material without old visual kits',()=>{
   const desktop=read('src/desktop/Desktop.tsx'),settings=read('src/desktop/LiveSettings.tsx');
-  assert.match(desktop,/components\/ui\/primitives\.css/);assert.doesNotMatch(desktop,/design-system\//);assert.doesNotMatch(settings,/MaterialPicker|materialTheme|materialNeo|materialLiquid/);
+  assert.match(desktop,/components\/ui\/primitives\.css/);assert.doesNotMatch(desktop,/design-system\//);assert.doesNotMatch(settings,/MaterialPicker|materialNeo|materialLiquid/);
+  assert.match(desktop,/import '\.\/glass\.css'/);assert.match(settings,/materialTheme/);
   for(const file of ['src/desktop/ui/UI.tsx','src/desktop/ui/SyncChangesTable.tsx','src/desktop/LiveDialogs.tsx'])assert.doesNotMatch(read(file),/from ['"][^'"]*(?:vendor\/|react-aria-components|morphicons)/);
   assert.match(read('src/desktop/ui/UI.tsx'),/components\/ui\/dialog/);
   assert.match(read('src/desktop/ui/UI.tsx'),/components\/ui\/dropdown-menu/);
@@ -32,10 +33,16 @@ test('action icons use Lucide and vendored component sources retain their licens
 test('table selection uses stable path IDs and never the upstream page-only select-all',()=>{
   const table=read('src/desktop/ui/SyncChangesTable.tsx');assert.match(table,/getRowId:change=>rowKey\(change.path\)/);assert.doesNotMatch(table,/toggleAllPageRowsSelected|CUSTOMERS/);assert.match(table,/toggleGroup\(rows,old\)/);
 });
-test('production output excludes integration fixtures and all spatial gradients',()=>{
+test('production output excludes integration fixtures and keeps optical gradients scoped to glass',()=>{
   const root=new URL('../dist/assets/',import.meta.url);
   for(const file of readdirSync(root)){
     if(file.endsWith('.js'))assert.doesNotMatch(readFileSync(new URL(file,root),'utf8'),/__SYNCFU_TEST__|fixture-plan-0|Fixture rejected operation/);
-    if(file.endsWith('.css'))assert.doesNotMatch(readFileSync(new URL(file,root),'utf8'),/(?:linear|radial|conic)-gradient\s*\(/i);
+    if(file.endsWith('.css')){
+      const css=readFileSync(new URL(file,root),'utf8');
+      for(const [,selector,body] of css.matchAll(/([^{}]+)\{([^{}]*)\}/g)){
+        if(!/(?:linear|radial|conic)-gradient\s*\(/i.test(body))continue;
+        for(const scope of selector.split(','))assert.match(scope,/\[data-material=(?:"glass"|glass)\]/,`Unscoped optical surface: ${scope}`);
+      }
+    }
   }
 });

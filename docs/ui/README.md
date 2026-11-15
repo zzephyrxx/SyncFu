@@ -11,6 +11,9 @@ The production controls are now vendored shadcn/ui components, using Radix primi
 - `tokens.css`: neutral light/dark semantic tokens. Hex colours preserve compatibility with the existing desktop browser targets; the radius scale is tightened to 6–8px.
 - `primitives.css`: compatibility sizing and state styles. Dialogs retain Radix focus trapping, Escape handling, opener restoration and the pairing finalization dismissal guard. Menus retain roving keyboard focus; path details use a Popover.
 - `src/desktop/ui/icons.tsx`: official lucide-react components. The user-provided app logo is unchanged.
+- `src/desktop/views/Overview.tsx` and `overview.css`: daily byte chart and processed-file heatmap, both based on the same completed real records and 7/30-day range. Tooltips use the shared Radix portal, collision handling and keyboard focus rather than absolutely positioned children of the clipped chart container.
+- `src/desktop/ScanStatus.tsx`: per-device discovery/verification, actual file/byte counts and the bounded current work queue. A finished batch does not imply finished directory discovery.
+- `src/desktop/ExecutionStatus.tsx`: current file, transfer bytes and confirmed applied-item totals. File progress is fetched separately in pages; waiting, transferred and applied states stay distinct.
 
 The original registry files are retained under `upstream/`. `sources.json` records exact content hashes, source URLs and local adaptations. shadcn and Radix licenses are distributed in `assets/licenses/`; Lucide and Inter licenses remain in assets/licenses/. The upstream tauri-ui package declares MIT, documented in its retained package snapshot and the local notice.
 
@@ -28,9 +31,15 @@ Settings retain the existing neutral light/dark tokens and Inter/system typograp
 
 The acknowledgements page lists project credits and license links without interactive component demonstrations. The About page centers the original application icon, name, version and slogan, followed by developer and project information. The former computer-handoff action is removed from the window toolbar; actual device connections and task synchronization remain in their own pages.
 
+## Optional surface material
+
+Settings → Appearance offers **Solid / Liquid glass**, persisted as a local preference. Solid remains the default. `src/desktop/glass.css` provides neutral translucent toolbar, sidebar, sync-footer, dialog and menu surfaces for light and dark themes; file tables and content retain opaque reading surfaces. The backdrop is blurred behind the material, without filtering foreground text. Reduced transparency, increased contrast, forced colors and unsupported backdrop-filter environments use solid surfaces. This is a CSS surface treatment, not native macOS vibrancy, wallpaper sampling or dynamic optical refraction.
+
+The independent implementation references the material layering in [SemiDone's surface CSS](https://github.com/zzephyrxx/SemiDone/blob/d6d7ef3fcc94ac552e4bad1e417a65bc84f7aaef/src/styles/liquidGlassSurfaces.css) and [material settings](https://github.com/zzephyrxx/SemiDone/blob/d6d7ef3fcc94ac552e4bad1e417a65bc84f7aaef/src/utils/liquidGlassSettings.ts), pinned to commit `d6d7ef3fcc94ac552e4bad1e417a65bc84f7aaef`. No SVG/WebGL filter or native wallpaper capture is used.
+
 ## Verification — 2026-11-15
 
-The current revision passed all **85 tests** in `npm test` and successfully built the **macOS arm64 application**. Browser checks used the `desktop-test` fixture at **1120 × 780** and **680 × 560**, including light and dark themes.
+The following table records the preceding UI verification pass using the `desktop-test` fixture at **1120 × 780** and **680 × 560**, including light and dark themes. Test counts and build results belong to their specific revision; the new large-task progress, heatmap and material changes require their own current check record.
 
 | Area | Observed result |
 | --- | --- |
@@ -79,3 +88,12 @@ All screenshots below show the `desktop-test` fixture rather than a live peer co
 | New task | Minimum window · 680 × 560 |
 | --- | --- |
 | ![New-task dialog with explicit source and destination](screenshots/new-task.jpg) | ![Scrollable task dialog at the minimum checked window size](screenshots/minimum-window.jpg) |
+
+Current large-task UI proof (development fixtures, not user sync history):
+
+- [Completed files and progress](screenshots/sync-completed-files.jpg)
+- [File-count heatmap with complete tooltip](screenshots/overview-heatmap.jpg)
+- [New task rules, relationship icons and primary action](screenshots/new-task-rules.jpg)
+- [Optional glass appearance](screenshots/glass-appearance.jpg)
+
+Both chart tooltips also fit within the 680 × 560 minimum window. A completed run retains its file list; a new inspection dismisses the old batch before accepting new results, so completed marks cannot be reused for a new plan.

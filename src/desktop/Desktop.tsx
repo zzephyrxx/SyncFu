@@ -22,6 +22,7 @@ import './ui/index.css';
 import '../components/ui/tokens.css';
 import '../components/ui/primitives.css';
 import './workspace.css';
+import './glass.css';
 type Page='tasks'|'overview'|'devices'|'history'|'settings';
 const taskTone=(id:string)=>[...id].reduce((hash,char)=>(hash*31+char.charCodeAt(0))>>>0,0)%4;
 const logo=new URL('../../assets/syncfu-icon.svg',import.meta.url).href;
@@ -57,7 +58,7 @@ function DesktopApp({transport,testMode}:{transport?:Transport;testMode:boolean}
     </header>
     <div className="sf-shell">
       <aside className="sf-sidebar" id="app-sidebar" aria-label="SyncFu">
-        <Button className="sf-new-task" disabled={c.busy} onClick={newTask} aria-label={t('newTask')} title={t('newTask')}><AppIcon name="Plus" size={19}/><span>{t('newTask')}</span></Button>
+        <Button variant="primary" className="sf-new-task" disabled={c.busy} onClick={newTask} aria-label={t('newTask')} title={t('newTask')}><AppIcon name="Plus" size={19}/><span>{t('newTask')}</span></Button>
         <nav className="sf-primary-nav" aria-label={t('overview')}>{([{id:'overview',icon:'LayoutDashboard'},{id:'devices',icon:'Laptop'},{id:'history',icon:'History'}] as const).map(item=><NavItem key={item.id} active={page===item.id} onClick={()=>go(item.id)} aria-label={t(labels[item.id])} title={t(labels[item.id])}><AppIcon name={item.icon} size={18}/><span>{t(labels[item.id])}</span>{item.id==='devices'&&<small className="sf-nav-count">{c.snapshot.peers.length+1}</small>}</NavItem>)}</nav>
         <div className="sf-sidebar-heading"><span>{t('tasks')}</span><span className="sf-task-count">{c.snapshot.tasks.length}</span></div>
         <nav className="sf-task-nav" aria-label={t('tasks')}>{c.snapshot.tasks.map(item=>{

@@ -1,6 +1,6 @@
 import Desktop from '../desktop/Desktop';
 import type { Transport } from '../desktop/controller';
-import type { Snapshot, Plan, Settings, Batch } from '../types';
+import type { Snapshot, Plan, Settings, Batch,FileProgressState } from '../types';
 import { wireProtocol } from '../generated/policy';
 import type { TaskPolicy, UsageReport } from '../generated/policy';
 // Development-only integration fixture. Never imported by a production bundle.
@@ -35,6 +35,9 @@ function visiblePlan():Plan {
   return {...plan,resolutions:[],comparison:{...plan.comparison,changes}};
 }
 let sequence=0;let nextOutcome='completed';const delays=new Map<string,number>();let usage:UsageReport={enabled:true,records:[]};let settings:Settings={days:30,quota:1e10,location:'/fixture/backups',autostart:false,updates_available:false};let fail='';
+const progressEvents:{path:string;state:FileProgressState}[]=[];
+if(scenario==='overview')usage.records=Array.from({length:30},(_,i)=>({id:`usage-${i}`,created:Math.floor(Date.now()/1000)-i*86400,files:i%7===0?0:(i*13+76)%193,bytes:String((i*27+49)*1024*1024)}));
+if(scenario==='windows-path')snapshot.tasks[0].remote_path=String.raw`\\?\F:\A研\A党\A工作资料`;
 const calls:{name:string;args?:Record<string,unknown>}[]=[];
 const originals=new Map<string,Plan>();
 const transport:Transport=async<T,>(name:string,args?:Record<string,unknown>)=>{
@@ -43,6 +46,7 @@ const transport:Transport=async<T,>(name:string,args?:Record<string,unknown>)=>{
   if(fail===name){fail='';throw new Error('Fixture rejected operation');}
   const a=args??{};let output:unknown;
   switch(name){
+    case 'execution_progress':{const cursor=a.batch===snapshot.execution?.batch?Number(a.after):0;const end=Math.min(cursor+256,progressEvents.length);output={summary:snapshot.execution??null,events:progressEvents.slice(cursor,end),cursor:end,more:end<progressEvents.length};break;}
     case 'snapshot':output=snapshot;break;
     case 'usage_report':output=usage;break;
     case 'settings':output=settings;break;
@@ -52,7 +56,7 @@ const transport:Transport=async<T,>(name:string,args?:Record<string,unknown>)=>{
     case 'inspect_task':{
       if(scenario==='scan-progress'){
         for(let tick=0;tick<20;tick++){
-          const progress={phase:tick<4?'discovering' as const:'hashing' as const,current_path:`资料/项目 ${Math.floor(tick/3)+1}/报告-${tick+1}.pdf`,directories:Math.min(320,80*(tick+1)),files_total:tick<4?400*(tick+1):1600,files_hashed:Math.max(0,(tick-4)*100),bytes_hashed:Math.max(0,(tick-4)*17400000)};
+          const progress={phase:tick<4?'discovering' as const:'hashing' as const,discovery_complete:tick>=4,queued_files:Math.max(0,1600-(tick-4)*100),current_path:`资料/项目 ${Math.floor(tick/3)+1}/报告-${tick+1}.pdf`,directories:Math.min(320,80*(tick+1)),files_total:tick<4?400*(tick+1):1600,files_hashed:Math.max(0,(tick-4)*100),bytes_hashed:Math.max(0,(tick-4)*17400000)};
           snapshot.scan={task:taskId,local:progress,remote:{...progress,files_hashed:Math.max(0,progress.files_hashed-50),current_path:`共享资料/归档/文档-${tick+1}.docx`},incoming:false};
           await new Promise(resolve=>setTimeout(resolve,600));
         }
@@ -72,7 +76,10 @@ const transport:Transport=async<T,>(name:string,args?:Record<string,unknown>)=>{
     case 'review_notes':output=plan.review_notes;break;
     case 'clear_review_note':plan.review_notes=plan.review_notes.filter(n=>n.path!==a.path);break;
     case 'preview_execution': {const selected=a.selected as string[];const changes=visiblePlan().comparison.changes;const risks=[local,remote].map((device,target)=>{const planned=changes.filter(ch=>ch.action==='delete'&&ch.target===target);const chosen=planned.filter(ch=>selected.includes(ch.path));return {device,planned_deletions:planned.length,selected_deletions:chosen.length,recent_deletions:planned.length?99:0,baseline_files:100,reasons:chosen.length?['large_deletion']:[]};});output={plan:plan.id,digest:plan.digest,selection_digest:'selection-'+selected.join(','),selected,approval_required:risks.some(r=>r.selected_deletions>0),risks};break;}
-    case 'execute_plan': {if(a.plan!==plan.id||a.digest!==plan.digest)throw new Error('Fixture stale plan');const selected=a.selected as string[];if(visiblePlan().comparison.changes.some(ch=>ch.action==='delete'&&selected.includes(ch.path))&&!a.approveRisk)throw new Error('Fixture deletion approval missing');const requested=visiblePlan().comparison.changes.filter(ch=>selected.includes(ch.path));const outcome=nextOutcome;nextOutcome='completed';const changes=outcome==='partial'?requested.slice(0,Math.max(1,Math.floor(requested.length/2))):outcome==='failed'?[]:requested;const applied=new Set(changes.map(ch=>ch.path));const batch:Batch={id:`fixture-batch-${++sequence}`,task:taskId,label:snapshot.tasks[0].label,created:Math.floor(Date.now()/1000),status:outcome,undo_of:plan.undo_of,done:changes.length,total:requested.length,skipped:visiblePlan().comparison.changes.length-changes.length,message:outcome==='partial'?'Fixture connection interrupted':null,undo_available:!plan.undo_of&&changes.length>0};originals.set(batch.id,{...structuredClone(plan),comparison:{...structuredClone(plan.comparison),changes:structuredClone(changes)}});snapshot.history.unshift(batch);plan.comparison.changes=plan.comparison.changes.filter(ch=>!applied.has(ch.path));if(usage.enabled&&!batch.undo_of&&outcome==='completed')usage.records.push({id:batch.id,created:batch.created,files:changes.length,bytes:String(changes.reduce((sum,ch)=>sum+(ch.after?.type==='file'?ch.after.bytes:0),0))});output=batch;break;}
+    case 'execute_plan': {if(a.plan!==plan.id||a.digest!==plan.digest)throw new Error('Fixture stale plan');const selected=a.selected as string[];if(visiblePlan().comparison.changes.some(ch=>ch.action==='delete'&&selected.includes(ch.path))&&!a.approveRisk)throw new Error('Fixture deletion approval missing');const requested=visiblePlan().comparison.changes.filter(ch=>selected.includes(ch.path));const outcome=nextOutcome;nextOutcome='completed';const changes=outcome==='partial'?requested.slice(0,Math.max(1,Math.floor(requested.length/2))):outcome==='failed'?[]:requested;const applied=new Set(changes.map(ch=>ch.path));const batch:Batch={id:`fixture-batch-${++sequence}`,task:taskId,label:snapshot.tasks[0].label,created:Math.floor(Date.now()/1000),status:outcome,undo_of:plan.undo_of,done:changes.length,total:requested.length,skipped:visiblePlan().comparison.changes.length-changes.length,message:outcome==='partial'?'Fixture connection interrupted':null,undo_available:!plan.undo_of&&changes.length>0};progressEvents.length=0;for(const change of requested)progressEvents.push({path:change.path,state:'waiting'});snapshot.execution={batch:batch.id,task:taskId,total:requested.length,done:0,transferred_bytes:0,total_bytes:requested.reduce((n,ch)=>n+(ch.after?.type==='file'?ch.after.bytes:0),0),current_path:'',current_bytes:0,current_total:0,stage:'transfer',running:true};
+      for(const change of requested){const size=change.after?.type==='file'?change.after.bytes:0;snapshot.execution.current_path=change.path;snapshot.execution.current_total=size;snapshot.execution.current_bytes=size;snapshot.execution.transferred_bytes+=size;progressEvents.push({path:change.path,state:'transferred'});if(scenario==='sync-progress')await new Promise(resolve=>setTimeout(resolve,700));}
+      snapshot.execution.stage='apply';for(const change of changes){progressEvents.push({path:change.path,state:'applied'});snapshot.execution.done++;if(scenario==='sync-progress')await new Promise(resolve=>setTimeout(resolve,900));}snapshot.execution.running=false;snapshot.execution.stage=outcome;snapshot.execution.current_path='';
+      originals.set(batch.id,{...structuredClone(plan),comparison:{...structuredClone(plan.comparison),changes:structuredClone(changes)}});snapshot.history.unshift(batch);plan.comparison.changes=plan.comparison.changes.filter(ch=>!applied.has(ch.path));if(usage.enabled&&!batch.undo_of&&outcome==='completed')usage.records.push({id:batch.id,created:batch.created,files:changes.length,bytes:String(changes.reduce((sum,ch)=>sum+(ch.after?.type==='file'?ch.after.bytes:0),0))});output=batch;break;}
     case 'inspect_undo': {const old=originals.get(String(a.batch));if(!old)throw new Error('Fixture no history');plan={...structuredClone(old),id:`fixture-undo-${++sequence}`,digest:`fixture-undo-${sequence}`,undo_of:String(a.batch),conflicts:[],resolutions:[]};plan.comparison.changes=plan.comparison.changes.filter(ch=>ch.action!=='conflict').map(ch=>({...ch,before:ch.after,after:ch.before,action:ch.before?'update':'delete'}));output=visiblePlan();break;}
     case 'pause_task':snapshot.policy_states[0].paused=Boolean(a.paused);break;
     case 'pause_all':snapshot.paused_all=Boolean(a.paused);break;
