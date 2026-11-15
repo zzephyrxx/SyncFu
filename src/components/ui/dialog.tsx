@@ -2,16 +2,16 @@
 "use client"
 
 import * as React from "react"
+import {GlassBackdropProvider,GlassRim,useGlassOpen} from "../../desktop/glass/Glass"
 import { cn } from "./utils"
 import { XIcon } from "lucide-react"
 import * as DialogPrimitive from "@radix-ui/react-dialog"
 
 import { Button } from "./button"
 
-function Dialog({
-  ...props
-}: React.ComponentProps<typeof DialogPrimitive.Root>) {
-  return <DialogPrimitive.Root data-slot="dialog" {...props} />
+function Dialog({open,defaultOpen,onOpenChange,children,...props}: React.ComponentProps<typeof DialogPrimitive.Root>) {
+  const glass=useGlassOpen(open,defaultOpen,onOpenChange);
+  return <GlassBackdropProvider snapshot={glass.snapshot}><DialogPrimitive.Root data-slot="dialog" {...props} open={glass.open} onOpenChange={glass.onOpenChange}>{children}</DialogPrimitive.Root></GlassBackdropProvider>;
 }
 
 function DialogTrigger({
@@ -69,6 +69,7 @@ function DialogContent({
         )}
         {...props}
       >
+        <GlassRim />
         {children}
         {showCloseButton && (
           <DialogPrimitive.Close

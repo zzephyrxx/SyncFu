@@ -2,14 +2,14 @@
 "use client"
 
 import * as React from "react"
+import {GlassBackdropProvider,GlassRim,useGlassOpen} from "../../desktop/glass/Glass"
 import { cn } from "./utils"
 import { CheckIcon, ChevronRightIcon, CircleIcon } from "lucide-react"
 import * as DropdownMenuPrimitive from "@radix-ui/react-dropdown-menu"
 
-function DropdownMenu({
-  ...props
-}: React.ComponentProps<typeof DropdownMenuPrimitive.Root>) {
-  return <DropdownMenuPrimitive.Root data-slot="dropdown-menu" {...props} />
+function DropdownMenu({open,defaultOpen,onOpenChange,children,...props}: React.ComponentProps<typeof DropdownMenuPrimitive.Root>) {
+  const glass=useGlassOpen(open,defaultOpen,onOpenChange);
+  return <GlassBackdropProvider snapshot={glass.snapshot}><DropdownMenuPrimitive.Root data-slot="dropdown-menu" {...props} open={glass.open} onOpenChange={glass.onOpenChange}>{children}</DropdownMenuPrimitive.Root></GlassBackdropProvider>;
 }
 
 function DropdownMenuPortal({
@@ -33,6 +33,7 @@ function DropdownMenuTrigger({
 
 function DropdownMenuContent({
   className,
+  children,
   sideOffset = 4,
   ...props
 }: React.ComponentProps<typeof DropdownMenuPrimitive.Content>) {
@@ -46,7 +47,12 @@ function DropdownMenuContent({
           className
         )}
         {...props}
-      />
+      >
+        <GlassRim />
+        <div className="sf-menu-viewport" data-slot="dropdown-menu-viewport">
+          {children}
+        </div>
+      </DropdownMenuPrimitive.Content>
     </DropdownMenuPrimitive.Portal>
   )
 }

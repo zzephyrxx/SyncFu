@@ -1,6 +1,5 @@
-/* Liquid surfaces: transmitted backdrop, a curved specular rim, and crisp
-   foreground controls. The native WebKit and WebView2 paths deliberately share
-   CSS optics; SVG backdrop filters are not reliable in WKWebView. */
+/* Clear glass: a lightly diffused live face, a separate sampled/refracted rim,
+   and independent foreground controls. See glass/Glass.tsx for native capture. */
 .sf-material-setting{flex-wrap:wrap;row-gap:12px}
 .sf-material-setting>div:first-child{flex:1;min-width:180px}
 .sf-material-setting p{max-width:330px;margin-top:6px;color:var(--sf-muted);font-size:11px;line-height:1.65}
@@ -11,46 +10,51 @@
 [data-theme="dark"] .sf-material-swatch[data-material="glass"]{background:linear-gradient(145deg,#69717e 0%,#323a47 48%,#556273 49%,#303641 100%);border-color:#778394;box-shadow:inset 0 1px 0 #aab7c54d}
 
 :root[data-surface="desktop"][data-material="glass"]{
-  --glass-chrome:rgb(247 250 255 / .42);
-  --glass-floating:rgb(249 252 255 / .22);
-  --glass-panel:rgb(255 255 255 / .65);
-  --glass-footer:rgb(249 252 255 / .62);
-  --glass-control:rgb(255 255 255 / .44);
-  --glass-control-hover:rgb(255 255 255 / .70);
-  --glass-inset:rgb(230 238 248 / .30);
-  --glass-selected:rgb(255 255 255 / .74);
+  --glass-mask:linear-gradient(#fff 0 0);
+  --glass-chrome:rgb(247 250 255 / .24);
+  --glass-floating:rgb(249 252 255 / .20);
+  --glass-panel:rgb(255 255 255 / .48);
+  --glass-footer:rgb(249 252 255 / .30);
+  --glass-control:rgb(255 255 255 / .32);
+  --glass-control-hover:rgb(255 255 255 / .52);
+  --glass-inset:rgb(218 232 247 / .16);
+  --glass-selected:rgb(255 255 255 / .58);
   --glass-rim:rgb(255 255 255 / .95);
   --glass-inner-rim:rgb(255 255 255 / .40);
   --glass-edge:rgb(50 70 100 / .18);
-  --glass-shadow:rgb(23 40 68 / .20);
-  --glass-overlay:rgb(32 46 66 / .13);
+  --glass-shadow:rgb(23 40 68 / .16);
+  --glass-overlay:rgb(32 46 66 / .10);
+  --glass-action:rgb(48 89 147 / .94);
+  --glass-action-ink:#fff;
   --glass-ink:#17202d;
   --glass-muted:#4d5b6c;
   --glass-wash:radial-gradient(ellipse at 2% 0%,#dcecfb 0%,transparent 62%),radial-gradient(ellipse at 100% 100%,#deeee9 0%,transparent 60%),linear-gradient(125deg,#eef1f8,#e7eaf3 60%,#f0edf4);
-  --glass-sheen:linear-gradient(135deg,rgb(255 255 255 / .48),rgb(255 255 255 / .08) 42%,rgb(255 255 255 / .02) 68%,rgb(255 255 255 / .22));
+  --glass-sheen:linear-gradient(145deg,rgb(255 255 255 / .18),rgb(255 255 255 / .025) 36%,rgb(255 255 255 / 0) 68%,rgb(255 255 255 / .10));
   --glass-specular:linear-gradient(135deg,rgb(255 255 255 / 1) 0%,rgb(255 255 255 / .72) 20%,rgb(255 255 255 / .05) 44%,rgb(116 143 179 / .22) 57%,rgb(255 255 255 / .85) 82%,rgb(255 255 255 / .42));
-  --glass-bloom:radial-gradient(ellipse at 0% 0%,rgb(255 255 255 / .48),transparent 55%);
+  --glass-bloom:radial-gradient(ellipse at 0% 0%,rgb(255 255 255 / .14),transparent 42%);
 }
 :root[data-surface="desktop"][data-material="glass"][data-theme="dark"]{
-  --glass-chrome:rgb(26 34 48 / .46);
-  --glass-floating:rgb(20 28 42 / .43);
-  --glass-panel:rgb(21 27 37 / .70);
-  --glass-footer:rgb(28 35 48 / .66);
-  --glass-control:rgb(197 216 248 / .08);
-  --glass-control-hover:rgb(197 216 248 / .15);
-  --glass-inset:rgb(6 13 24 / .18);
-  --glass-selected:rgb(177 205 248 / .17);
-  --glass-rim:rgb(219 236 255 / .47);
+  --glass-chrome:rgb(44 57 77 / .20);
+  --glass-floating:rgb(40 53 72 / .28);
+  --glass-panel:rgb(30 40 56 / .38);
+  --glass-footer:rgb(54 69 91 / .28);
+  --glass-control:rgb(198 220 250 / .10);
+  --glass-control-hover:rgb(198 220 250 / .19);
+  --glass-inset:rgb(163 194 235 / .055);
+  --glass-selected:rgb(186 214 250 / .22);
+  --glass-rim:rgb(227 242 255 / .66);
   --glass-inner-rim:rgb(209 229 255 / .08);
   --glass-edge:rgb(192 215 246 / .18);
   --glass-shadow:rgb(0 5 15 / .50);
-  --glass-overlay:rgb(4 9 18 / .28);
+  --glass-overlay:rgb(10 18 31 / .16);
+  --glass-action:rgb(198 222 255 / .94);
+  --glass-action-ink:#172a46;
   --glass-ink:#f2f6fc;
   --glass-muted:#bdc9db;
   --glass-wash:radial-gradient(ellipse at 0% 0%,#344964 0%,transparent 62%),radial-gradient(ellipse at 100% 100%,#223d3e 0%,transparent 60%),linear-gradient(125deg,#202937,#202333 60%,#302b3b);
-  --glass-sheen:linear-gradient(135deg,rgb(191 218 255 / .15),rgb(167 198 237 / .04) 42%,rgb(112 144 184 / .01) 68%,rgb(178 205 243 / .08));
+  --glass-sheen:linear-gradient(145deg,rgb(203 226 255 / .065),rgb(167 198 237 / .015) 36%,rgb(112 144 184 / 0) 68%,rgb(194 218 250 / .045));
   --glass-specular:linear-gradient(135deg,rgb(224 240 255 / .72),rgb(196 223 255 / .30) 20%,rgb(168 203 255 / .02) 44%,rgb(13 23 40 / .10) 57%,rgb(200 226 255 / .39) 82%,rgb(208 230 255 / .14));
-  --glass-bloom:radial-gradient(ellipse at 0% 0%,rgb(177 210 255 / .11),transparent 55%);
+  --glass-bloom:radial-gradient(ellipse at 0% 0%,rgb(207 230 255 / .045),transparent 42%);
 }
 
 /* No overlay blur: the surface itself must sample the live page. A second
@@ -59,7 +63,7 @@
   :root[data-surface="desktop"][data-material="glass"] .board-app{background:var(--glass-wash)}
   :root[data-surface="desktop"][data-material="glass"] :is(.sf-window-toolbar,.sf-sidebar){
     background-color:var(--glass-chrome);background-image:var(--glass-sheen);
-    -webkit-backdrop-filter:blur(20px) saturate(1.35);backdrop-filter:blur(20px) saturate(1.35);
+    -webkit-backdrop-filter:blur(6px) saturate(1.25);backdrop-filter:blur(6px) saturate(1.25);
   }
   :root[data-surface="desktop"][data-material="glass"] .sf-window-toolbar{box-shadow:inset 0 1px 0 var(--glass-rim)}
   :root[data-surface="desktop"][data-material="glass"] .sf-sidebar{box-shadow:inset 1px 0 0 var(--glass-inner-rim)}
@@ -67,16 +71,17 @@
   :root[data-surface="desktop"][data-material="glass"] .sf-sync-footer{
     background-color:var(--glass-footer);background-image:var(--glass-sheen);
     border-top-color:var(--glass-edge);box-shadow:inset 0 1px 0 var(--glass-rim);
-    -webkit-backdrop-filter:blur(16px) saturate(1.4);backdrop-filter:blur(16px) saturate(1.4);
+    -webkit-backdrop-filter:blur(5px) saturate(1.3);backdrop-filter:blur(5px) saturate(1.3);
   }
   :root[data-surface="desktop"][data-material="glass"] .sfu-dialog-overlay{background:var(--glass-overlay)}
   :root[data-surface="desktop"][data-material="glass"] :is(.sfu-dialog-content,.sfu-menu,.sfu-popover,.sf-select-content[data-slot="select-content"]){
     --sf-ink:var(--glass-ink);--sf-muted:var(--glass-muted);
     --sf-border:var(--glass-edge);--muted-foreground:var(--glass-muted);
     color:var(--glass-ink);background-color:var(--glass-floating);background-image:var(--glass-sheen);
+    animation:none;
     background-clip:padding-box;border:1px solid var(--glass-edge);border-radius:14px;
     box-shadow:inset 0 1px 0 var(--glass-rim),inset 0 -1px 0 var(--glass-inner-rim),inset 1px 0 0 var(--glass-inner-rim),0 0 0 1px rgb(12 26 46 / .04),0 8px 20px rgb(12 26 46 / .10),0 28px 70px -16px var(--glass-shadow);
-    -webkit-backdrop-filter:blur(14px) saturate(1.55);backdrop-filter:blur(14px) saturate(1.55);
+    -webkit-backdrop-filter:blur(4px) saturate(1.25);backdrop-filter:blur(4px) saturate(1.25);
   }
   /* The shell never scrolls. Its rim and light stay in place while the body
      scrolls, and keyboard focus rings have their own inset breathing room. */
@@ -84,17 +89,17 @@
     border-radius:22px;overflow:hidden;
     box-shadow:inset 0 1px 0 var(--glass-rim),inset 0 -1px 0 var(--glass-inner-rim),0 0 0 1px rgb(12 26 46 / .06),0 12px 28px -8px var(--glass-shadow),0 40px 100px -24px var(--glass-shadow);
   }
-  :root[data-surface="desktop"][data-material="glass"] .sfu-dialog-content::before{
+  :root[data-surface="desktop"][data-material="glass"] :is(.sfu-dialog-content,.sfu-menu,.sfu-popover,.sf-select-content)::before{
     content:"";position:absolute;inset:0;z-index:0;border-radius:inherit;pointer-events:none;
     background:var(--glass-bloom);
-    box-shadow:inset 0 2px 6px -2px var(--glass-rim),inset 2px 0 5px -3px var(--glass-rim),inset 0 -4px 7px -5px var(--glass-rim);
+    box-shadow:inset 0 1px 1px var(--glass-rim),inset 1px 0 1px var(--glass-inner-rim),inset 0 -2px 2px -1px rgb(118 187 219 / .22);
   }
   @supports ((mask-composite:exclude) or (-webkit-mask-composite:xor)){
-  :root[data-surface="desktop"][data-material="glass"] .sfu-dialog-content::after{
-    content:"";position:absolute;inset:0;z-index:2;padding:1.5px;border-radius:inherit;pointer-events:none;
+  :root[data-surface="desktop"][data-material="glass"] :is(.sfu-dialog-content,.sfu-menu,.sfu-popover,.sf-select-content)::after{
+    content:"";position:absolute;inset:0;z-index:3;padding:1.5px;border-radius:inherit;pointer-events:none;
     background:var(--glass-specular);
-    -webkit-mask:linear-gradient(#fff 0 0) content-box,linear-gradient(#fff 0 0);
-    -webkit-mask-composite:xor;mask:linear-gradient(#fff 0 0) content-box,linear-gradient(#fff 0 0);mask-composite:exclude;
+    -webkit-mask:var(--glass-mask) content-box,var(--glass-mask);
+    -webkit-mask-composite:xor;mask:var(--glass-mask) content-box,var(--glass-mask);mask-composite:exclude;
   }
   }
   :root[data-surface="desktop"][data-material="glass"] .sfu-dialog-content .bui-dialog{
@@ -131,19 +136,28 @@
 /* Accessibility overrides the saved material without changing the preference.
    The tokens also restore nested controls, not only the outside shell. */
 @media (prefers-reduced-transparency:reduce),(prefers-contrast:more){
-  :root[data-surface="desktop"][data-material="glass"][data-theme]{--glass-control:var(--sf-panel);--glass-control-hover:var(--sf-soft);--glass-inset:var(--sf-soft);--glass-selected:var(--sf-soft);--glass-edge:var(--sf-border-strong);--glass-inner-rim:transparent;--glass-rim:transparent;--glass-ink:var(--foreground);--glass-muted:var(--muted-foreground)}
+  :root[data-surface="desktop"][data-material="glass"][data-theme]{--glass-action:var(--primary);--glass-action-ink:var(--primary-foreground);--glass-control:var(--sf-panel);--glass-control-hover:var(--sf-soft);--glass-inset:var(--sf-soft);--glass-selected:var(--sf-soft);--glass-edge:var(--sf-border-strong);--glass-inner-rim:transparent;--glass-rim:transparent;--glass-ink:var(--foreground);--glass-muted:var(--muted-foreground)}
   :root[data-surface="desktop"][data-material="glass"] .board-app{background:var(--sf-sidebar)}
   :root[data-surface="desktop"][data-material="glass"] :is(.sf-window-toolbar,.sf-sidebar,.sf-main,.sf-sync-footer,.sfu-dialog-content,.sfu-menu,.sfu-popover,.sf-select-content[data-slot="select-content"]){background:var(--sf-panel);border-color:var(--sf-border-strong);box-shadow:none;-webkit-backdrop-filter:none;backdrop-filter:none}
   :root[data-surface="desktop"][data-material="glass"] :is(.sf-window-toolbar,.sf-sidebar){background:var(--sf-sidebar)}
   :root[data-surface="desktop"][data-material="glass"] .sfu-dialog-overlay{background:rgb(0 0 0 / .35)}
-  :root[data-surface="desktop"][data-material="glass"] .sfu-dialog-content::before,:root[data-surface="desktop"][data-material="glass"] .sfu-dialog-content::after{display:none}
+  :root[data-surface="desktop"][data-material="glass"] :is(.sfu-dialog-content,.sfu-menu,.sfu-popover,.sf-select-content)::before,:root[data-surface="desktop"][data-material="glass"] :is(.sfu-dialog-content,.sfu-menu,.sfu-popover,.sf-select-content)::after{display:none}
 }
 @media (forced-colors:active){
-  :root[data-surface="desktop"][data-material="glass"][data-theme]{--glass-control:Canvas;--glass-control-hover:Canvas;--glass-inset:Canvas;--glass-selected:Canvas;--glass-edge:CanvasText;--glass-inner-rim:transparent;--glass-rim:transparent;--glass-ink:CanvasText;--glass-muted:CanvasText}
+  :root[data-surface="desktop"][data-material="glass"][data-theme]{--glass-action:ButtonFace;--glass-action-ink:ButtonText;--glass-control:Canvas;--glass-control-hover:Canvas;--glass-inset:Canvas;--glass-selected:Canvas;--glass-edge:CanvasText;--glass-inner-rim:transparent;--glass-rim:transparent;--glass-ink:CanvasText;--glass-muted:CanvasText}
   :root[data-surface="desktop"][data-material="glass"] .board-app{background:Canvas}
   :root[data-surface="desktop"][data-material="glass"] :is(.sf-window-toolbar,.sf-sidebar,.sf-main,.sf-sync-footer,.sfu-dialog-content,.sfu-menu,.sfu-popover,.sf-select-content[data-slot="select-content"]){background:Canvas;color:CanvasText;border-color:CanvasText;box-shadow:none;-webkit-backdrop-filter:none;backdrop-filter:none}
-  :root[data-surface="desktop"][data-material="glass"] .sfu-dialog-content::before,:root[data-surface="desktop"][data-material="glass"] .sfu-dialog-content::after{display:none}
+  :root[data-surface="desktop"][data-material="glass"] :is(.sfu-dialog-content,.sfu-menu,.sfu-popover,.sf-select-content)::before,:root[data-surface="desktop"][data-material="glass"] :is(.sfu-dialog-content,.sfu-menu,.sfu-popover,.sf-select-content)::after{display:none}
   :root[data-surface="desktop"][data-material="glass"] :is(.bui-menu-item[data-highlighted],.sfu-menu-check[data-highlighted],.sf-select-item[data-highlighted]){background:Highlight;color:HighlightText}
   .sf-material-swatch,.sf-material-swatch[data-material="glass"]{background:Canvas;border-color:CanvasText;box-shadow:none}
   .sf-material-options [aria-pressed="true"]{outline:1px solid Highlight;outline-offset:-1px}
 }
+
+/* Snapshot-based optics sit behind every interactive child. The SVG center is
+   transparent; only a 12–16px inner band contains refracted background pixels. */
+.sf-glass-optics{position:absolute;inset:0;z-index:0;display:block;overflow:hidden;border-radius:inherit;pointer-events:none;user-select:none}
+.sf-glass-optics>svg{display:block;pointer-events:none}
+:root[data-surface="desktop"][data-material="glass"] :is(.sfu-menu,.sfu-popover,.sf-select-content)>:not(.sf-glass-optics){position:relative;z-index:1}
+:root[data-surface="desktop"][data-material="glass"] :is(.sfu-menu,.sfu-popover){position:relative;overflow:hidden}
+:root[data-surface="desktop"][data-material="glass"] .sfu-menu{max-height:min(var(--radix-dropdown-menu-content-available-height,70vh),70vh);overflow-y:auto}
+@media(prefers-reduced-transparency:reduce),(prefers-contrast:more),(forced-colors:active){.sf-glass-optics{display:none}}

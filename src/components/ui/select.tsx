@@ -2,15 +2,15 @@
 "use client"
 
 import * as React from "react"
+import {GlassBackdropProvider,GlassRim,useGlassOpen} from "../../desktop/glass/Glass"
 import { cn } from "./utils"
 import "./select.css"
 import { CheckIcon, ChevronDownIcon, ChevronUpIcon } from "lucide-react"
 import * as SelectPrimitive from "@radix-ui/react-select"
 
-function Select({
-  ...props
-}: React.ComponentProps<typeof SelectPrimitive.Root>) {
-  return <SelectPrimitive.Root data-slot="select" {...props} />
+function Select({open,defaultOpen,onOpenChange,children,...props}: React.ComponentProps<typeof SelectPrimitive.Root>) {
+  const glass=useGlassOpen(open,defaultOpen,onOpenChange);
+  return <GlassBackdropProvider snapshot={glass.snapshot}><SelectPrimitive.Root data-slot="select" {...props} open={glass.open} onOpenChange={glass.onOpenChange}>{children}</SelectPrimitive.Root></GlassBackdropProvider>;
 }
 
 function SelectGroup({
@@ -74,6 +74,7 @@ function SelectContent({
         collisionPadding={collisionPadding}
         {...props}
       >
+        <GlassRim />
         <SelectScrollUpButton />
         <SelectPrimitive.Viewport
           className="sf-select-viewport p-1"

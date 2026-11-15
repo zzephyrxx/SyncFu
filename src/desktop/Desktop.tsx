@@ -23,10 +23,12 @@ import '../components/ui/tokens.css';
 import '../components/ui/primitives.css';
 import './workspace.css';
 import './glass.css';
+import './glass-controls.css';
+import {GlassProvider} from './glass/Glass';
 type Page='tasks'|'overview'|'devices'|'history'|'settings';
 const taskTone=(id:string)=>[...id].reduce((hash,char)=>(hash*31+char.charCodeAt(0))>>>0,0)%4;
 const logo=new URL('../../assets/syncfu-icon.svg',import.meta.url).href;
-export default function Desktop({transport,testMode=false}:{transport?:Transport;testMode?:boolean}){return <PrototypeProvider mode="desktop">{desktop||transport?<DesktopApp transport={transport} testMode={testMode}/>:<BrowserBoundary/>}</PrototypeProvider>;}
+export default function Desktop({transport,testMode=false}:{transport?:Transport;testMode?:boolean}){return <PrototypeProvider mode="desktop"><GlassProvider>{desktop||transport?<DesktopApp transport={transport} testMode={testMode}/>:<BrowserBoundary/>}</GlassProvider></PrototypeProvider>;}
 function BrowserBoundary(){const {t}=usePrototype();return <div className="board-app"><main className="ui-centered"><img src={logo} alt="SyncFu" width={64}/><h1>SyncFu</h1><p>{t('browserOnly')}</p>{import.meta.env.DEV&&<a href="/?desktop-test">{t('demo')}</a>}</main></div>;}
 function DesktopApp({transport,testMode}:{transport?:Transport;testMode:boolean}){
   const {t,prefs,setPref}=usePrototype();const {profiles}=useDeviceProfiles();const c=useDesktopController(transport);const [page,setPage]=useState<Page>(prefs.startup);const collapsed=prefs.sidebarCollapsed;const setCollapsed=(value:boolean)=>setPref('sidebarCollapsed',value);

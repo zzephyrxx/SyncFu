@@ -2,13 +2,13 @@
 "use client"
 
 import * as React from "react"
+import {GlassBackdropProvider,GlassRim,useGlassOpen} from "../../desktop/glass/Glass"
 import { cn } from "./utils"
 import * as PopoverPrimitive from "@radix-ui/react-popover"
 
-function Popover({
-  ...props
-}: React.ComponentProps<typeof PopoverPrimitive.Root>) {
-  return <PopoverPrimitive.Root data-slot="popover" {...props} />
+function Popover({open,defaultOpen,onOpenChange,children,...props}: React.ComponentProps<typeof PopoverPrimitive.Root>) {
+  const glass=useGlassOpen(open,defaultOpen,onOpenChange);
+  return <GlassBackdropProvider snapshot={glass.snapshot}><PopoverPrimitive.Root data-slot="popover" {...props} open={glass.open} onOpenChange={glass.onOpenChange}>{children}</PopoverPrimitive.Root></GlassBackdropProvider>;
 }
 
 function PopoverTrigger({
@@ -19,6 +19,7 @@ function PopoverTrigger({
 
 function PopoverContent({
   className,
+  children,
   align = "center",
   sideOffset = 4,
   ...props
@@ -34,7 +35,12 @@ function PopoverContent({
           className
         )}
         {...props}
-      />
+      >
+        <GlassRim />
+        <div className="sf-popover-viewport" data-slot="popover-viewport">
+          {children}
+        </div>
+      </PopoverPrimitive.Content>
     </PopoverPrimitive.Portal>
   )
 }

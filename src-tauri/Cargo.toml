@@ -9,6 +9,7 @@ tauri-build = { version = "2", features = [] }
 
 [dependencies]
 anyhow = "1"
+base64 = "0.22"
 png = "0.18"
 serde = { version = "1", features = ["derive"] }
 syncfu-core = { path = "../core" }
@@ -18,8 +19,14 @@ tauri-plugin-autostart = "2"
 tauri-plugin-opener = "2"
 
 [target.'cfg(target_os = "macos")'.dependencies]
+block2 = "0.6"
+objc2 = "0.6"
+objc2-app-kit = { version = "0.3.2", default-features = false, features = ["std", "NSImage", "NSImageRep", "NSBitmapImageRep", "NSGraphicsContext", "objc2-core-graphics"] }
+objc2-foundation = { version = "0.3.2", default-features = false, features = ["std", "NSError", "NSValue"] }
+objc2-web-kit = { version = "0.3.2", default-features = false, features = ["std", "WKWebView", "WKSnapshotConfiguration", "block2"] }
 keyring = { version = "3", features = ["apple-native"] }
 
 [target.'cfg(windows)'.dependencies]
-base64 = "0.22"
+webview2-com = "0.39.1"
+windows = { version = "0.62.2", features = ["Win32_System_Com", "Win32_System_Com_StructuredStorage"] }
 keyring = { version = "3", features = ["windows-native"] }

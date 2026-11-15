@@ -1,5 +1,6 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
+mod glass_capture;
 mod permissions;
 
 use serde::Serialize;
@@ -420,7 +421,25 @@ fn tray_icon(bytes: &[u8]) -> anyhow::Result<tauri::image::Image<'static>> {
 
 fn setup(app: &mut tauri::App) -> anyhow::Result<()> {
     let dir: PathBuf = app.path().app_local_data_dir()?;
+    // Native UI checks can use disposable state without touching an installed
+    // application's database or its path-scoped keychain identity. Release
+    // builds do not read this environment variable.
+    #[cfg(debug_assertions)]
+    let dir = std::env::var_os("SYNCFU_DEV_DATA_DIR")
+        .filter(|value| !value.is_empty())
+        .map(PathBuf::from)
+        .unwrap_or(dir);
     let engine = Engine::open(&dir)?;
+    #[cfg(debug_assertions)]
+    let identity = if std::env::var_os("SYNCFU_DEV_DATA_DIR").is_some_and(|value| !value.is_empty())
+    {
+        // Disposable visual checks never open or update the user's keychain.
+        // The fixture identity is intentionally different on every startup.
+        Identity::generate()?
+    } else {
+        identity(&dir)?
+    };
+    #[cfg(not(debug_assertions))]
     let identity = identity(&dir)?;
     let node = tauri::async_runtime::block_on(async {
         let fixed = SocketAddr::from((Ipv4Addr::UNSPECIFIED, DEFAULT_PORT));
@@ -484,6 +503,7 @@ fn main() {
             }
         })
         .invoke_handler(tauri::generate_handler![
+            glass_capture::capture_glass_backdrop,
             snapshot,
             execution_progress,
             check_permissions,

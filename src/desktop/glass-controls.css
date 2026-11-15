@@ -1,0 +1,269 @@
+/* Shared control surfaces for the glass material. Do not make --background or
+   --sf-panel transparent: they also supply switch thumbs and action text. */
+.sf-menu-viewport,.sf-popover-viewport{display:contents}
+:root[data-surface="desktop"][data-material="glass"]{
+  --glass-toggle-on:#356ab1;--glass-toggle-thumb:#f2f7ff;--glass-toggle-ink:#fff;
+}
+@supports ((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))){
+  /* Keep the optical shell stationary. The wrapper is box-less in Solid mode,
+     and remains inside Radix Content so typeahead/roving focus work normally. */
+  :root[data-surface="desktop"][data-material="glass"] .sfu-menu[data-slot="dropdown-menu-content"]{
+    display:flex;flex-direction:column;padding:0;overflow:hidden;
+    max-height:min(var(--radix-dropdown-menu-content-available-height,70vh),70vh);
+  }
+  :root[data-surface="desktop"][data-material="glass"] .sfu-popover[data-slot="popover-content"]{
+    display:flex;flex-direction:column;padding:0;overflow:hidden;
+    max-height:min(var(--radix-popover-content-available-height,70vh),70vh);
+  }
+  :root[data-surface="desktop"][data-material="glass"] .sfu-menu>.sf-menu-viewport,
+  :root[data-surface="desktop"][data-material="glass"] .sfu-popover>.sf-popover-viewport{
+    display:block;min-width:0;min-height:0;box-sizing:border-box;
+    overflow-x:hidden;overflow-y:auto;overscroll-behavior:contain;scrollbar-width:thin;
+  }
+  :root[data-surface="desktop"][data-material="glass"] .sfu-menu>.sf-menu-viewport{
+    padding:5px;max-height:calc(min(var(--radix-dropdown-menu-content-available-height,70vh),70vh) - 2px);
+  }
+  :root[data-surface="desktop"][data-material="glass"] .sfu-popover>.sf-popover-viewport{
+    padding:12px;max-height:calc(min(var(--radix-popover-content-available-height,70vh),70vh) - 2px);
+  }
+  /* Color only: Radix remains the sole owner of thumb movement and the
+     established 34×20 switch / 17×17 checkbox dimensions. */
+  :root[data-surface="desktop"][data-material="glass"] .sfu-switch[data-slot="switch"]{
+    background:var(--glass-control);box-shadow:inset 0 0 0 1px var(--glass-edge);
+  }
+  :root[data-surface="desktop"][data-material="glass"] .sfu-switch[data-state="checked"]{
+    background:var(--glass-toggle-on);box-shadow:inset 0 1px 0 var(--glass-inner-rim);
+  }
+  :root[data-surface="desktop"][data-material="glass"] .sfu-switch [data-slot="switch-thumb"]{
+    background:var(--glass-toggle-thumb);box-shadow:0 1px 2px rgb(10 25 50 / .20);
+  }
+  :root[data-surface="desktop"][data-material="glass"] .sfu-checkbox[data-slot="checkbox"]{
+    background:var(--glass-control);border-color:var(--glass-edge);color:var(--glass-ink);
+    box-shadow:inset 0 1px 0 var(--glass-inner-rim);
+  }
+  :root[data-surface="desktop"][data-material="glass"] .sfu-checkbox:is([data-state="checked"],[data-state="indeterminate"]){
+    background:var(--glass-toggle-on);border-color:var(--glass-toggle-on);color:var(--glass-toggle-ink);
+  }
+  :root[data-surface="desktop"][data-material="glass"] :is(
+    .sfu-button[data-variant="outline"]:not(.sf-rules-reject),
+    .bui-dropdown-trigger:not(.sf-file-path-trigger),
+    .sf-select-trigger[data-slot="select-trigger"],
+    .bui-dialog button.sf-select-trigger[data-slot][data-size],
+    .ui-setting [data-slot="input"],
+    .sf-search,
+    .sf-route-folder,
+    .sf-route-direction>svg,
+    .sf-scan-side,
+    .sfu-selection-card,
+    .sf-batch-card,
+    .sf-device-local-tag
+  ){
+    background:var(--glass-control);color:var(--glass-ink);
+    border-color:var(--glass-edge);box-shadow:inset 0 1px 0 var(--glass-inner-rim);
+  }
+  :root[data-surface="desktop"][data-material="glass"] :is(
+    .sfu-button[data-variant="outline"]:not(.sf-rules-reject):hover:not(:disabled),
+    .sf-select-trigger[data-slot="select-trigger"]:hover:not(:disabled),
+    .bui-dialog button.sf-select-trigger[data-slot][data-size]:hover:not(:disabled),
+    .sfu-selection-card:hover,
+    .sf-batch-card:hover
+  ){
+    background:var(--glass-control-hover);color:var(--glass-ink);
+  }
+  :root[data-surface="desktop"][data-material="glass"] :is(
+    .sfu-button[data-variant="ghost"]:hover:not(:disabled):not(.sf-device-unpair):not(.sf-grant-revoke),
+    .bui-nav-item:hover,
+    .bui-table tbody tr:hover
+  ){
+    background:var(--glass-control-hover);color:var(--glass-ink);
+  }
+  /* Settings and task segments used to restore the solid dark token even
+     when the surrounding shell was already transparent. */
+  :root[data-surface="desktop"][data-material="glass"] :is(
+    .ui-segment,.sf-segment,.sf-pair-tabs,.sf-local-device,.sf-route,
+    .sf-execution-status,.sf-scan-status,.sf-count,.sf-about-version,
+    .sf-license-badge,.sf-changes-heading>span,.sf-grants-toolbar h3>span,
+    .sf-devices-list-heading h2>span,.sf-device-editor-preview,
+    .sf-unpair-device,.sf-grant-revoke-path,.sf-rules-value,
+    .sf-disconnected-icon,.sfu-empty-icon.bui-art:not(.small),.ui-compare-columns header
+  ){
+    background:var(--glass-inset);border-color:var(--glass-edge);
+  }
+  :root[data-surface="desktop"][data-material="glass"] :is(
+    .ui-segment button,.sf-segment button
+  ){
+    background:transparent;color:var(--glass-muted);box-shadow:none;
+  }
+  :root[data-surface="desktop"][data-material="glass"] :is(
+    .ui-segment button:hover:not(:disabled),.sf-segment button:hover:not(:disabled)
+  ){
+    background:var(--glass-control-hover);color:var(--glass-ink);
+  }
+  :root[data-surface="desktop"][data-material="glass"] :is(
+    .ui-segment button[aria-pressed="true"],.ui-segment button.active,
+    .sf-segment button[aria-pressed="true"],.sf-list-filters>.bui-button[aria-pressed="true"],
+    .bui-nav-item[data-active="true"],.sf-sidebar .bui-nav-item[data-active="true"],
+    .sf-task-nav .bui-nav-item[data-active="true"],
+    .sfu-selection-card[data-state="checked"],.sfu-selection-card[data-state="indeterminate"],
+    .sf-batch-card.is-selected,.sf-batch-card[data-indeterminate]
+  ){
+    background:var(--glass-selected);color:var(--glass-ink);
+    border-color:var(--glass-edge);box-shadow:inset 0 1px 0 var(--glass-inner-rim);
+  }
+  :root[data-surface="desktop"][data-material="glass"] :is(
+    .sf-sidebar .bui-nav-item,.ui-settings-nav .bui-nav-item
+  ){
+    color:var(--glass-muted);
+  }
+  :root[data-surface="desktop"][data-material="glass"] :is(
+    .sf-sidebar .bui-nav-item[data-active="true"],.ui-settings-nav .bui-nav-item[data-active="true"]
+  ){
+    color:var(--glass-ink);
+  }
+  :root[data-surface="desktop"][data-material="glass"] .bui-table.bui-table-sm th{
+    background:var(--glass-inset);color:var(--glass-muted);border-color:var(--glass-edge);
+  }
+  :root[data-surface="desktop"][data-material="glass"] .bui-table{
+    /* Selection is set as an inline style by SyncChangesTable. Remap the
+       referenced token locally rather than fighting that style with !important. */
+    --color-background-selected:var(--glass-selected);
+    background:transparent;
+  }
+  :root[data-surface="desktop"][data-material="glass"] .bui-table :is(tbody,td),
+  :root[data-surface="desktop"][data-material="glass"] .bui-table tbody tr{
+    background:transparent;
+  }
+  :root[data-surface="desktop"][data-material="glass"] .bui-table tbody tr:nth-child(even):not([data-chosen="true"]):not([data-completed="true"]){
+    background:var(--glass-inset);
+  }
+  :root[data-surface="desktop"][data-material="glass"] .bui-table tbody tr:has([aria-expanded="true"]){
+    background:var(--glass-control-hover);
+  }
+  :root[data-surface="desktop"][data-material="glass"] .bui-table tbody tr[data-completed="true"]{
+    background:color-mix(in srgb,var(--sf-green) 8%,var(--glass-inset));
+  }
+  :root[data-surface="desktop"][data-material="glass"] .bui-table tbody tr[data-chosen="true"]{
+    background:var(--glass-selected);
+  }
+  :root[data-surface="desktop"][data-material="glass"] :is(
+    .board-app .sf-search input,.board-app .ui-settings-search input,.sf-file-path-trigger.bui-dropdown-trigger
+  ){
+    background:transparent;box-shadow:none;
+  }
+
+  /* Primary actions have their own ink pair; glass never turns their label
+     into a translucent surface color. Destructive fills remain semantic. */
+  :root[data-surface="desktop"][data-material="glass"] :is(
+    .sfu-button[data-variant="default"],.sf-sidebar button.sf-new-task,
+    .bui-dialog button.primary
+  ){
+    background:var(--glass-action,var(--primary));
+    color:var(--glass-action-ink,var(--primary-foreground));
+    border-color:transparent;
+  }
+  :root[data-surface="desktop"][data-material="glass"] :is(
+    .sfu-button[data-variant="default"]:hover:not(:disabled),
+    .sf-sidebar button.sf-new-task:hover:not(:disabled),
+    .bui-dialog button.primary:hover:not(:disabled)
+  ){
+    background:var(--glass-action,var(--primary));
+    color:var(--glass-action-ink,var(--primary-foreground));
+    box-shadow:inset 0 0 0 1px var(--glass-inner-rim);
+  }
+
+  /* Old native <button> rules and selected avatar/type states were the other
+     source of opaque patches inside otherwise transparent dialogs. */
+  :root[data-surface="desktop"][data-material="glass"] .sfu-dialog-content :is(
+    .ui-resolution-actions>button,.ui-skip-row>button,.ui-ignored-row>button,
+    .bui-dialog-body>button:not(.primary):not([data-slot]),
+    .sf-device-emoji-choice,.sf-device-kind-options>button,
+    .sf-avatar-auto-label,.sf-pair-device .sf-pair-device-icon,
+    .sf-new-task .sf-route-device-icon,.sf-device-type-badge
+  ){
+    background:var(--glass-control);color:var(--glass-ink);
+    border-color:var(--glass-edge);box-shadow:inset 0 1px 0 var(--glass-inner-rim);
+  }
+  :root[data-surface="desktop"][data-material="glass"] .sfu-dialog-content :is(
+    .ui-resolution-actions>button:hover:not(:disabled),.ui-skip-row>button:hover:not(:disabled),
+    .ui-ignored-row>button:hover:not(:disabled),.sf-device-emoji-choice:hover,
+    .sf-device-kind-options>button:hover
+  ){
+    background:var(--glass-control-hover);
+  }
+  :root[data-surface="desktop"][data-material="glass"] .sfu-dialog-content :is(
+    .sf-device-emoji-choice[aria-pressed="true"],.sf-device-kind-options>button[aria-pressed="true"],
+    .sf-pair-device.is-selected .sf-pair-device-icon
+  ){
+    background:var(--glass-selected);color:var(--glass-ink);
+    box-shadow:inset 0 1px 0 var(--glass-inner-rim),0 0 0 1px var(--sf-info);
+  }
+  :root[data-surface="desktop"][data-material="glass"] .sf-device-type-badge{
+    background:var(--glass-control);color:var(--glass-muted);border-color:var(--glass-edge);
+  }
+  :root[data-surface="desktop"][data-material="glass"] .sfu-dialog-content :is(
+    .sf-new-task-choice>input[type="radio"],.sf-rules-mode input[type="radio"]
+  ){
+    background:var(--glass-control);border-color:var(--glass-edge);
+  }
+  :root[data-surface="desktop"][data-material="glass"] .sfu-dialog-content :is(
+    .sf-new-task-choice>input[type="radio"]:checked,.sf-rules-mode input[type="radio"]:checked
+  ){
+    border-color:var(--glass-toggle-on);
+  }
+  :root[data-surface="desktop"][data-material="glass"] .sfu-dialog-content :is(
+    .sf-new-task-choice>input[type="radio"]:checked,.sf-rules-mode input[type="radio"]:checked
+  )::after{
+    background:var(--glass-toggle-on);
+  }
+  :root[data-surface="desktop"][data-material="glass"] .bui-notice.warning{
+    background:color-mix(in srgb,var(--sf-warn) 10%,var(--glass-control));
+  }
+  :root[data-surface="desktop"][data-material="glass"] .bui-notice.error{
+    background:color-mix(in srgb,var(--sf-danger) 10%,var(--glass-control));
+  }
+  :root[data-surface="desktop"][data-material="glass"] .bui-notice.success{
+    background:color-mix(in srgb,var(--sf-green) 10%,var(--glass-control));
+  }
+  :root[data-surface="desktop"][data-material="glass"] .bui-notice.info{
+    background:var(--glass-inset);border-color:var(--glass-edge);color:var(--glass-muted);
+  }
+  :root[data-surface="desktop"][data-material="glass"] .sf-heatmap-day[data-level="0"],
+  :root[data-surface="desktop"][data-material="glass"] .sf-heatmap-swatches [data-level="0"]{
+    background:var(--glass-inset);
+  }
+}
+
+/* glass.css supplies opaque control tokens for reduced transparency and
+   increased contrast. Forced-color mode also preserves native selected states. */
+@media (forced-colors:active){
+  :root[data-surface="desktop"][data-material="glass"] :is(.sfu-switch,.sfu-checkbox){
+    background:Canvas!important;color:CanvasText!important;border-color:CanvasText!important;box-shadow:none!important;
+  }
+  :root[data-surface="desktop"][data-material="glass"] :is(.sfu-switch,.sfu-checkbox):is([data-state="checked"],[data-state="indeterminate"]){
+    background:Highlight!important;color:HighlightText!important;border-color:Highlight!important;
+  }
+  :root[data-surface="desktop"][data-material="glass"] .sfu-switch [data-slot="switch-thumb"]{
+    background:CanvasText!important;box-shadow:none!important;
+  }
+  :root[data-surface="desktop"][data-material="glass"] .sfu-switch[data-state="checked"] [data-slot="switch-thumb"]{
+    background:HighlightText!important;
+  }
+  :root[data-surface="desktop"][data-material="glass"] :is(
+    .sfu-button,.bui-dropdown-trigger,.sf-select-trigger,.ui-segment,.sf-segment,
+    .bui-nav-item,.sf-route,.sf-route-folder,.sf-batch-card,.sfu-selection-card,
+    .sf-search,.sf-local-device,.sf-scan-status,.sf-scan-side,.sf-execution-status,
+    .sf-device-emoji-choice,.sf-device-kind-options>button,.sf-device-type-badge
+  ){
+    background:Canvas!important;color:CanvasText!important;box-shadow:none!important;
+    border-color:CanvasText!important;
+  }
+  :root[data-surface="desktop"][data-material="glass"] :is(
+    .ui-segment button[aria-pressed="true"],.sf-segment button[aria-pressed="true"],
+    .bui-nav-item[data-active="true"],.sf-list-filters>.bui-button[aria-pressed="true"],
+    .sf-device-emoji-choice[aria-pressed="true"],.sf-device-kind-options>button[aria-pressed="true"],
+    .sfu-selection-card[data-state="checked"],.sfu-selection-card[data-state="indeterminate"],
+    .sf-batch-card.is-selected,.sf-batch-card[data-indeterminate],.bui-table tbody tr[data-chosen="true"]
+  ){
+    background:Highlight!important;color:HighlightText!important;border-color:Highlight!important;
+  }
+}

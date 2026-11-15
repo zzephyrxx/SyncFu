@@ -1,0 +1,5 @@
+.glass-qa-scene{position:relative;display:block;min-height:100vh;overflow:hidden;padding:56px 50px;color:var(--sf-ink)}
+.glass-qa-scene>header{position:relative;display:flex;gap:12px;align-items:center;z-index:1}.glass-qa-scene h1{font-size:20px;margin-right:auto}
+.glass-qa-grid{position:absolute;inset:0;background-size:36px 36px;background-image:linear-gradient(90deg,#8885 1px,transparent 1px),linear-gradient(#8885 1px,transparent 1px)}
+.glass-qa-markers{position:absolute;inset:170px 80px 90px;display:flex;align-items:center;justify-content:space-around;gap:60px}.glass-qa-markers i{width:110px;height:100%;border-radius:80px;background:#6b9ac9}.glass-qa-markers i:nth-child(2){background:#77b3a3;transform:rotate(24deg)}.glass-qa-markers i:nth-child(3){background:#b99aca;transform:rotate(-24deg)}.glass-qa-markers strong{position:absolute;left:0;right:0;top:50%;font-size:40px;white-space:nowrap}
+.glass-qa-scene>aside{position:absolute;bottom:80px;left:80px}.glass-qa-fields{display:flex;gap:12px;margin:30px 0}.sfu-dialog-content:has(.glass-qa-fields){--dialog-width:580px}.sfu-dialog-content:has(.glass-qa-fields) p{margin:12px 0;line-height:1.7;font-size:13px}

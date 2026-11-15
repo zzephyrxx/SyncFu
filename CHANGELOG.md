@@ -29,7 +29,8 @@ Development release. A versioned package is not a claim of production acceptance
 
 ### Fixes
 
-- Rework liquid-glass dialogs with live backdrop transmission, curved specular rims, translucent inner controls and menus, readable light/dark palettes, and stationary shells around scrollable content. Preserve solid-material and accessibility fallbacks.
+- Rework liquid-glass dialogs and dropdowns with a live 4px-blurred center and a narrow, genuinely displaced image rim. Capture only SyncFu's own WebView into memory before opening, then apply an ordinary SVG image filter on macOS WKWebView and Windows WebView2; no desktop capture, screen-recording permission or image files are needed.
+- Keep glass capture within a 240ms opening deadline, discard late/cancelled results, and invalidate stale edge images after theme, viewport or background-scroll changes. Preserve clear foreground controls, scrollable dialog bodies, solid material and accessibility fallbacks.
 
 - Prevent directory-handle exhaustion during broad or deep scans by queuing paths and limiting concurrent file reads.
 - Remove the 20,000-entry scan/plan limit while preserving complete-scan validation and authorization checks. Keep the queued hashing work and read buffers bounded; full manifests and plans still use O(n) memory.
@@ -51,4 +52,5 @@ Development release. A versioned package is not a claim of production acceptance
 - UI checks and their scope are recorded in [the UI guide](docs/ui/README.md); automated checks belong to their corresponding revision and CI run.
 - Automatic write scheduling is not implemented.
 - Native Windows window behavior and physical two-device LAN synchronization still require acceptance testing.
+- Native macOS optical-grid inspection confirms sampled edge-pixel displacement; a measured capture completed in 144ms, and dialogs and nested dropdowns obtained snapshots within the 240ms production deadline. The native-grid screenshot is archived in the UI guide. Frontend tests report 103 passes; three native-capture tests and Clippy pass. Native Windows glass appearance still requires verification.
 - Local builds and ad-hoc signature checks do not imply Windows code signing, Developer ID signing or Apple notarization.
