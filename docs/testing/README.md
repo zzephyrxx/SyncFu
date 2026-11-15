@@ -102,3 +102,5 @@ node scripts/test-data.mjs check --root test-data/windows --stage bidirectional-
 - `cargo fmt --all --check`、core 全目标 Clippy（warnings as errors）、生成协议合约校验通过。
 - 桌面开发验证：1280×720、1120×780、680×560；图表/热力图右边缘提示完整，逐文件勾选与已同步筛选保留，创建任务图标和主按钮可见。玻璃材质深浅色与持久化已验证。
 - 以上双节点测试使用本机临时目录与 TLS 回环连接；不等同于实体 Mac/Windows 局域网跨机验收。
+
+玻璃弹窗专项：1120×780 深浅色及 680×560 小窗口检查通过；验证新建任务、配对、任务规则、设备备注、解除配对确认、下拉菜单和键盘滚动可达性。实色模式不带玻璃滤镜；截图见 `docs/ui/README.md`。系统级高对比度/降低透明度为代码审查，未交互模拟；Windows 原生视觉检查仍需实体设备。

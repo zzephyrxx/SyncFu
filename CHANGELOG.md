@@ -29,6 +29,8 @@ Development release. A versioned package is not a claim of production acceptance
 
 ### Fixes
 
+- Rework liquid-glass dialogs with live backdrop transmission, curved specular rims, translucent inner controls and menus, readable light/dark palettes, and stationary shells around scrollable content. Preserve solid-material and accessibility fallbacks.
+
 - Prevent directory-handle exhaustion during broad or deep scans by queuing paths and limiting concurrent file reads.
 - Remove the 20,000-entry scan/plan limit while preserving complete-scan validation and authorization checks. Keep the queued hashing work and read buffers bounded; full manifests and plans still use O(n) memory.
 - Report per-device scan phases, paths, bounded queue counts, file counts and bytes. Long scan and work RPCs have a longer deadline; active framed transfers use per-frame stall deadlines rather than a 90-second whole-message server deadline.

@@ -33,9 +33,15 @@ The acknowledgements page lists project credits and license links without intera
 
 ## Optional surface material
 
-Settings → Appearance offers **Solid / Liquid glass**, persisted as a local preference. Solid remains the default. `src/desktop/glass.css` provides neutral translucent toolbar, sidebar, sync-footer, dialog and menu surfaces for light and dark themes; file tables and content retain opaque reading surfaces. The backdrop is blurred behind the material, without filtering foreground text. Reduced transparency, increased contrast, forced colors and unsupported backdrop-filter environments use solid surfaces. This is a CSS surface treatment, not native macOS vibrancy, wallpaper sampling or dynamic optical refraction.
+Settings → Appearance offers **Solid / Liquid glass**, persisted as a local preference. Solid remains the default. `src/desktop/glass.css` implements the same CSS material on macOS WKWebView and Windows WebView2:
 
-The independent implementation references the material layering in [SemiDone's surface CSS](https://github.com/zzephyrxx/SemiDone/blob/d6d7ef3fcc94ac552e4bad1e417a65bc84f7aaef/src/styles/liquidGlassSurfaces.css) and [material settings](https://github.com/zzephyrxx/SemiDone/blob/d6d7ef3fcc94ac552e4bad1e417a65bc84f7aaef/src/utils/liquidGlassSettings.ts), pinned to commit `d6d7ef3fcc94ac552e4bad1e417a65bc84f7aaef`. No SVG/WebGL filter or native wallpaper capture is used.
+- Translucent floating surfaces sample the live page with a 14px backdrop blur and modest saturation. A lighter, unblurred overlay preserves the background instead of turning it into a flat dark sheet.
+- A 22px dialog shell has a directional specular rim, inner edge light and two-scale shadow. Mask-based rim enhancement is gated by support; text and controls are never filtered.
+- Route cards, pairing-code inputs, device-avatar controls, selectors and menus share translucent control tokens. Primary and destructive actions retain their semantic colors.
+- The shell and close button remain stationary while long dialog bodies scroll. Long titles/paths have a bounded, independently scrollable header area.
+- Light and dark palettes both return to solid surfaces for reduced transparency, increased contrast and forced colors. Unsupported backdrop filters keep the original solid UI.
+
+The independent implementation references the layering in [SemiDone's dialogs](https://github.com/zzephyrxx/SemiDone/blob/d6d7ef3fcc94ac552e4bad1e417a65bc84f7aaef/src/styles/liquidGlassDialogs.css), [surface CSS](https://github.com/zzephyrxx/SemiDone/blob/d6d7ef3fcc94ac552e4bad1e417a65bc84f7aaef/src/styles/liquidGlassSurfaces.css) and [material settings](https://github.com/zzephyrxx/SemiDone/blob/d6d7ef3fcc94ac552e4bad1e417a65bc84f7aaef/src/utils/liquidGlassSettings.ts), pinned to commit `d6d7ef3fcc94ac552e4bad1e417a65bc84f7aaef`. This is CSS transmission and specular lighting, not native wallpaper sampling or geometric refraction. SVG backdrop filters are deliberately avoided because [WebKit does not reliably render them](https://bugs.webkit.org/show_bug.cgi?id=245510).
 
 ## Verification — 2026-11-15
 
@@ -97,3 +103,16 @@ Current large-task UI proof (development fixtures, not user sync history):
 - [Optional glass appearance](screenshots/glass-appearance.jpg)
 
 Both chart tooltips also fit within the 680 × 560 minimum window. A completed run retains its file list; a new inspection dismisses the old batch before accepting new results, so completed marks cannot be reused for a new plan.
+
+### Liquid-glass dialog refinement — 2026-11-15
+
+Checked the rendered UI with development fixtures at 1120 × 780 in both themes and 680 × 560 for scrolling/keyboard access. New-task, pairing, task-rule, device-profile and unpair confirmation dialogs show the same material; the device selector opens above the dialog without clipping. At the minimum window, the body scrolls to the primary action while the header stays fixed. Switching back to Solid restores the original white surface, 10px new-task corner radius and no backdrop filter or rim pseudo-elements. No pairing, deletion or synchronization was performed during this visual pass.
+
+`npm test`: 90 passed, including production CSS scoping and fixture exclusion. Accessibility fallback selectors were reviewed for both light/dark specificity; OS-level contrast and reduced-transparency modes were not interactively emulated. Windows native visual inspection remains a separate device check.
+
+| Pairing · light glass | Pairing · dark glass |
+| --- | --- |
+| ![Translucent pairing dialog in light mode](screenshots/glass-pairing-light.jpg) | ![Glass edges and legible controls in dark mode](screenshots/glass-pairing-dark.jpg) |
+
+- [New task with translucent inner controls](screenshots/glass-dialog-light.jpg)
+- [Task rules floating over the file list](screenshots/glass-rules-light.jpg)
