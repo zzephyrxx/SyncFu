@@ -44,6 +44,8 @@ Windows installers use an existing WebView2 runtime or download it if missing. B
 Install [Node.js 22.18+](https://nodejs.org/), [Rust stable](https://www.rust-lang.org/tools/install), and the [Tauri platform prerequisites](https://v2.tauri.app/start/prerequisites/). Clone this repository, enter its directory, then run:
 
 ```bash
+git clone https://github.com/zzephyrxx/SyncFu.git
+cd SyncFu
 npm ci
 ```
 

@@ -72,7 +72,7 @@ SyncFu 把一次同步集中到一张清单：检查文件变化，选择新增�
 克隆本仓库，进入项目目录，然后执行：
 
 ```bash
-git clone git@github.com:zzephyrxx/SyncFu.git
+git clone https://github.com/zzephyrxx/SyncFu.git
 cd SyncFu
 npm ci
 ```
