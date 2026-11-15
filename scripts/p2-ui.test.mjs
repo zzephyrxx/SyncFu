@@ -3,7 +3,7 @@ import { readFileSync,readdirSync } from 'node:fs';
 import { test } from 'node:test';
 import { usageScale } from '../src/prototype/usage.ts';
 import { compareText } from '../src/desktop/line-diff.ts';
-import { defaultSelection,decisionSelection,handoffBlock,canConfirm,requireProtocol } from '../src/desktop/selection.ts';
+import { defaultSelection,decisionSelection,canConfirm,requireProtocol } from '../src/desktop/selection.ts';
 import { policyFixtures, conflictPreviewFixture, decisionFixtures, usageFixture } from '../src/generated/policy-fixtures.ts';
 import { normalisePreferences,persistPreferences,readPreferences,defaults } from '../src/prototype/preferences.ts';
 const policy=policyFixtures[2].state.current;
@@ -53,11 +53,6 @@ test('confirmation rechecks live policy revision, peer, pause and unfinished wor
   const cases=[s=>{s.paused_all=true},s=>{s.policy_states[0].paused=true},s=>{s.policy_states[0].state.current.revision++},s=>{s.policy_states[0].state.pending={}},s=>{s.peers[0].online=false},s=>{s.history.push({status:'pending'})}];
   for(const mutate of cases){const s=snapshot();mutate(s);assert.equal(canConfirm(s,plan,['create']),false);}
   assert.equal(canConfirm(snapshot(),plan,[]),false);assert.equal(canConfirm(snapshot(),{...plan,comparison:{...plan.comparison,issues:['blocked']}},['create']),false);
-});
-test('handoff checks refuse reverse direction and local safety vetoes',()=>{
-  const s=snapshot();assert.equal(handoffBlock(s,task),null);
-  s.policy_states[0].state.current.direction={mode:'one_way_update',source_device:task.peer};assert.equal(handoffBlock(s,task),'directionBlocked');
-  s.policy_states[0].paused=true;assert.equal(handoffBlock(s,task),'paused');s.peers[0].online=false;assert.equal(handoffBlock(s,task),'offline');
 });
 test('production and prototype preferences are isolated by namespace',()=>{
   const values=new Map();const storage={getItem:key=>values.get(key)??null,setItem:(key,value)=>values.set(key,value)};

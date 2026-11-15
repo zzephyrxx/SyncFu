@@ -1,10 +1,10 @@
 import { useState } from 'react';
-import { ArrowLeftRight, ArrowRight, Check, ChevronLeft, FileText, Folder, ShieldAlert } from 'lucide-react';
+import { ArrowLeftRight, ArrowRight, Check, ChevronLeft, FileText, Folder } from 'lucide-react';
 import { Checkbox, Notice, Toggle } from '../components';
 import { usePrototype } from './context';
-import { Art, Dialog, Help, Status, SuccessMark } from './UI';
+import { Art, Dialog, Help } from './UI';
 import PairingDialog from './PairingDialog';
-import { canManage, canResolve, evaluateHandoff, isIgnored, localDevice, managedChanges, remoteDevice, type DemoChange, type DemoTask, type Mode, type Resolution } from './model';
+import { canManage, canResolve, isIgnored, localDevice, managedChanges, remoteDevice, type DemoChange, type DemoTask, type Mode, type Resolution } from './model';
 
 export function TaskWizard({ onClose, onCreate }: { onClose: () => void; onCreate: (task: DemoTask) => void }) {
   const { t, prefs } = usePrototype();
@@ -75,14 +75,6 @@ export function RiskDialog({ task, onClose, onApprove }: { task: DemoTask; onClo
     <div className="p-risk-list">{deletions.slice(0, 5).map(c => <div key={c.path}><FileText size={16} />{c.path}</div>)}{deletions.length > 5 && <span>{t('moreFiles', { n: deletions.length - 5 })}</span>}</div>
     <label className="p-consent"><Checkbox checked={approved} onChange={() => setApproved(!approved)} label={t('consent')} /><span>{t('consent')}</span></label><p className="p-body-copy">{t('backupFirst')}</p>
     <div className="modal-actions"><button onClick={onClose}>{t('remainPaused')}</button><button className="p-danger" disabled={!approved || !canManage(task)} onClick={onApprove}>{t('approveOnce')}</button></div>
-  </Dialog>;
-}
-export function HandoffDialog({ tasks, onClose }: { tasks: DemoTask[]; onClose: () => void }) {
-  const { t } = usePrototype(); const [selected, setSelected] = useState(new Set(tasks.map(task => task.id))); const [checked, setChecked] = useState(false);
-  const { ignored: ignoredCount, wrongDirection, blocked: problem } = evaluateHandoff(tasks.filter(task => selected.has(task.id)));
-  return <Dialog title={t('handoff')} description={t('handoffTarget', { device: remoteDevice })} onClose={onClose}>
-    {checked ? <div className="p-handoff-result">{problem || ignoredCount ? <Art kind="folder" size="large" /> : <SuccessMark />}<h2>{t(problem ? 'handoffBlocked' : ignoredCount ? 'ignoredState' : 'ready')}</h2>{problem ? <p>{t(wrongDirection ? 'handoffDirectionHelp' : 'handoffHelp')}</p> : ignoredCount > 0 && <p>{t('ignoredStateHelp')}</p>}</div> : <div className="p-handoff-list">{tasks.map(task => <label key={task.id}><Checkbox label={task.name} checked={selected.has(task.id)} onChange={() => setSelected(old => { const n = new Set(old); if (n.has(task.id)) n.delete(task.id); else n.add(task.id); return n; })} /><Art kind="folder" size="small" /><div><strong>{task.name}</strong><span>{task.mode !== 'both' && task.source === 'remote' ? t('directionBlocked') : <Status task={task} />}</span></div>{!task.online || task.paused || task.risk || task.problem || managedChanges(task).length > 0 || (task.mode !== 'both' && task.source === 'remote') ? <ShieldAlert size={18} /> : <Check size={18} />}</label>)}</div>}
-    <div className="modal-actions"><button onClick={onClose}>{t(checked ? 'back' : 'cancel')}</button>{!checked && <button className="primary" disabled={!selected.size} onClick={() => setChecked(true)}>{t('checkHandoff')}</button>}</div>
   </Dialog>;
 }
 export function IgnoredDialog({ task, onClose, onRestore }: { task: DemoTask; onClose: () => void; onRestore: (path: string) => void }) {

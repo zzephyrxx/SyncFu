@@ -60,6 +60,23 @@
       ]
     },
     {
+      "name": "select",
+      "project": "shadcn/ui",
+      "license": "MIT",
+      "source": "https://raw.githubusercontent.com/shadcn-ui/ui/main/apps/v4/registry/new-york-v4/ui/select.tsx",
+      "retrieved": "2026-11-15",
+      "snapshot": "docs/ui/upstream/select.tsx",
+      "sha256": "962830436bd0b7ee50e556f0747e277d6a86869ed27d167516346b15f26309d8",
+      "adaptedTo": "src/components/ui/select.tsx",
+      "adaptations": [
+        "Replace monorepo cn import with local clsx/tailwind-merge utility",
+        "Use separately installed @radix-ui/react-select instead of umbrella radix-ui",
+        "Use popper placement with viewport collision padding and scroll controls",
+        "Add AppSelect controlled application wrapper with reversible empty-value encoding",
+        "Apply shared token-based trigger/menu styling and ellipsis in select.css"
+      ]
+    },
+    {
       "name": "switch",
       "project": "shadcn/ui",
       "license": "MIT",

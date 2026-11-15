@@ -1,0 +1,26 @@
+/* Shared shadcn/Radix select geometry, including controls inside dialogs. */
+.sf-select-trigger[data-slot="select-trigger"]{box-sizing:border-box;display:inline-flex;align-items:center;justify-content:space-between;gap:10px;flex:none;width:160px;max-width:100%;min-width:0;height:35px;min-height:35px;padding:7px 10px;border:1px solid var(--input);border-radius:6px;background:var(--background);background-image:none;color:var(--foreground);font:inherit;font-size:12px;font-weight:400;line-height:1.5;text-align:left;box-shadow:0 1px 2px #00000004;appearance:none;cursor:pointer;outline:none;transition:background-color 120ms,border-color 120ms}
+/* Keep legacy dialog action-button rules from restyling the select trigger. */
+.bui-dialog button.sf-select-trigger[data-slot][data-size]{min-height:35px;padding:7px 10px;background:var(--background);border:1px solid var(--input);border-radius:6px;display:inline-flex;align-items:center;justify-content:space-between;gap:10px;font-size:12px}
+.sf-select-trigger[data-slot="select-trigger"]:hover:not(:disabled),.bui-dialog button.sf-select-trigger[data-slot][data-size]:hover:not(:disabled){background:var(--accent)}
+.sf-select-trigger[data-slot="select-trigger"]:focus-visible,.bui-dialog button.sf-select-trigger[data-slot][data-size]:focus-visible{outline:2px solid var(--ring);outline-offset:2px;box-shadow:none}
+.sf-select-trigger[data-slot="select-trigger"]:disabled,.bui-dialog button.sf-select-trigger[data-slot][data-size]:disabled{opacity:.45;cursor:not-allowed}
+.sf-select-trigger [data-slot="select-value"]{display:block;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sf-select-trigger[data-slot="select-trigger"]>svg{position:static;flex:none;width:16px;height:16px;margin:0;color:var(--muted-foreground);opacity:1;pointer-events:none}
+.sf-select-content[data-slot="select-content"]{z-index:310;box-sizing:border-box;min-width:min(max(144px,var(--radix-select-trigger-width)),calc(100vw - 24px));max-width:min(max(420px,var(--radix-select-trigger-width)),calc(100vw - 24px));max-height:min(328px,var(--radix-select-content-available-height));overflow:hidden;border:1px solid var(--border);border-radius:8px;padding:0;background:var(--popover);color:var(--popover-foreground);box-shadow:0 5px 18px #00000014;outline:none;animation:none}
+.sf-select-viewport{box-sizing:border-box;padding:4px;max-width:100%;max-height:inherit}
+.sf-select-item[data-slot="select-item"]{position:relative;display:flex;align-items:center;min-width:0;min-height:32px;padding:7px 30px 7px 9px;border:0;border-radius:4px;background:transparent;color:var(--popover-foreground);font-size:12px;font-weight:400;line-height:1.5;cursor:default;outline:none;user-select:none}
+.sf-select-item[data-highlighted]{background:var(--accent);color:var(--accent-foreground)}
+.sf-select-item[data-state="checked"]{font-weight:500}
+.sf-select-item[data-disabled]{opacity:.4;pointer-events:none}
+.sf-select-item-text{display:block;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sf-select-item>[data-slot="select-item-indicator"]{position:absolute;inset-inline-end:9px;display:flex;align-items:center;justify-content:center;width:14px;height:14px;color:var(--foreground)}
+.sf-select-item>[data-slot="select-item-indicator"] svg{width:14px;height:14px}
+.sf-select-content [data-slot="select-scroll-up-button"],.sf-select-content [data-slot="select-scroll-down-button"]{display:flex;align-items:center;justify-content:center;height:23px;padding:3px;background:var(--popover);color:var(--muted-foreground);cursor:default}
+.sf-select-content [data-slot="select-scroll-up-button"] svg,.sf-select-content [data-slot="select-scroll-down-button"] svg{width:15px;height:15px}
+.ui-form>label>.sf-select-trigger[data-slot],.sf-new-task-folder label>.sf-select-trigger[data-slot]{width:100%}
+.sf-new-task-peer>.sf-select-trigger[data-slot]{width:min(340px,100%)}
+.ui-skip-row>.sf-select-trigger[data-slot]{width:180px}
+@media(max-width:560px){.sf-new-task-peer>.sf-select-trigger[data-slot]{width:100%}}
+@media(prefers-reduced-motion:reduce){.sf-select-trigger[data-slot="select-trigger"]{transition:none}}
+@media(forced-colors:active){.sf-select-trigger[data-slot="select-trigger"],.sf-select-content[data-slot="select-content"]{border:1px solid ButtonText}.sf-select-item[data-highlighted]{background:Highlight;color:HighlightText}}

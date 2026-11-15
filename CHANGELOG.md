@@ -13,6 +13,7 @@ Development release. A versioned package is not a claim of production acceptance
 - A shadcn/Radix desktop interface with Lucide controls, Fluent Emoji device avatars, Phosphor status dots and react-file-icon file glyphs.
 - Persistent sidebar collapse, colored task folders, local device aliases and a compact endpoint-aware task form.
 - A 38px macOS toolbar aligned with native window controls, and light/dark themes controlled in Settings.
+- Consistent dropdown selectors, a static acknowledgements page, and a centered application About page.
 
 ### Project organization
 
@@ -27,6 +28,8 @@ Development release. A versioned package is not a claim of production acceptance
 - Pairing approval has a visible wait state and unlocks controls after at most 18 seconds.
 - Consumed pairing codes cannot appear valid again after a request disconnects.
 - Device and folder endpoints remain explicit in task creation and synchronization views.
+- Settings switch thumbs use one translation and remain within their tracks.
+- Removed the obsolete computer-handoff action and its dialogs.
 
 ### Validation and limitations
 

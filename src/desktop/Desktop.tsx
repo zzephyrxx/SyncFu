@@ -5,14 +5,14 @@ import {PrototypeProvider,usePrototype} from '../prototype/context';
 import type {UsageEvent} from '../prototype/usage';
 import type {MessageKey} from '../prototype/messages';
 import {useDesktopController,useTaskAutoCheck,type Transport} from './controller';
-import {Art,Button,Dialog,Dropdown,DropdownItem,DropdownPopover,DropdownTrigger,Help,IconButton,NavItem,Notice,Spinner} from './ui/UI';
+import {Art,Button,Dialog,Help,IconButton,NavItem,Notice,Spinner} from './ui/UI';
 import {AppIcon} from './ui/icons';
 import {LiveTask,LiveFooter,type LiveTaskView} from './LiveTask';
 import {LiveRules,LiveNewTask,LiveConflict,LiveConfirmation,LiveIgnored} from './LiveDialogs';
 import {LivePairing} from './LivePairing';
 import {LiveSettings} from './LiveSettings';
 import {DevicesPage} from './views/Devices';
-import {HistoryPage,HandoffDialog} from './views/Activity';
+import {HistoryPage} from './views/Activity';
 import {OverviewPage} from './views/Overview';
 import {TaskIcon,StatusDot} from './TaskIcon';
 import {DeviceAvatar} from './DeviceAvatar';
@@ -29,7 +29,7 @@ export default function Desktop({transport,testMode=false}:{transport?:Transport
 function BrowserBoundary(){const {t}=usePrototype();return <div className="board-app"><main className="ui-centered"><img src={logo} alt="SyncFu" width={64}/><h1>SyncFu</h1><p>{t('browserOnly')}</p>{import.meta.env.DEV&&<a href="/?desktop-test">{t('demo')}</a>}</main></div>;}
 function DesktopApp({transport,testMode}:{transport?:Transport;testMode:boolean}){
   const {t,prefs,setPref}=usePrototype();const {profiles}=useDeviceProfiles();const c=useDesktopController(transport);const [page,setPage]=useState<Page>(prefs.startup);const collapsed=prefs.sidebarCollapsed;const setCollapsed=(value:boolean)=>setPref('sidebarCollapsed',value);
-  const [dialog,setDialog]=useState<'new'|'pair'|'rules'|'ignored'|'handoff'|null>(null);const [conflict,setConflict]=useState<string[]|null>(null);const [taskView,setTaskView]=useState<LiveTaskView>({filter:'all',search:'',page:0});
+  const [dialog,setDialog]=useState<'new'|'pair'|'rules'|'ignored'|null>(null);const [conflict,setConflict]=useState<string[]|null>(null);const [taskView,setTaskView]=useState<LiveTaskView>({filter:'all',search:'',page:0});
   const workspace=useRef<HTMLDivElement>(null),focusPage=useRef(false);
   useEffect(()=>setTaskView({filter:'all',search:'',page:0}),[c.active]);
   useEffect(()=>{if(focusPage.current){workspace.current?.focus({preventScroll:true});focusPage.current=false;}},[page,c.active]);
@@ -53,11 +53,10 @@ function DesktopApp({transport,testMode}:{transport?:Transport;testMode:boolean}
       </div>
       <div className="sf-toolbar-context" data-tauri-drag-region={desktop?'':undefined}>
         <div className="sf-breadcrumb" data-tauri-drag-region={desktop?'':undefined}><span>{t(labels[page])}</span>{page==='tasks'&&task&&<><AppIcon name="ChevronRight" size={14}/><strong>{c.plan?.undo_of?t('undoPreview'):task.label}</strong></>}</div>
-        <Dropdown><DropdownTrigger className="sf-more-button" aria-label={t('moreTools')}><AppIcon name="MoreHorizontal" size={19}/></DropdownTrigger><DropdownPopover label={t('moreTools')}><DropdownItem disabled={c.busy||!c.snapshot.tasks.length} onSelect={()=>setDialog('handoff')}><AppIcon name="ArrowUpRight"/>{t('handoff')}</DropdownItem></DropdownPopover></Dropdown>
       </div>
     </header>
     <div className="sf-shell">
-      <aside className="sf-sidebar" id="app-sidebar" aria-label={t('moreTools')}>
+      <aside className="sf-sidebar" id="app-sidebar" aria-label="SyncFu">
         <Button className="sf-new-task" disabled={c.busy} onClick={newTask} aria-label={t('newTask')} title={t('newTask')}><AppIcon name="Plus" size={19}/><span>{t('newTask')}</span></Button>
         <nav className="sf-primary-nav" aria-label={t('overview')}>{([{id:'overview',icon:'LayoutDashboard'},{id:'devices',icon:'Laptop'},{id:'history',icon:'History'}] as const).map(item=><NavItem key={item.id} active={page===item.id} onClick={()=>go(item.id)} aria-label={t(labels[item.id])} title={t(labels[item.id])}><AppIcon name={item.icon} size={18}/><span>{t(labels[item.id])}</span>{item.id==='devices'&&<small className="sf-nav-count">{c.snapshot.peers.length+1}</small>}</NavItem>)}</nav>
         <div className="sf-sidebar-heading"><span>{t('tasks')}</span><span className="sf-task-count">{c.snapshot.tasks.length}</span></div>
@@ -82,7 +81,7 @@ function DesktopApp({transport,testMode}:{transport?:Transport;testMode:boolean}
         </div>{page==='tasks'&&<LiveFooter controller={c} onShowSelected={()=>setTaskView(old=>({...old,filter:old.filter==='selected'?'all':'selected',search:'',page:0}))}/>}
       </main>
     </div>
-    {dialog==='pair'&&<LivePairing c={c} onClose={()=>setDialog(null)}/>}{dialog==='new'&&<LiveNewTask c={c} onClose={()=>{setDialog(null);setPage('tasks');}}/>}{dialog==='rules'&&view&&<LiveRules key={`${view.task}-${view.state.current.revision}-${view.state.pending?.proposal.id??''}`} c={c} view={view} onClose={()=>setDialog(null)}/>}{dialog==='ignored'&&task&&<LiveIgnored c={c} task={task} onClose={()=>setDialog(null)} onRules={()=>setDialog('rules')}/>}{conflict&&c.plan&&<LiveConflict c={c} paths={conflict} onClose={()=>setConflict(null)} onExclude={excluded}/>} {dialog==='handoff'&&<HandoffDialog c={c} onClose={()=>setDialog(null)} onTask={goTask}/>}
+    {dialog==='pair'&&<LivePairing c={c} onClose={()=>setDialog(null)}/>}{dialog==='new'&&<LiveNewTask c={c} onClose={()=>{setDialog(null);setPage('tasks');}}/>}{dialog==='rules'&&view&&<LiveRules key={`${view.task}-${view.state.current.revision}-${view.state.pending?.proposal.id??''}`} c={c} view={view} onClose={()=>setDialog(null)}/>}{dialog==='ignored'&&task&&<LiveIgnored c={c} task={task} onClose={()=>setDialog(null)} onRules={()=>setDialog('rules')}/>}{conflict&&c.plan&&<LiveConflict c={c} paths={conflict} onClose={()=>setConflict(null)} onExclude={excluded}/>}
     {c.prepared&&<Dialog title={t(c.prepared.plan.undo_of?'undoPreview':'confirmTransfer')} onClose={()=>c.setPrepared(null)}><LiveConfirmation key={c.prepared.preview.selection_digest} c={c}/></Dialog>}
   </div>;
 }

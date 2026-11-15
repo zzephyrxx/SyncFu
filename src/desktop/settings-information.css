@@ -1,0 +1,33 @@
+.sf-about{max-width:440px;margin:0 auto;padding:22px 0 10px}
+.sf-about-brand{display:flex;flex-direction:column;align-items:center;text-align:center;padding:8px 16px 30px}
+.sf-about-icon{display:block;width:96px;height:96px;object-fit:contain;padding:10px;border:1px solid var(--sf-border);border-radius:22px;background:#fff;box-shadow:0 2px 5px #00000006}
+.sf-about-brand h2{margin:20px 0 7px;font-size:28px;line-height:1.25;font-weight:650;letter-spacing:-.04em}
+.sf-about-version{display:inline-flex;padding:3px 8px;border:1px solid var(--sf-border);border-radius:5px;font-size:11px;line-height:1.5;color:var(--sf-muted);background:var(--sf-soft)}
+.sf-about-slogan{margin:18px 0 0;font-size:14px;line-height:1.6;color:var(--sf-muted)}
+.sf-about-details{margin:0;border-top:1px solid var(--sf-border)}
+.sf-about-details>div{display:flex;align-items:baseline;justify-content:space-between;gap:20px;padding:15px 0;border-bottom:1px solid var(--sf-border);font-size:12px;line-height:1.5}
+.sf-about-details dt{color:var(--sf-muted)}
+.sf-about-details dd{margin:0;text-align:right;font-weight:500}
+.sf-about-links{display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:12px;margin-top:22px;font-size:12px}
+.sf-about-links>a{color:var(--sf-ink);text-underline-offset:4px;text-decoration:underline;text-decoration-color:var(--sf-border-strong)}
+.sf-about-links>a:hover{text-decoration-color:currentColor}
+.sf-about-links>.bui-button{height:30px;font-size:12px}
+.sf-acknowledgements>h2{font-size:17px;line-height:1.4;font-weight:600;margin:0 0 10px}
+.sf-acknowledgements-intro{font-size:12px;line-height:1.8;color:var(--sf-muted);margin:0 0 14px;max-width:60ch}
+.sf-acknowledgements-list{list-style:none;margin:0;padding:0}
+.sf-acknowledgements-list>li{padding:16px 0;border-bottom:1px solid var(--sf-border)}
+.sf-acknowledgement-heading{display:flex;align-items:center;justify-content:space-between;gap:16px}
+.sf-acknowledgement-heading>a:first-child{color:var(--sf-ink);font-size:13px;font-weight:550;text-decoration:none;text-underline-offset:4px}
+.sf-acknowledgement-heading>a:first-child:hover{text-decoration:underline}
+.sf-acknowledgement-heading>.sf-license-badge{flex:none;border:1px solid var(--sf-border);border-radius:4px;padding:2px 6px;font-size:10px;line-height:1.5;color:var(--sf-muted);text-decoration:none;background:var(--sf-soft)}
+.sf-acknowledgement-heading>.sf-license-badge:hover{color:var(--sf-ink);border-color:var(--sf-border-strong)}
+.sf-acknowledgements-list p{font-size:12px;line-height:1.7;color:var(--sf-muted);margin:6px 0 0}
+.sf-acknowledgements-history{margin-top:28px}
+.sf-acknowledgements-history h3{font-size:12px;font-weight:550;margin:0 0 8px}
+.sf-acknowledgements-history>p{font-size:11px;line-height:1.7;color:var(--sf-muted);margin:0}
+.sf-acknowledgements-history ul{display:flex;flex-wrap:wrap;gap:12px 20px;list-style:none;margin:12px 0 0;padding:0}
+.sf-acknowledgements-history li{display:flex;gap:8px;align-items:center;font-size:11px;color:var(--sf-muted)}
+.sf-acknowledgements-history a{color:var(--sf-muted);text-underline-offset:3px}
+.sf-about a:focus-visible,.sf-acknowledgements a:focus-visible{outline:2px solid var(--ring);outline-offset:3px;border-radius:3px}
+@media(max-width:850px){.sf-about{padding-top:4px}.sf-about-brand{padding-top:0}.sf-about-icon{width:80px;height:80px;border-radius:18px}.sf-about-brand h2{font-size:25px;margin-top:16px}}
+@media(max-height:650px){.sf-about{padding-top:0}.sf-about-brand{padding-bottom:20px}.sf-about-icon{width:72px;height:72px;border-radius:16px}.sf-about-brand h2{margin-top:14px}.sf-about-slogan{margin-top:12px}}

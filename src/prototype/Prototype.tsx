@@ -1,6 +1,6 @@
 import '../styles.css';
 import { useEffect, useState } from 'react';
-import { ArrowUpRight, BarChart3, Check, ChevronRight, Folder, History, Laptop, Menu, Monitor, Moon, Plus, Settings2, Sun, X } from 'lucide-react';
+import { BarChart3, Check, ChevronRight, Folder, History, Laptop, Menu, Monitor, Moon, Plus, Settings2, Sun, X } from 'lucide-react';
 import { Notice } from '../components';
 import { PrototypeProvider, usePrototype } from './context';
 import { Art, Dialog, Help, Status } from './UI';
@@ -8,13 +8,13 @@ import TaskWorkspace, { TaskFooter, type TaskAction, type TaskView } from './Tas
 import Overview from './Overview';
 import Settings from './Settings';
 import PairingDialog from './PairingDialog';
-import { ConflictDialog, HandoffDialog, IgnoredDialog, PolicyDialog, RiskDialog, TaskWizard } from './Dialogs';
+import { ConflictDialog, IgnoredDialog, PolicyDialog, RiskDialog, TaskWizard } from './Dialogs';
 import { chosenChanges, executeDemo, isPending, localDevice, makeTasks, managedChanges, remoteDevice, resolveChange, restoreDemo, type DemoChange, type DemoTask, type Resolution, type Scenario } from './model';
 import { seedUsage, transferredBytes, type UsageEvent } from './usage';
 import type { MessageKey, Values } from './messages';
 import './prototype.css';
 type Page = 'tasks' | 'overview' | 'devices' | 'history' | 'settings';
-type DialogId = TaskAction | 'new' | 'pair' | 'handoff' | 'confirm' | 'remove' | 'undo' | null;
+type DialogId = TaskAction | 'new' | 'pair' | 'confirm' | 'remove' | 'undo' | null;
 interface Batch { id: string; task: string; name: string; createdAt: number; changes: DemoChange[]; undone: boolean }
 const scenarios: { id: Scenario; key: MessageKey }[] = [{ id: 'changes', key: 'scenarioChanges' }, { id: 'clean', key: 'ready' }, { id: 'offline', key: 'offline' }, { id: 'empty', key: 'scenarioEmpty' }, { id: 'permission', key: 'permission' }, { id: 'partial', key: 'partial' }, { id: 'shared', key: 'shared' }];
 const iconUrl = new URL('../../assets/syncfu-icon.svg', import.meta.url).href;
@@ -75,7 +75,7 @@ function PrototypeApp() {
       <button className="p-add-task" title={t('newTask')} aria-label={t('newTask')} disabled={busy} onClick={() => setDialog('new')}><Plus size={19} /><span>{t('newTask')}</span></button>
       <nav className="p-sidebar-bottom" aria-label={t('settings')}>{([{ id: 'devices', icon: Laptop }, { id: 'history', icon: History }, { id: 'settings', icon: Settings2 }] as const).map(({ id, icon: Icon }) => <button key={id} title={t(pageKey[id])} className={page === id ? 'active' : ''} aria-current={page === id ? 'page' : undefined} onClick={() => { setPage(id); setFeedback(null); }}><Icon size={20} /><span>{t(pageKey[id])}</span></button>)}</nav>
     </aside>
-    <main className="p-main"><header className="p-topbar"><div className="p-topbar-context"><button className="p-icon" aria-label={t('collapse')} onClick={() => setCollapsed(!collapsed)}><Menu size={19} /></button><span>{t(pageKey[page])}</span>{page === 'tasks' && task && <><ChevronRight size={14} /><strong>{task.name}</strong></>}</div><div className="p-topbar-actions"><button className="p-icon" aria-label={t(dark ? 'light' : 'dark')} onClick={() => setPref('theme', dark ? 'light' : 'dark')}>{dark ? <Sun size={19} /> : <Moon size={19} />}</button><button disabled={!tasks.length || busy} onClick={() => setDialog('handoff')}><ArrowUpRight size={17} /><span>{t('handoff')}</span></button></div></header>
+    <main className="p-main"><header className="p-topbar"><div className="p-topbar-context"><button className="p-icon" aria-label={t('collapse')} onClick={() => setCollapsed(!collapsed)}><Menu size={19} /></button><span>{t(pageKey[page])}</span>{page === 'tasks' && task && <><ChevronRight size={14} /><strong>{task.name}</strong></>}</div><div className="p-topbar-actions"><button className="p-icon" aria-label={t(dark ? 'light' : 'dark')} onClick={() => setPref('theme', dark ? 'light' : 'dark')}>{dark ? <Sun size={19} /> : <Moon size={19} />}</button></div></header>
       <div className="p-workspace">
         {feedback && (prefs.successMessages || feedback.warning) && <div className={`p-feedback ${feedback.warning ? 'warning' : ''}`} role="status"><Check size={17} /><span>{t(feedback.key, feedback.values)}</span><button className="p-icon" aria-label={t('close')} onClick={() => setFeedback(null)}><X size={16} /></button></div>}
         {page === 'tasks' && (task ? <TaskWorkspace key={task.id} task={task} view={taskView} onView={setTaskView} busy={busy} stage={scanning ? 'scan' : job ? (['prepare', 'transfer', 'verify'] as const)[job.step] : null} onUpdate={updateTask} onPause={pause} onInspect={() => setScanning(true)} onStop={() => { setJob(null); setScanning(false); notify('stopped'); }} onDialog={action} onConflict={setConflict} /> : <div className="p-centered p-empty-home"><Art kind="folder" size="large" /><h1>{t('emptyTitle')}</h1><Help>{t('emptyHelp')}</Help><button className="primary" onClick={() => setDialog('new')}><Plus size={18} />{t('newTask')}</button><button className="p-link" onClick={() => setDialog('pair')}>{t('connect')}</button></div>)}
@@ -89,7 +89,6 @@ function PrototypeApp() {
     {dialog === 'pair' && <PairingDialog onClose={() => setDialog(null)} />}
     {dialog === 'new' && <TaskWizard onClose={() => setDialog(null)} onCreate={created => { setTasks(old => [...old, created]); openTask(created.id); setDialog(null); }} />}
     {dialog === 'policy' && task && <PolicyDialog task={task} onClose={() => setDialog(null)} onSave={next => { updateTask(next); setDialog(null); notify('taskSaved'); }} />}
-    {dialog === 'handoff' && <HandoffDialog tasks={tasks} onClose={() => setDialog(null)} />}
     {dialog === 'risk' && task && <RiskDialog task={task} onClose={() => setDialog(null)} onApprove={() => { updateTask({ ...task, risk: false, changes: task.changes.map(c => c.kind === 'delete' ? { ...c, selected: true } : c) }); setDialog(null); }} />}
     {dialog === 'ignored' && task && <IgnoredDialog task={task} onClose={() => setDialog(null)} onRestore={path => updateTask({ ...task, changes: task.changes.map(c => c.path === path ? { ...c, resolution: undefined, selected: false } : c) })} />}
     {conflictChange && task && <ConflictDialog task={task} change={conflictChange} onClose={() => setConflict(null)} onResolve={resolve} />}

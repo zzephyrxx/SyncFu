@@ -7,22 +7,7 @@ import { defaults, normalisePreferences, persistPreferences, preferenceKey, read
 import { pairingPhase, pairingReducer, initialPairState } from '../src/prototype/pairing.ts';
 import { seedUsage, summariseUsage, transferredBytes } from '../src/prototype/usage.ts';
 import { shouldAnimate } from '../src/prototype/motion-policy.ts';
-import { evaluateHandoff, makeTasks, resolveChange, executeDemo } from '../src/prototype/model.ts';
-
-test('handoff respects direction, local vetoes and unfinished work', () => {
-  const clean = makeTasks('clean')[0];
-  assert.deepEqual(evaluateHandoff([clean]), { blocked: false, wrongDirection: false, ignored: 0 });
-  assert.equal(evaluateHandoff([{ ...clean, mode: 'update', source: 'remote' }]).wrongDirection, true);
-  assert.equal(evaluateHandoff([{ ...clean, mode: 'update', source: 'remote' }]).blocked, true);
-  for (const override of [{ paused: true }, { online: false }, { risk: true }, { problem: 'partial' }]) assert.equal(evaluateHandoff([{ ...clean, ...override }]).blocked, true);
-  assert.equal(evaluateHandoff([makeTasks()[0]]).blocked, true);
-});
-test('ignored content is disclosed separately from a completely clean handoff', () => {
-  const clean = makeTasks('clean')[0];
-  const ignored = resolveChange(makeTasks()[0], '笔记/工作交接.md', 'version').changes.find(c => c.path === '笔记/工作交接.md');
-  const result = evaluateHandoff([{ ...clean, changes: [ignored] }]);
-  assert.equal(result.ignored, 1); assert.equal(result.blocked, false);
-});
+import { makeTasks, resolveChange, executeDemo } from '../src/prototype/model.ts';
 
 test('system reduced motion and application settings override visual preferences', () => {
   assert.equal(shouldAnimate('full', true, false), false);

@@ -103,12 +103,6 @@ export function restoreDemo(task: DemoTask, changes: DemoChange[]): DemoTask {
   const paths = new Set(changes.map(c => c.path));
   return { ...task, paused: true, changes: [...task.changes.filter(c => !paths.has(c.path)), ...changes.map(c => ({ ...c }))] };
 }
-export function evaluateHandoff(tasks: DemoTask[]) {
-  const wrongDirection = tasks.some(task => task.mode !== 'both' && task.source === 'remote');
-  const ignored = tasks.reduce((sum, task) => sum + managedChanges(task).filter(isIgnored).length, 0);
-  const blocked = wrongDirection || tasks.some(task => !task.online || task.paused || task.risk || task.problem || managedChanges(task).some(c => !isIgnored(c)));
-  return { blocked, wrongDirection, ignored };
-}
 export const scenarios: { id: Scenario; name: string }[] = [
   { id: 'changes', name: '变化与冲突' }, { id: 'clean', name: '文件已一致' }, { id: 'offline', name: '设备离线' },
   { id: 'empty', name: '首次使用' }, { id: 'permission', name: '目录权限不足' }, { id: 'partial', name: '中断与核对' },
