@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 import { usePrototype } from '../prototype/context';
-import { AppIcon } from './boardui/icons';
+import { AppIcon } from './ui/icons';
 import { fileIdentity } from './focus-model';
 import { TaskIcon, StatusDot } from './TaskIcon';
 import './sync-route.css';

@@ -1,13 +1,6 @@
-# Contributing to SyncFu
+# Contributing to SyncFu 0.1.0
 
-感谢你参与 SyncFu。请让每个改动聚焦一个问题，并保持文件同步的安全边界。一般问题可使用 Issue 模板；涉及漏洞时先阅读 [SECURITY.md](SECURITY.md)。
-
-## 开始之前
-
-- 先检查已有 Issue，较大的行为或界面变更请先说明问题、目标和兼容性影响。
-- 使用独立分支和专用测试目录。不要把日常资料作为覆盖、删除或镜像测试对象。
-- 不提交配对码、设备私钥、系统凭据、应用数据库、备份内容或本机工具配置。
-- 保留原 SyncFu 品牌素材；UI 改造不应顺带替换 Logo。
+请让改动聚焦一个问题，并保持文件同步的安全边界。一般问题使用 Issue 模板；涉及漏洞时先阅读 [SECURITY.md](SECURITY.md)。
 
 ## 开发环境
 
@@ -15,79 +8,61 @@
 
 ```bash
 npm ci
-```
-
-```bash
 npm run tauri dev
 ```
 
-仅检查界面可运行 `npm run dev` 并打开 `http://localhost:1420/?desktop-test`。该开发夹具不接入真实文件系统；不要把它的结果描述为实体双机通过。
+界面夹具：运行 `npm run dev` 并打开 `http://localhost:1420/?desktop-test`。它不接入真实同步目录，不能代替实体双机测试。
+
+完整构建与 Windows 源码包流程见 [构建指南](docs/building.md)。统一版本源为 `package.json`；Rust 包、锁文件根包和 Tauri 配置必须保持一致，构建工具会检查。
 
 ## 提交前检查
 
-前端测试先生成生产包，再验证业务、契约和生产隔离规则：
-
 ```bash
 npm test
-```
-
-```bash
-cargo test --locked -p syncfu-core
-```
-
-```bash
 cargo fmt --all --check
-```
-
-```bash
+cargo test --locked -p syncfu-core
 cargo clippy --locked -p syncfu-core --all-targets -- -D warnings
-```
-
-```bash
 cargo run --locked -p syncfu-core --features bindings --example export_policy_contract -- --check
 ```
 
-如果有意修改契约，请使用生成器更新 TypeScript 输出，再检查差异、补测试并评估协议兼容性；不要手工修改生成文件来掩盖漂移。
+有意修改协议契约时，使用生成器更新 TypeScript 输出，并评估兼容性：
 
 ```bash
 cargo run --locked -p syncfu-core --features bindings --example export_policy_contract
 ```
 
-性能用例默认不跑；需要单独记录机器、构建模式、数据规模和测量条件。回环数字不是跨平台 LAN 吞吐承诺。
+不要手工修改生成文件来掩盖漂移。性能用例应单独记录机器、数据规模与测量条件；回环测量不是跨平台 LAN 吞吐承诺。
 
-## 不可省略的安全边界
+## 界面约定
 
-- 目录授权、对等身份、任务规则、管理权限和写前校验由内核权威检查，不能只依赖禁用按钮。
-- 用户的一次执行必须绑定确切计划、内容指纹和所选项目；陈旧批准不得复用。
-- 不为速度移除 SHA-256、no-follow／授权根约束、覆盖前备份或删除风险门禁。
-- 暂停是本机否决权。恢复暂停、切换主题或重新连接不能自动恢复写入。
-- 默认不勾选删除或未解决冲突。必要目录扩展、所选冲突覆盖和撤销仍需最终审阅。
-- 当前自动检查只读。自动写入调度属于单独的设计和安全评审范围。
+正式界面位于 `src/desktop/`，共享控件位于 `src/components/ui/`，业务组件适配层位于 `src/desktop/ui/`。采用 shadcn/Radix，操作与设备类型图标使用 Lucide，设备头像使用 Fluent Emoji，状态圆点使用 Phosphor，文件类型使用 react-file-icon。保留原 SyncFu Logo 和第三方来源记录。
 
-## 界面与测试约定
+界面变更检查浅深主题、常用语言、窄窗口、长文件名、键盘、空状态和错误状态。截图使用测试数据，说明未测试的平台。仅为有意义的行为回归补测试，避免只验证实现细节。
 
-正式入口是 `src/desktop/`，使用 `src/desktop/boardui/` 的组件和 token。仅保留纯色浅／深主题，操作图标走 Morphicons，原 Logo 不经图标适配器处理。
+## 数据与操作边界
 
-行为修复应补回归用例。界面变更应检查亮暗、常用语言、窄窗口、长文件名、键盘操作、空／错误／部分结果状态；截图使用夹具并去除私人信息。记录未测试的平台，不以浏览器截图代替原生 WebView 验证。
+- 使用专用测试目录；不要用日常资料测试覆盖、删除或镜像。
+- 目录授权、对等身份、任务规则、管理权限和写前校验由内核检查。
+- 一次执行必须绑定确切计划、内容指纹和选择，陈旧批准不可复用。
+- 保留 SHA-256、授权根约束、覆盖前备份、删除风险门禁和后续编辑保护。
+- 暂停是本机否决权；恢复暂停、切换主题或重连不应自动写入。
+- 默认不选删除和未解决冲突；必要目录扩展、冲突覆盖和撤销仍需审阅。
+- 不提交配对码、私钥、系统凭据、应用数据库、备份内容或本机代理／工具设置。
 
-## 验收快照
-
-`docs/acceptance/source-manifest.json` 用于匹配两端验收源码，不是发布者签名。源码变更后，只有在准备新的验收快照并完成相应检查时才运行：
-
-```bash
-node scripts/freeze-acceptance.mjs
-```
+## 源码包与目录
 
 ```bash
-node scripts/build-acceptance.mjs windows --verify-only
+node scripts/package-source.mjs
 ```
 
-新建快照不会让旧结果自动适用于新代码。保留结果的日期、实际验证范围和历史构建 ID，不把未运行的检查改为通过。
+该命令从明确的源码目录清单生成 `releases/0.1.0/SyncFu-0.1.0-windows-source.zip`，附带包内源码 SHA-256 清单。解压后可运行 `node scripts/build.mjs windows --verify-only` 检查完整性；这不是编译测试或发布者签名。
+
+源码包是固定快照。开发请使用 Git checkout；修改源码包中的文件会使其校验失败，应从修改后的开发仓库重新打包。
+
+`releases/`、`target/`、`dist/` 和 `node_modules/` 均为本机构建输出，不提交。历史文档只保留在 `docs/archive/`，新增说明放入现有构建、测试或 UI 文档，不再创建按迭代名称区分的发布目录。
 
 ## Pull Request
 
-请说明解决的问题、改动范围、验证命令和未测试部分。涉及用户界面时附脱敏截图；涉及同步、权限、删除或恢复时列出故障／中断场景。
+说明问题、最终行为、验证命令与未测试部分。涉及界面时附脱敏截图；涉及同步、删除或恢复时说明故障与中断场景。采用 `feat:`、`fix:`、`docs:`、`test:` 等明确提交前缀。
 
-尽量保持提交小而清晰，不混入无关格式化、依赖大升级或生成产物。采用 `feat:`、`fix:`、`docs:`、`test:` 等明确的提交前缀即可。讨论应围绕行为和证据，保持尊重。
-
-提交贡献意味着你有权提交相应内容，并同意项目 [Apache-2.0](LICENSE) 许可；第三方来源必须保留各自许可与归属。
+提交贡献意味着你有权提交相应内容，并同意项目 [Apache-2.0](LICENSE) 许可；第三方来源必须保留许可与归属。

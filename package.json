@@ -11,8 +11,11 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc --noEmit && vite build",
-    "test": "npm run build && node --test scripts/prototype.test.mjs scripts/prototype-v2.test.mjs scripts/p1-contract.test.mjs scripts/p2-ui.test.mjs scripts/focus-ui.test.mjs scripts/material-ui.test.mjs scripts/boardui-sync.test.mjs scripts/boardui-visual.test.mjs scripts/acceptance-data.test.mjs scripts/device-profiles.test.mjs",
-    "tauri": "tauri"
+    "test": "npm run build && node --test scripts/*.test.mjs",
+    "tauri": "tauri",
+    "build:windows": "node scripts/build.mjs windows",
+    "build:macos": "node scripts/build.mjs macos",
+    "package:source": "node scripts/package-source.mjs"
   },
   "dependencies": {
     "@fontsource-variable/inter": "^5.3.0",
@@ -28,12 +31,9 @@
     "@tauri-apps/api": "^2.8.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
-    "lucide": "^0.548.0",
     "lucide-react": "^0.548.0",
-    "morphicons": "^2.0.2",
     "motion": "^14.13.0",
     "react": "^19.2.0",
-    "react-aria-components": "^1.22.1",
     "react-dom": "^19.2.0",
     "react-file-icon": "^1.6.0",
     "tailwind-merge": "^3.7.0"

@@ -1,5 +1,5 @@
 import { execFileSync } from 'node:child_process';
-import { copyFileSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from 'node:fs';
+import { copyFileSync, cpSync, mkdirSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
 import { basename, dirname, join } from 'node:path';
 
 const output = 'target/third-party-notices';
@@ -12,6 +12,7 @@ for (const [directory, item] of Object.entries(JSON.parse(readFileSync('package-
     packages.push({ name: directory.slice('node_modules/'.length), version: item.version, license: item.license || '(see included notices)', folder: directory });
   }
 }
+rmSync(output, { recursive: true, force: true });
 mkdirSync(output, { recursive: true });
 for (const { name, version, folder } of packages) {
   let entries;
@@ -22,16 +23,8 @@ for (const { name, version, folder } of packages) {
     copyFileSync(join(folder, item.name), join(out, basename(item.name)));
   }
 }
-for (const [source,name] of [['assets/fluent-emoji/LICENSE.txt','Microsoft-Fluent-Emoji'],['assets/streamline/LICENSE-Phosphor.txt','Phosphor-Icons']]) {
-  const out=join(output,name);mkdirSync(out,{recursive:true});copyFileSync(source,join(out,'LICENSE.txt'));
-}
-copyFileSync('assets/fluent-emoji/sources.json',join(output,'Microsoft-Fluent-Emoji','sources.json'));
-const shadcnNotices=join(output,'Shadcn-Tauri-UI-sources');mkdirSync(shadcnNotices,{recursive:true});
-for(const entry of readdirSync('assets/shadcn-licenses',{withFileTypes:true})){
-  if(entry.isFile())copyFileSync(join('assets/shadcn-licenses',entry.name),join(shadcnNotices,entry.name));
-}
-const materialNotices=join(output,'Material-UI-sources');mkdirSync(materialNotices,{recursive:true});
-for(const name of readdirSync('assets/material-licenses'))copyFileSync(join('assets/material-licenses',name),join(materialNotices,name));
-const boardNotices=join(output,'BoardUI-sources');mkdirSync(boardNotices,{recursive:true});
-for(const name of readdirSync('assets/boardui-licenses'))copyFileSync(join('assets/boardui-licenses',name),join(boardNotices,name));
+const fluentNotices=join(output,'Microsoft-Fluent-Emoji');mkdirSync(fluentNotices,{recursive:true});
+copyFileSync('assets/fluent-emoji/LICENSE.txt',join(fluentNotices,'LICENSE.txt'));
+copyFileSync('assets/fluent-emoji/sources.json',join(fluentNotices,'sources.json'));
+cpSync('assets/licenses',join(output,'UI-and-assets'),{recursive:true});
 writeFileSync(join(output, 'DEPENDENCIES.txt'), packages.map(item => `${item.name} ${item.version}: ${item.license}`).sort().join('\n') + '\n');

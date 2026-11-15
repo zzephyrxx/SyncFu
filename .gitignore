@@ -5,7 +5,9 @@
 /target/
 /src-tauri/gen/
 /artifacts/
-/acceptance-data/
+/releases/
+/source-manifest.json
+/test-data/
 /coverage/
 
 # Local agent/editor state (never publish credentials or permission settings)

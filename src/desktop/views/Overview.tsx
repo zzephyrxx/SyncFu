@@ -1,8 +1,8 @@
 import {useMemo,useState} from 'react';
-import {BarChart3,Table2} from '../boardui/glyphs';
+import {BarChart3,Table2} from '../ui/glyphs';
 import {usePrototype} from '../../prototype/context';
 import {summariseUsage,usageScale,type UsageEvent} from '../../prototype/usage';
-import {Art,Button,Help,Panel} from '../boardui/UI';
+import {Art,Button,Help,Panel} from '../ui/UI';
 // Existing real-record aggregation is unchanged; only the desktop presentation owns this view.
 export function OverviewPage({events,enabled,onSettings}:{events:UsageEvent[];enabled:boolean;onSettings:()=>void}){
   const {t,bytes,number,date}=usePrototype();const [range,setRange]=useState<7|30>(7);const [table,setTable]=useState(false);const [hover,setHover]=useState<number|null>(null);

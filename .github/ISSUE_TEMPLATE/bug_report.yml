@@ -19,14 +19,14 @@ body:
     id: revision
     attributes:
       label: Revision or build ID / 版本或构建 ID
-      placeholder: Commit SHA, acceptance build ID, or artifact name
+      placeholder: 0.1.0, commit SHA, or artifact name
     validations:
       required: true
   - type: textarea
     id: environment
     attributes:
       label: Environment / 运行环境
-      description: List both peers if relevant; OS version, CPU architecture, normal or acceptance app, native or browser fixture.
+      description: List both peers if relevant; OS version, CPU architecture, SyncFu version, native app or browser fixture.
     validations:
       required: true
   - type: textarea

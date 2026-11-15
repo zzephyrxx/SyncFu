@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import { CheckCircle2, ExternalLink, ShieldCheck } from './boardui/glyphs';
-import { Notice } from './boardui/UI';
+import { CheckCircle2, ExternalLink, ShieldCheck } from './ui/glyphs';
+import { Notice } from './ui/UI';
 import { usePrototype } from '../prototype/context';
 import type { DesktopController } from './controller';
 type Report={platform:string;port:number;addresses:string[];listener_error:string|null;firewall:{private_network:boolean;syncfu_rule:boolean}|null};

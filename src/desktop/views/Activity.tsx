@@ -1,6 +1,6 @@
 import {useState} from 'react';
-import {CheckCircle2,Clock3,Folder,History,RotateCcw} from '../boardui/glyphs';
-import {Art,Button,Dialog,Spinner} from '../boardui/UI';
+import {CheckCircle2,Clock3,Folder,History,RotateCcw} from '../ui/glyphs';
+import {Art,Button,Dialog,Spinner} from '../ui/UI';
 import {usePrototype} from '../../prototype/context';
 import type {MessageKey} from '../../prototype/messages';
 import type {Batch,Plan} from '../../types';

@@ -2,7 +2,7 @@ import {fileIdentity,fileKind} from './focus-model';
 import {usePrototype} from '../prototype/context';
 import {FileIcon,defaultStyles,type FileIconProps} from 'react-file-icon';
 import {Send} from 'lucide-react';
-import {Dropdown,DropdownPopover,DropdownTrigger} from './boardui/UI';
+import {Dropdown,DropdownPopover,DropdownTrigger} from './ui/UI';
 import {TaskIcon} from './TaskIcon';
 import './file-identity.css';
 const fallback:FileIconProps={type:'document',color:'#edf0f4',foldColor:'#d9dfe8',glyphColor:'#748196',labelColor:'#748196'};

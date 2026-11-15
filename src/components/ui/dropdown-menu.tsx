@@ -1,4 +1,4 @@
-// Adapted from shadcn/ui (MIT © 2023 shadcn). See docs/shadcn-redesign/sources.json.
+// Adapted from shadcn/ui (MIT © 2023 shadcn). See docs/ui/sources.json.
 "use client"
 
 import * as React from "react"

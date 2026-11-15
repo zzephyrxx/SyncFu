@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react';
-import { Folder, ShieldAlert } from './boardui/glyphs';
+import { Folder, ShieldAlert } from './ui/glyphs';
 import { Checkbox as ConsentCheckbox } from '../components/ui/selection';
-import { Notice, Spinner, Dialog, Art, Help, Button } from './boardui/UI';
-import { AppIcon } from './boardui/icons';
+import { Notice, Spinner, Dialog, Art, Help, Button } from './ui/UI';
+import { AppIcon } from './ui/icons';
 import { SyncRoute } from './SyncRoute';
 import { DeviceAvatar } from './DeviceAvatar';
 import { deviceDisplayName } from './device-metadata';

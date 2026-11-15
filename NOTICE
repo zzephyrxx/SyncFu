@@ -14,7 +14,7 @@ MIT). tauri-ui is a scaffolder, not a runtime component dependency.
 
 Vendored shadcn/ui components are adapted for SyncFu and use Radix primitives.
 shadcn/ui: Copyright (c) 2023 shadcn, MIT License.
-See assets/shadcn-licenses/ and docs/shadcn-redesign/ for source records.
+See assets/licenses/ and docs/ui/ for source records.
 
 Microsoft Fluent Emoji 3D device artwork is used without modification.
 Copyright (c) Microsoft Corporation, MIT License.

@@ -83,7 +83,7 @@ export const messages = {
   reconcilePolicy: ['核对策略', '核對策略', 'Reconcile policy', 'ルールを照合', '규칙 대조'],
   submitPolicy: ['提交策略', '提交策略', 'Propose policy', 'ルールを提案', '규칙 제안'],
   policySent: ['已提交，请在对端确认', '已提交，請在對端確認', 'Submitted. Confirm on the other device.', '送信しました。相手側で確認してください。', '제출했습니다. 상대 기기에서 확인하세요.'],
-  autoUnavailable: ['自动调度将在 P3 开启，目前只手动执行', '自動排程將於 P3 啟用，目前僅手動執行', 'Automatic scheduling arrives in P3; execution is manual for now', '自動実行は P3 で対応予定です。現在は手動実行です', '자동 실행은 P3에서 지원됩니다. 현재는 수동 실행입니다'],
+  autoUnavailable: ['当前版本仅支持手动同步', '目前版本僅支援手動同步', 'This version supports manual synchronization only', '現在のバージョンでは手動同期のみ対応しています', '현재 버전은 수동 동기화만 지원합니다'],
   localReview: ['仅影响本机审阅，不替对端作决定', '僅影響本機審閱，不替對端決定', 'Local review preference; does not decide for the other device', 'このデバイスの確認設定のみです。相手の選択は変更しません', '이 기기의 검토 설정에만 적용되며 상대의 결정을 바꾸지 않습니다'],
   structural: ['结构冲突：先人工改名或整理目录，再重新检查', '結構衝突：先手動重新命名或整理目錄，再檢查', 'Structural conflict: rename or reorganize the folders, then check again', '構造の競合です。名前やフォルダを整理してから再確認してください', '구조 충돌입니다. 이름이나 폴더를 정리한 후 다시 확인하세요'],
   missingFile: ['此端已删除', '此端已刪除', 'Deleted on this device', 'このデバイスでは削除済み', '이 기기에서 삭제됨'],

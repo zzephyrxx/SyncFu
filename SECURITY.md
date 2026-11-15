@@ -33,6 +33,6 @@ The design includes PAKE pairing, mutual TLS, stable peer identities, explicit f
 - Undo applies to the recorded operations and protects subsequent edits. It is not a complete folder rollback.
 - Active databases, application libraries, NAS/removable storage and full metadata fidelity are outside the current acceptance scope.
 
-The normal app (`org.syncfu.desktop`) and acceptance app (`org.syncfu.acceptance.p2`) have different application-data identities, but both use the same default listener port. Quit an older process before running another version. Previous acceptance tasks may remain in the acceptance identity.
+SyncFu 0.1.0 uses the application-data identity `org.syncfu.desktop`. Quit older SyncFu processes before starting the current application. Historical preview data is not automatically imported or deleted.
 
 For non-security bugs, use the ordinary bug template with sanitized diagnostic details.

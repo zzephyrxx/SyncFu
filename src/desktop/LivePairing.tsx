@@ -1,6 +1,6 @@
 import {useEffect,useRef,useState,type FormEvent} from 'react';
-import {Button,Notice,Spinner,Dialog,SuccessMark} from './boardui/UI';
-import {AppIcon} from './boardui/icons';
+import {Button,Notice,Spinner,Dialog,SuccessMark} from './ui/UI';
+import {AppIcon} from './ui/icons';
 import {usePrototype} from '../prototype/context';
 import {motionTokens,useMotionAllowed} from '../prototype/motion';
 import {Reel} from '../ui/DigitReels';
