@@ -5,6 +5,9 @@ on:
   workflow_dispatch:
 permissions:
   contents: read
+concurrency:
+  group: build-${{ github.ref }}
+  cancel-in-progress: true
 jobs:
   desktop:
     strategy:
@@ -12,13 +15,9 @@ jobs:
       matrix:
         include:
           - os: macos-latest
-            target: universal-apple-darwin
-            rust-targets: aarch64-apple-darwin,x86_64-apple-darwin
-            bundles: app
+            platform: macos
           - os: windows-latest
-            target: x86_64-pc-windows-msvc
-            rust-targets: x86_64-pc-windows-msvc
-            bundles: nsis
+            platform: windows
     env:
       SYNCFU_RELEASE_PAGE: https://github.com/${{ github.repository }}/releases
     runs-on: ${{ matrix.os }}
@@ -29,31 +28,16 @@ jobs:
           node-version: 22
       - uses: dtolnay/rust-toolchain@stable
         with:
-          targets: ${{ matrix.rust-targets }}
           components: rustfmt, clippy
-      - run: npm ci
       - run: cargo fmt --all --check
-      - run: cargo test --locked -p syncfu-core
       - run: cargo clippy --locked -p syncfu-core --all-targets -- -D warnings
-      - run: cargo run --locked -p syncfu-core --features bindings --example export_policy_contract -- --check
-      - run: npm test
-      - run: npm run tauri build -- --target ${{ matrix.target }} --bundles ${{ matrix.bundles }} --ci -- --locked
-      - name: Ad-hoc sign and archive macOS app
-        if: runner.os == 'macOS'
-        shell: bash
-        run: |
-          SYNCFU_APP_BUNDLE="target/${{ matrix.target }}/release/bundle/macos/SyncFu.app"
-          # This verifies a local ad-hoc signature, not Developer ID notarization.
-          codesign --force --deep --sign - "$SYNCFU_APP_BUNDLE"
-          codesign --verify --deep --strict "$SYNCFU_APP_BUNDLE"
-          ditto -c -k --sequesterRsrc --keepParent "$SYNCFU_APP_BUNDLE" "target/${{ matrix.target }}/release/bundle/SyncFu-macOS-universal.zip"
+      - name: Build SyncFu 0.1.0 and run tests
+        run: node scripts/build.mjs ${{ matrix.platform }}
+      - name: Package portable Windows build sources
+        if: runner.os == 'Windows'
+        run: node scripts/package-source.mjs
       - uses: actions/upload-artifact@v4
         with:
-          name: SyncFu-${{ matrix.target }}
+          name: SyncFu-0.1.0-${{ matrix.platform }}
           if-no-files-found: error
-          path: |
-            target/${{ matrix.target }}/release/bundle/*.zip
-            target/${{ matrix.target }}/release/bundle/nsis/*.exe
-            target/third-party-notices/
-            LICENSE
-            NOTICE
+          path: releases/0.1.0/
