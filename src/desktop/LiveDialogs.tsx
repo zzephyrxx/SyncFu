@@ -8,7 +8,7 @@ import { DeviceAvatar } from './DeviceAvatar';
 import { deviceDisplayName } from './device-metadata';
 import { useDeviceProfiles } from './useDeviceProfiles';
 import { usePrototype } from '../prototype/context';
-import type { ConflictPreview, Decision, PolicyView, ReviewNote, TaskPolicy } from '../generated/policy';
+import type { ConflictPreview, Decision, PolicyState, PolicyView, ReviewNote, TaskPolicy } from '../generated/policy';
 import type { Folder as FolderData, Task } from '../types';
 import { FileIdentity } from './FileIdentity';
 import { fileIdentity } from './focus-model';
@@ -17,28 +17,50 @@ import { canConfirm } from './selection';
 import type { DesktopController } from './controller';
 import { AppSelect } from '../components/ui/select';
 import './new-task.css';
+import './rules.css';
 
 export function LiveRules({ c, view, onClose }: { c: DesktopController; view: PolicyView; onClose: () => void }) {
   const { t, prefs } = usePrototype(); const local = c.snapshot.device.id;
+  const {profiles}=useDeviceProfiles();
   const current = view.state.current; const pending = view.state.pending;
   const [draft, setDraft] = useState<TaskPolicy>(() => ({ ...current, revision: current.revision + 1, direction: current.trust.kind==='unclassified' ? prefs.defaultMode==='both'?{mode:'bidirectional'}:{mode:prefs.defaultMode==='update'?'one_way_update':'one_way_mirror',source_device:local} : current.direction, trust: current.trust }));
   const [excludeText,setExcludeText]=useState(current.excludes.join('\n'));
+  const [action,setAction]=useState<'submit'|'accept'|'reject'|'refresh'|null>(null);
+  const [refreshed,setRefreshed]=useState(false);
   const allowed = current.trust.kind === 'unclassified' || current.trust.kind === 'personal' || current.trust.owner_device === local;
-  const name = (id: string) => id === local ? c.snapshot.device.name : c.snapshot.peers.find(p=>p.id===id)?.name ?? id;
+  const name = (id: string) => {const device=id===local?c.snapshot.device:c.snapshot.peers.find(p=>p.id===id);return device?deviceDisplayName(device,profiles):id;};
+  const other=current.endpoints.find(endpoint=>endpoint.device!==local)?.device??'';
   const shown = pending?.proposal.next ?? draft;
-  const submit = () => void c.run(async()=> { await c.transport('propose_task_policy',{task:current.task,expectedRevision:current.revision,next:draft}); c.invalidate(); onClose(); });
-  return <Dialog error={c.error} title={t('rules')} onClose={onClose}><div className="ui-form">
-    {pending&&<Notice tone="warning"><strong>{t('pendingPolicy')}</strong><p>{name(pending.proposal.proposed_by)} · v{pending.proposal.next.revision}</p></Notice>}
+  const readOnly=!allowed||Boolean(pending),disabled=c.busy||readOnly;
+  const waitingPeer=Boolean(pending&&(pending.accepted||pending.proposal.proposed_by===local));
+  const perform=(nextAction:NonNullable<typeof action>,operation:()=>Promise<void>)=>void c.run(async()=>{
+    setAction(nextAction);setRefreshed(false);
+    try{await operation();}finally{setAction(null);}
+  },'policy');
+  const submit = () => perform('submit',async()=> { await c.transport('propose_task_policy',{task:current.task,expectedRevision:current.revision,next:draft}); c.invalidate(); onClose(); });
+  const answer=(accept:boolean)=>{if(!pending)return;perform(accept?'accept':'reject',async()=>{
+    const state=await c.transport<PolicyState>('answer_task_policy',{task:current.task,proposal:pending.proposal.id,accept});
+    c.invalidate();if(!state.pending)onClose();
+  });};
+  const refreshPolicy=()=>perform('refresh',async()=>{
+    await c.transport<PolicyState>('reconcile_task_policy',{task:current.task});
+    c.invalidate();setRefreshed(true);
+  });
+  const relationLabel=shown.trust.kind==='unclassified'?t('chooseRelationship'):t(shown.trust.kind==='personal'?'personal':shown.trust.owner_device!==local?'shared':'shareOwner');
+  return <Dialog className="sf-rules" error={c.error} title={t('rules')} onClose={onClose} dismissDisabled={c.busy}><div className="sf-rules-form">
+    {pending?<Notice tone="warning"><strong>{t('pendingPolicy')}</strong><p>{name(pending.proposal.proposed_by)} · v{pending.proposal.next.revision}</p><p className="sf-rules-confirmation-status" role="status">{action==='refresh'?t('policyRefreshing'):waitingPeer?t(refreshed?'policyStillWaiting':'policyWaitingPeer',{device:name(other)}):t('policyWaitingYou')}</p></Notice>:current.trust.kind!=='unclassified'&&<p className="sf-rules-active" role="status"><AppIcon name="CheckCircle2" size={15}/>{t('policyActive',{version:current.revision})}</p>}
     {!allowed&&!pending&&<Notice>{t('sharedHelp',{device: current.trust.kind==='shared'?name(current.trust.owner_device):''})}</Notice>}
-    <fieldset className="ui-mode-picker" disabled={c.busy||!allowed||Boolean(pending)}><legend>{t('rulesStep')}</legend>{(['bidirectional','one_way_update','one_way_mirror'] as const).map(mode=><label key={mode} className={shown.direction.mode===mode?'selected':''}><input type="radio" name="live-mode" checked={shown.direction.mode===mode} onChange={()=>setDraft(old=>({...old,direction:mode==='bidirectional'?{mode}:{mode,source_device:local}}))}/><span><strong>{t(mode==='bidirectional'?'both':mode==='one_way_update'?'update':'mirror')}</strong><Help>{t(mode==='bidirectional'?'bothHelp':mode==='one_way_update'?'updateHelp':'mirrorHelp')}</Help></span></label>)}</fieldset>
-    {shown.direction.mode!=='bidirectional'&&<label>{t('source')}<AppSelect aria-label={t('source')} disabled={c.busy||!allowed||Boolean(pending)} value={shown.direction.source_device} onValueChange={value=>setDraft(old=>({...old,direction:old.direction.mode==='bidirectional'?old.direction:{...old.direction,source_device:value},conflicts:{kind:'hold'}}))} options={shown.endpoints.map(e=>({value:e.device,label:name(e.device)}))}/></label>}
-    {shown.direction.mode==='one_way_mirror'&&<Notice tone="warning">{t('mirrorHelp')}</Notice>}
-    <label>{t('relation')}<AppSelect aria-label={t('relation')} disabled={c.busy||!allowed||Boolean(pending)} value={shown.trust.kind} onValueChange={value=>setDraft(old=>({...old,trust:value==='personal'?{kind:'personal'}:{kind:'shared',owner_device:local}}))} options={[{value:'unclassified',label:t('chooseRelationship'),disabled:true},{value:'personal',label:t('personal')},{value:'shared',label:t(shown.trust.kind==='shared'&&shown.trust.owner_device!==local?'shared':'shareOwner')}]}/></label>
-    <details className="sync-rule-extras"><summary>{t('excludedPaths')} ({shown.excludes.length})</summary><label>{t('excludedPaths')}<textarea rows={3} disabled={c.busy||!allowed||Boolean(pending)} value={pending?shown.excludes.join('\n'):excludeText} onChange={e=>{setExcludeText(e.target.value);setDraft(old=>({...old,excludes:e.target.value.split('\n').map(p=>p.trim()).filter(Boolean)}));}}/></label></details>
-    <div className="ui-modal-actions"><button onClick={onClose}>{t('close')}</button>{pending?<>
-      {!pending.accepted&&pending.proposal.proposed_by!==local&&<><button disabled={c.busy} onClick={()=>void c.run(async()=>{await c.transport('answer_task_policy',{task:current.task,proposal:pending.proposal.id,accept:false});c.invalidate();onClose();})}>{t('reject')}</button><button className="primary" disabled={c.busy} onClick={()=>void c.run(async()=>{await c.transport('answer_task_policy',{task:current.task,proposal:pending.proposal.id,accept:true});c.invalidate();onClose();})}>{t('accept')}</button></>}
-      <button disabled={c.busy} onClick={()=>void c.run(async()=>{await c.transport('reconcile_task_policy',{task:current.task});c.invalidate();onClose();})}>{t('reconcilePolicy')}</button>
-    </>:allowed&&<button className="primary" disabled={c.busy||draft.trust.kind==='unclassified'} onClick={submit}>{t('submitPolicy')}</button>}</div>
+    <fieldset className="sf-rules-mode" disabled={disabled}><legend>{t('rulesStep')}</legend><div>{(['bidirectional','one_way_update','one_way_mirror'] as const).map(mode=><label key={mode} className={shown.direction.mode===mode?'selected':''}><input type="radio" name="live-mode" checked={shown.direction.mode===mode} onChange={()=>setDraft(old=>({...old,direction:mode==='bidirectional'?{mode}:{mode,source_device:local}}))}/><span>{t(mode==='bidirectional'?'directionBoth':mode==='one_way_update'?'directionUpdate':'directionMirror')}</span></label>)}</div></fieldset>
+    {shown.direction.mode==='one_way_mirror'?<Notice tone="warning">{t('mirrorHelp')}</Notice>:<p className="sf-rules-mode-help">{t(shown.direction.mode==='bidirectional'?'bothHelp':'updateHelp')}</p>}
+    <div className="sf-rules-fields">
+      {shown.direction.mode!=='bidirectional'&&<label><span>{t('source')}</span>{readOnly?<span className="sf-rules-value" title={name(shown.direction.source_device)}>{name(shown.direction.source_device)}</span>:<AppSelect aria-label={t('source')} disabled={c.busy} value={shown.direction.source_device} onValueChange={value=>setDraft(old=>({...old,direction:old.direction.mode==='bidirectional'?old.direction:{...old.direction,source_device:value},conflicts:{kind:'hold'}}))} options={shown.endpoints.map(e=>({value:e.device,label:name(e.device)}))}/>}</label>}
+      <label><span>{t('relation')}</span>{readOnly?<span className="sf-rules-value" title={relationLabel}>{relationLabel}</span>:<AppSelect aria-label={t('relation')} disabled={c.busy} value={shown.trust.kind} onValueChange={value=>setDraft(old=>({...old,trust:value==='personal'?{kind:'personal'}:{kind:'shared',owner_device:local}}))} options={[{value:'unclassified',label:t('chooseRelationship'),disabled:true},{value:'personal',label:t('personal')},{value:'shared',label:t(shown.trust.kind==='shared'&&shown.trust.owner_device!==local?'shared':'shareOwner')}]}/>}</label>
+    </div>
+    <details className="sync-rule-extras"><summary>{t('excludedPaths')} ({shown.excludes.length})</summary><label>{t('excludedPaths')}<textarea rows={3} readOnly={readOnly} disabled={c.busy} value={pending?shown.excludes.join('\n'):excludeText} onChange={e=>{setExcludeText(e.target.value);setDraft(old=>({...old,excludes:e.target.value.split('\n').map(p=>p.trim()).filter(Boolean)}));}}/></label></details>
+    <div className="ui-modal-actions"><Button variant="secondary" disabled={c.busy} onClick={onClose}>{t('close')}</Button>{pending?<>
+      {!pending.accepted&&pending.proposal.proposed_by!==local&&<><Button variant="secondary" className="sf-rules-reject" disabled={c.busy} onClick={()=>answer(false)}>{action==='reject'&&<Spinner/>}{t('reject')}</Button><Button variant="primary" disabled={c.busy} onClick={()=>answer(true)}>{action==='accept'&&<Spinner/>}{t('accept')}</Button></>}
+      {waitingPeer&&<Button variant="primary" disabled={c.busy} onClick={refreshPolicy}>{action==='refresh'?<Spinner/>:<AppIcon name="RefreshCw" size={15}/>} {t('policyRefresh')}</Button>}
+    </>:allowed&&<Button variant="primary" disabled={c.busy||draft.trust.kind==='unclassified'} onClick={submit}>{action==='submit'&&<Spinner/>}{t('submitPolicy')}</Button>}</div>
   </div></Dialog>;
 }
 
@@ -119,7 +141,7 @@ export function LiveConfirmation({c}:{c:DesktopController}) {
     {prepared.preview.approval_required&&!manager&&<Notice tone="warning">{t('riskSummary')}</Notice>}
     {prepared.preview.approval_required&&<ConsentCheckbox className="ui-consent" aria-label={t('consent')} isSelected={approved} isDisabled={!manager} onChange={setApproved}>{t('consent')}</ConsentCheckbox>}
     <p className="ui-body-copy">{t(prepared.plan.undo_of?'laterEdits':'backupFirst')}</p>
-    <div className="ui-modal-actions"><button onClick={()=>c.setPrepared(null)}>{t('changeSelection')}</button><button className="primary" disabled={c.busy||Boolean(c.snapshot.phase)||!canConfirm(c.snapshot,prepared.plan,prepared.preview.selected)||(prepared.preview.approval_required&&(!approved||!manager))} onClick={()=>void c.execute(approved)}><ShieldAlert size={17}/>{t(prepared.plan.undo_of?'undo':'confirmTransfer')}</button></div>
+    <div className="ui-modal-actions"><Button variant="secondary" onClick={()=>c.setPrepared(null)}>{t('changeSelection')}</Button><Button variant="primary" disabled={c.busy||Boolean(c.snapshot.phase)||!canConfirm(c.snapshot,prepared.plan,prepared.preview.selected)||(prepared.preview.approval_required&&(!approved||!manager))} onClick={()=>void c.execute(approved)}><ShieldAlert size={17}/>{t(prepared.plan.undo_of?'undo':'confirmTransfer')}</Button></div>
   </section>;
 }
 export function LiveIgnored({c,task,onClose,onRules}:{c:DesktopController;task:Task;onClose:()=>void;onRules:()=>void}) {

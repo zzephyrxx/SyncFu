@@ -14,6 +14,11 @@ if(scenario==='offline')snapshot.peers[0].online=false;
 if(scenario==='long-names'){snapshot.device.name='Design-Review-MacBook-Pro.local';snapshot.peers[0].name='OFFICE-DESKTOP';snapshot.tasks[0].local_path='/Users/example/Documents/示例项目文档与跨设备同步测试';snapshot.tasks[0].remote_path='D:\\Documents\\示例项目文档与跨设备同步测试';}
 const file=(bytes:number,sha:string)=>({type:'file' as const,bytes,sha256:sha.repeat(64)});
 let plan:Plan={id:'fixture-plan-0',task:snapshot.tasks[0],digest:'fixture-digest-0',policy:{revision:1,digest:'policy-fixture'},undo_of:null,comparison:{same:4,total:12,ignored:0,issues:[],changes:[{path:'notes/new.md',action:'create',target:1,before:null,after:file(12,'a')},{path:'notes/draft.md',action:'conflict',target:0,before:file(10,'a'),after:file(11,'b')},{path:'设计/客户交付/方案.pdf',action:'update',target:1,before:file(2048,'a'),after:file(2145178,'b')},{path:'品牌/导出/logo.svg',action:'create',target:1,before:null,after:file(48120,'c')},{path:'src/theme.ts',action:'update',target:0,before:file(42,'b'),after:file(3920,'a')},{path:'资料/参考/cover.png',action:'create',target:1,before:null,after:file(381238,'b')},{path:'存档/notes/new.md',action:'create',target:0,before:null,after:file(152,'a')},{path:'old.txt',action:'delete',target:1,before:file(20,'b'),after:null}]},conflicts:[{path:'notes/draft.md',versions:{[local]:file(10,'a'),[remote]:file(11,'b')},fingerprint:'fixture-conflict',resolvable:true}],resolutions:[],review_notes:[]};
+if(scenario==='scan-error')plan.comparison.issues=['无法读取目录 资料/未授权目录：Permission denied (os error 13)'];
+if(scenario==='policy-incoming'||scenario==='policy-outgoing'){
+  const next:TaskPolicy={...structuredClone(policy),revision:2,direction:{mode:'one_way_update',source_device:remote}};
+  snapshot.policy_states[0].state.pending={proposal:{id:'fixture-pending',expected_revision:1,next,proposed_by:scenario==='policy-incoming'?remote:local},accepted:false};
+}
 function visiblePlan():Plan {
   const current=snapshot.policy_states[0].state.current;
   if(plan.undo_of||current.direction.mode==='bidirectional')return plan;
@@ -44,7 +49,17 @@ const transport:Transport=async<T,>(name:string,args?:Record<string,unknown>)=>{
     case 'save_settings':settings={...settings,days:Number(a.days),quota:Number(a.quota),autostart:Boolean(a.autostart)};output=settings;break;
     case 'set_usage_enabled':usage.enabled=Boolean(a.enabled);break;
     case 'clear_usage':usage.records=[];break;
-    case 'inspect_task':output=visiblePlan();break;
+    case 'inspect_task':{
+      if(scenario==='scan-progress'){
+        for(let tick=0;tick<20;tick++){
+          const progress={phase:tick<4?'discovering' as const:'hashing' as const,current_path:`资料/项目 ${Math.floor(tick/3)+1}/报告-${tick+1}.pdf`,directories:Math.min(320,80*(tick+1)),files_total:tick<4?400*(tick+1):1600,files_hashed:Math.max(0,(tick-4)*100),bytes_hashed:Math.max(0,(tick-4)*17400000)};
+          snapshot.scan={task:taskId,local:progress,remote:{...progress,files_hashed:Math.max(0,progress.files_hashed-50),current_path:`共享资料/归档/文档-${tick+1}.docx`},incoming:false};
+          await new Promise(resolve=>setTimeout(resolve,600));
+        }
+        snapshot.scan=null;
+      }
+      output=visiblePlan();break;
+    }
     case 'preview_conflict':output={path:a.path,versions:[{device:local,entry:file(10,'a'),text:'title\nlocal change\nend',reason:null},{device:remote,entry:file(11,'b'),text:'title\nremote change\nend',reason:null}]};break;
     case 'resolve_plan': {
       const decisions=a.decisions as {path:string;decision:{choice:string;source_device?:string}}[];
@@ -63,7 +78,14 @@ const transport:Transport=async<T,>(name:string,args?:Record<string,unknown>)=>{
     case 'pause_all':snapshot.paused_all=Boolean(a.paused);break;
     case 'task_policy':output=snapshot.policy_states[0];break;
     case 'propose_task_policy': {if(a.expectedRevision!==snapshot.policy_states[0].state.current.revision||snapshot.policy_states[0].state.pending)throw new Error('Fixture stale policy');if(!snapshot.peers[0].online)throw new Error('Fixture peer offline');const next=a.next as TaskPolicy;const current=snapshot.policy_states[0].state.current;if(current.trust.kind==='shared'&&current.trust.owner_device!==local)throw new Error('Fixture owner-only policy');if(current.trust.kind==='unclassified'||JSON.stringify(current.trust)!==JSON.stringify(next.trust)){snapshot.policy_states[0].state.pending={proposal:{id:`fixture-proposal-${++sequence}`,expected_revision:current.revision,next,proposed_by:local},accepted:false};output=snapshot.policy_states[0].state;break;}snapshot.policy_states[0].state.current=next;plan.policy.revision=next.revision;plan.policy.digest=`policy-fixture-${next.revision}`;sequence++;plan.id=`fixture-plan-${sequence}`;plan.digest=`fixture-digest-${sequence}`;output=snapshot.policy_states[0].state;break;}
-    case 'reconcile_task_policy':case 'answer_task_policy':output=snapshot.policy_states[0].state;break;
+    case 'reconcile_task_policy':output=snapshot.policy_states[0].state;break;
+    case 'answer_task_policy':{
+      const state=snapshot.policy_states[0].state;
+      if(!state.pending||state.pending.proposal.id!==a.proposal)throw new Error('Fixture stale proposal');
+      if(a.accept){state.current=state.pending.proposal.next;plan.policy={revision:state.current.revision,digest:'fixture-policy-updated'};}
+      state.pending=null;output=state;break;
+    }
+    case 'forget_peer':snapshot.peers=snapshot.peers.filter(peer=>peer.id!==a.peer);snapshot.tasks=snapshot.tasks.filter(task=>task.peer!==a.peer);snapshot.policy_states=snapshot.policy_states.filter(view=>snapshot.tasks.some(task=>task.id===view.task));break;
     case 'folders':output={local:[{id:'local-grant',label:'Local',path:'/fixture/local'}],remote:[{id:'remote-grant',label:'Remote',path:'D:\\fixture'}]};break;
     case 'local_folders':output=[{id:'local-grant',label:'Local',path:'/fixture/local'}];break;
     case 'grant_folder':output={id:'extra-grant',label:'Extra',path:'/fixture/new'};break;

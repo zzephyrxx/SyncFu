@@ -25,6 +25,12 @@ Development release. A versioned package is not a claim of production acceptance
 
 ### Fixes
 
+- Prevent directory-handle exhaustion during broad or deep scans by queuing paths and limiting concurrent file reads.
+- Report per-device scan phases, paths, file counts and bytes; keep scan failures distinct from the existing entry limit. Slow scan RPCs have a longer deadline without extending other requests.
+- Explain disabled synchronization when the scan is incomplete, rules are pending, a device is offline, or no files are selected.
+- Put confirmed unpairing on device rows and move additional folder grants to the authorization list toolbar.
+- Compact the rules dialog and restore visible primary confirmation buttons. Replace ambiguous policy reconciliation with explicit confirmation-state feedback where recovery is needed.
+
 - Pairing approval has a visible wait state and unlocks controls after at most 18 seconds.
 - Consumed pairing codes cannot appear valid again after a request disconnects.
 - Device and folder endpoints remain explicit in task creation and synchronization views.

@@ -9,7 +9,15 @@ export function decisionSelection(plan: Plan, old: Set<string>, decisions: Decis
   const explicit = new Set(decisions.filter(d => d.decision.choice === 'use').map(d => d.path));
   return new Set(plan.comparison.changes.filter(change => change.action !== 'conflict' && (old.has(change.path) || explicit.has(change.path))).map(change => change.path));
 }
-export function canConfirm(snapshot: Snapshot, plan: Plan, selected: string[]) {
+export function confirmationBlock(snapshot: Snapshot, plan: Plan, selected: string[]) {
   const view=snapshot.policy_states.find(p=>p.task===plan.task.id);
-  return Boolean(selected.length&&view&&!view.paused&&!snapshot.paused_all&&!view.state.pending&&view.state.current.revision===plan.policy.revision&&!snapshot.history.some(b=>b.status==='pending')&&snapshot.peers.some(p=>p.id===plan.task.peer&&p.online)&&!plan.comparison.issues.length);
+  if(plan.comparison.issues.length)return 'scanIncomplete';
+  if(!view||view.state.current.revision!==plan.policy.revision)return 'syncCheckAgain';
+  if(view.state.pending)return 'pendingPolicy';
+  if(view.paused||snapshot.paused_all)return 'paused';
+  if(snapshot.history.some(b=>b.status==='pending'))return 'resultPending';
+  if(!snapshot.peers.some(p=>p.id===plan.task.peer&&p.online))return 'offline';
+  if(!selected.length)return 'syncNoSelection';
+  return null;
 }
+export function canConfirm(snapshot: Snapshot, plan: Plan, selected: string[]) { return confirmationBlock(snapshot,plan,selected)===null; }

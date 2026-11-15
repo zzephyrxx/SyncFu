@@ -22,7 +22,17 @@ export interface Snapshot {
   protocol: number;
   device: Device; peers: Peer[]; nearby: Nearby[]; pending: Nearby[];
   tasks: Task[]; history: Batch[]; dirty: string[]; phase: string | null; network_error: string | null;
+  scan?: ScanActivity | null;
   policy_states: PolicyView[]; paused_all: boolean; automatic_supported: boolean;
 }
+export interface ScanProgress {
+  phase: 'discovering' | 'hashing' | 'complete';
+  current_path: string;
+  directories: number;
+  files_total: number;
+  files_hashed: number;
+  bytes_hashed: number;
+}
+export interface ScanActivity { task: string; local: ScanProgress | null; remote: ScanProgress | null; incoming: boolean }
 export interface Settings { days: number; quota: number; location: string; autostart: boolean; updates_available: boolean }
 export type Page = 'tasks' | 'devices' | 'history' | 'settings';

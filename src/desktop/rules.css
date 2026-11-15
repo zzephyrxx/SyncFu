@@ -1,0 +1,32 @@
+.bui-modal.sf-rules{--dialog-width:560px}
+.sf-rules .bui-dialog>header{margin-bottom:16px}
+.sf-rules-form{display:flex;flex-direction:column;gap:14px}
+.sf-rules-form>.bui-notice{margin:0;padding:12px;font-size:12px;line-height:1.6}
+.sf-rules-form>.bui-notice p{margin-top:4px;overflow-wrap:anywhere}
+.sf-rules-confirmation-status{font-size:12px}
+.sf-rules-active{display:flex;align-items:center;gap:7px;margin:0;color:var(--sf-green);font-size:12px;line-height:1.6}
+.sf-rules-mode{padding:0;margin:0;border:0;min-width:0}
+.sf-rules-mode>legend{padding:0;margin-bottom:8px;font-size:12px;font-weight:500}
+.sf-rules-mode>div{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px}
+.sf-rules-mode label{display:flex;align-items:center;gap:7px;padding:9px 10px;border:1px solid var(--sf-border);border-radius:6px;background:var(--sf-panel);font-size:12px;line-height:1.5;cursor:pointer}
+.sf-rules-mode label.selected{border-color:var(--sf-ink);background:var(--sf-soft)}
+.sf-rules-mode:disabled label{cursor:default}
+.sf-rules-mode input{appearance:none;flex:none;display:grid;place-items:center;width:14px;height:14px;min-height:14px;margin:0;border:1px solid var(--sf-border-strong);border-radius:50%;background:var(--sf-panel)}
+.sf-rules-mode input:checked{border-color:var(--sf-ink)}
+.sf-rules-mode input:checked::after{content:"";width:6px;height:6px;background:var(--sf-ink);border-radius:50%}
+.sf-rules-mode label:has(input:focus-visible){outline:2px solid var(--ring);outline-offset:2px}
+.sf-rules-mode-help{margin:-6px 0 0;font-size:11px;line-height:1.7;color:var(--sf-muted)}
+.sf-rules-fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.sf-rules-fields>label{display:flex;flex-direction:column;gap:7px;min-width:0;font-size:12px;font-weight:500}
+.sf-rules-fields .sf-select-trigger[data-slot]{width:100%}
+.sf-rules-value{display:block;min-width:0;min-height:35px;padding:8px 10px;border:1px solid var(--sf-border);border-radius:6px;background:var(--sf-soft);font-size:12px;font-weight:400;line-height:1.5;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sf-rules-form .sync-rule-extras{min-width:0}
+.sf-rules-form .sync-rule-extras summary{padding:5px 0;font-size:12px}
+.sf-rules-form .sync-rule-extras label{display:flex;flex-direction:column;font-size:12px}
+.sf-rules-form .sync-rule-extras textarea{width:100%;font-size:12px;resize:vertical;min-height:76px;max-height:200px}
+.sf-rules-form>.ui-modal-actions{margin-top:2px;padding-top:14px;border-top:1px solid var(--sf-border);gap:8px}
+.sf-rules-form>.ui-modal-actions .sfu-button{height:34px;min-height:34px;font-size:12px}
+.sf-rules-form .sfu-button.sf-rules-reject{background:var(--sf-danger-soft);color:var(--sf-danger);border-color:transparent}
+.sf-rules-form .sfu-button.sf-rules-reject:hover:not(:disabled){border-color:var(--sf-danger)}
+@media(max-width:480px){.sf-rules-mode>div{gap:5px}.sf-rules-mode label{padding:8px 6px;gap:5px;font-size:11px}.sf-rules-fields{grid-template-columns:1fr}}
+@media(forced-colors:active){.sf-rules-mode input{appearance:auto}.sf-rules-mode input::after{display:none}.sf-rules-mode label.selected{outline:1px solid Highlight}}

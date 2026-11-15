@@ -19,10 +19,13 @@ export function DevicesPage({c,onPair}:{c:DesktopController;onPair:()=>void}){
   const {t,prefs}=usePrototype();const zh=prefs.locale.startsWith('zh');
   const {profiles,saveProfile,storageFailed}=useDeviceProfiles();
   const [peer,setPeer]=useState<Peer|null>(null);const [folders,setFolders]=useState<FolderData[]>([]);const [loadingFolders,setLoadingFolders]=useState(false);
-  const [confirm,setConfirm]=useState(false);const [revoke,setRevoke]=useState<string|null>(null);
+  const [unpair,setUnpair]=useState<Peer|null>(null);const [revoke,setRevoke]=useState<string|null>(null);
   const [editing,setEditing]=useState<Peer|null>(null);const [draft,setDraft]=useState<DeviceProfile>({alias:'',emoji:''});const [editError,setEditError]=useState('');const [saved,setSaved]=useState('');
   const kindName=(kind:DeviceKind)=>zh?({laptop:'笔记本',desktop:'台式电脑',phone:'手机'}[kind]):({laptop:'Laptop',desktop:'Desktop',phone:'Phone'}[kind]);
-  const closeGrants=()=>{setPeer(null);setConfirm(false);setRevoke(null);};
+  const closeGrants=()=>{setPeer(null);setRevoke(null);};
+  const unpairBlocked=c.busy||Boolean(c.snapshot.phase)||c.snapshot.history.some(batch=>batch.status==='pending');
+  const unpairTasks=c.snapshot.tasks.filter(task=>task.peer===unpair?.id);
+  const grantFolder=()=>{if(!peer||c.busy||loadingFolders)return;void c.run(async()=>{const folder=await c.transport<FolderData|null>('grant_folder',{peer:peer.id});if(folder)setFolders(old=>[...old.filter(f=>f.id!==folder.id),folder]);});};
   const openEditor=(item:Peer)=>{setDraft({...profiles[item.id]??{alias:'',emoji:''}});setEditing(item);setEditError('');setSaved('');};
   useEffect(()=>{
     let stopped=false;
@@ -48,7 +51,7 @@ export function DevicesPage({c,onPair}:{c:DesktopController;onPair:()=>void}){
         <DeviceAvatar deviceId={item.id} profiles={profiles}/>
         <div className="sf-device-identity"><h2 title={item.name}>{displayName}</h2>{alias&&<p className="sf-device-original-name">{item.name}</p>}<div className="sf-device-meta"><span><DeviceTypeIcon kind={kind} size={13}/>{kindName(kind)}</span><span title={item.address}>{item.address}</span>{taskCount>0&&<span>{zh?`${taskCount} 项任务`:`${taskCount} ${taskCount===1?'task':'tasks'}`}</span>}</div></div>
         <span className={`sf-device-status ${item.online?'online':'offline'}`}><StatusDot status={item.online?'online':'offline'} size={11}/>{t(item.online?'online':'offline')}</span>
-        <div className="sf-device-row-actions"><Button size="small" variant="ghost" onClick={()=>openEditor(item)} aria-label={zh?`编辑 ${displayName} 的备注和图标`:`Edit name and icon for ${displayName}`}><AppIcon name="Settings2" size={15}/>{zh?'自定义':'Customize'}</Button><Button size="small" disabled={c.busy} onClick={()=>{setFolders([]);setPeer(item);}}><AppIcon name="Folder" size={15}/>{t('grants')}</Button></div>
+        <div className="sf-device-row-actions"><Button size="small" variant="ghost" onClick={()=>openEditor(item)} aria-label={zh?`编辑 ${displayName} 的备注和图标`:`Edit name and icon for ${displayName}`}><AppIcon name="Settings2" size={15}/>{zh?'自定义':'Customize'}</Button><Button size="small" disabled={c.busy} onClick={()=>{setFolders([]);setPeer(item);}}><AppIcon name="Folder" size={15}/>{t('grants')}</Button><Button size="small" variant="ghost" className="sf-device-unpair" disabled={unpairBlocked} title={unpairBlocked?(zh?'请先完成或核对当前批次。':'Finish or reconcile the current batch first.'):undefined} aria-label={`${t('forget')} · ${displayName}`} onClick={()=>{c.setError('');setUnpair(item);}}><AppIcon name="Unplug" size={15}/>{t('forget')}</Button></div>
       </section>;
     })}</div>
     {!c.snapshot.peers.length&&<div className="sf-devices-empty"><AppIcon name="Monitor" size={34}/><h2>{zh?'把另一台设备连进来':'Connect another device'}</h2><p>{t('noPeers')}</p><Button onClick={onPair} disabled={c.busy}><AppIcon name="Plus" size={16}/>{t('connect')}</Button></div>}
@@ -62,10 +65,21 @@ export function DevicesPage({c,onPair}:{c:DesktopController;onPair:()=>void}){
         <div className="ui-modal-actions"><Button onClick={()=>setEditing(null)}>{t('cancel')}</Button><Button type="submit" variant="primary">{zh?'保存':'Save'}</Button></div>
       </form>
     </Dialog>}
-    {peer&&<Dialog error={c.error} title={`${deviceDisplayName(peer,profiles)} · ${t('grants')}`} description={peer.name} onClose={closeGrants}>
-      {confirm?<><p>{t('forgetHelp')}</p><div className="ui-modal-actions"><Button onClick={()=>setConfirm(false)}>{t('cancel')}</Button><Button variant="danger" disabled={c.busy} onClick={()=>void c.run(async()=>{await c.transport('forget_peer',{peer:peer.id});c.invalidate();closeGrants();})}>{t('forget')}</Button></div></>:revoke?<><p className="ui-body-copy">{folders.find(f=>f.id===revoke)?.path}</p><p>{t('wizardHelp')}</p><div className="ui-modal-actions"><Button onClick={()=>setRevoke(null)}>{t('cancel')}</Button><Button variant="danger" disabled={c.busy} onClick={()=>void c.run(async()=>{await c.transport('revoke_folder',{id:revoke});c.invalidate();setFolders(old=>old.filter(f=>f.id!==revoke));setRevoke(null);})}>{t('revoke')}</Button></div></>:<>
-        <p className="ui-body-copy">{t('wizardHelp')}</p>{loadingFolders?<p className="sf-device-folders-loading"><Spinner/>{t('loading')}</p>:folders.length?folders.map(folder=><div className="ui-ignored-row" key={folder.id}><AppIcon name="Folder" size={17}/><div><strong>{folder.path}</strong></div><Button size="small" disabled={c.busy} onClick={()=>setRevoke(folder.id)}>{t('revoke')}</Button></div>):<p className="ui-body-copy">{zh?'尚未向这台设备授权文件夹。':'No folders are shared with this device yet.'}</p>}
-        <Button disabled={c.busy||loadingFolders} onClick={()=>void c.run(async()=>{const folder=await c.transport<FolderData|null>('grant_folder',{peer:peer.id});if(folder)setFolders(old=>[...old.filter(f=>f.id!==folder.id),folder]);})}><AppIcon name="Plus" size={16}/>{t('grantLocal')}</Button><div className="ui-modal-actions"><Button className="ui-danger" variant="ghost" disabled={c.busy} onClick={()=>setConfirm(true)}>{t('forget')}</Button><Button onClick={closeGrants}>{t('done')}</Button></div>
+    {unpair&&<Dialog className="sf-device-unpair-dialog" error={c.error} title={zh?'确认解除配对？':'Unpair this device?'} description={zh?'此操作只移除连接和授权，不会删除你的文件。':'This removes the connection and access, not your files.'} dismissDisabled={c.busy} onClose={()=>setUnpair(null)}>
+      <div className="sf-unpair-device"><DeviceAvatar deviceId={unpair.id} profiles={profiles}/><div><strong>{deviceDisplayName(unpair,profiles)}</strong>{deviceDisplayName(unpair,profiles)!==unpair.name&&<span>{unpair.name}</span>}</div></div>
+      <p className="sf-unpair-help">{zh?'解除后，这台设备将无法访问你在本机授权的文件夹；再次连接需要重新配对。':'This device will lose access to folders shared by this computer. Connecting again requires pairing again.'}</p>
+      <div className="sf-unpair-tasks"><strong>{zh?`同时从本机移除 ${unpairTasks.length} 项相关同步任务`:`Also removes ${unpairTasks.length} related ${unpairTasks.length===1?'task':'tasks'} from this computer`}</strong>{unpairTasks.length>0&&<ul>{unpairTasks.map(task=><li key={task.id}><AppIcon name="Folder" size={14}/><span>{task.label}</span></li>)}</ul>}</div>
+      {unpairBlocked&&!c.busy&&<Notice tone="warning">{zh?'请先完成或核对当前批次，再解除配对。':'Finish or reconcile the current batch before unpairing.'}</Notice>}
+      <div className="ui-modal-actions"><Button disabled={c.busy} onClick={()=>setUnpair(null)}>{t('cancel')}</Button><Button variant="danger" disabled={unpairBlocked} onClick={()=>void c.run(async()=>{await c.transport('forget_peer',{peer:unpair.id});c.invalidate();setSaved(zh?`已解除与「${deviceDisplayName(unpair,profiles)}」的配对。`:`Unpaired ${deviceDisplayName(unpair,profiles)}.`);setUnpair(null);})}>{c.busy&&<Spinner/>}{t('forget')}</Button></div>
+    </Dialog>}
+    {peer&&<Dialog className="sf-device-grants" error={c.error} title={`${deviceDisplayName(peer,profiles)} · ${t('grants')}`} description={deviceDisplayName(peer,profiles)!==peer.name?peer.name:undefined} dismissDisabled={c.busy} onClose={closeGrants}>
+      {revoke?<><p className="sf-grant-revoke-path">{folders.find(f=>f.id===revoke)?.path}</p><p className="ui-body-copy">{zh?'撤销后，对端无法继续访问这个文件夹，使用它的相关任务将无法继续同步。你的文件不会删除。':'Revoking access prevents this peer from using the folder, so related tasks can no longer sync it. Your files are kept.'}</p><div className="ui-modal-actions"><Button disabled={c.busy} onClick={()=>setRevoke(null)}>{t('cancel')}</Button><Button variant="danger" disabled={c.busy} onClick={()=>void c.run(async()=>{await c.transport('revoke_folder',{id:revoke});c.invalidate();setFolders(old=>old.filter(f=>f.id!==revoke));setRevoke(null);})}>{t('revoke')}</Button></div></>:<>
+        <p className="ui-body-copy sf-grants-help">{t('wizardHelp')}</p>
+        {loadingFolders?<p className="sf-device-folders-loading"><Spinner/>{t('loading')}</p>:folders.length?<>
+          <div className="sf-grants-toolbar"><h3>{zh?'已授权文件夹':'Shared folders'}<span>{folders.length}</span></h3><Button size="small" variant="ghost" className="sf-grants-add" disabled={c.busy} onClick={grantFolder}><AppIcon name="Plus" size={15}/>{zh?'添加文件夹':'Add folder'}</Button></div>
+          <ul className="sf-grants-list">{folders.map(folder=><li key={folder.id}><AppIcon name="Folder" size={18}/><div><strong>{folder.label}</strong><span title={folder.path}>{folder.path}</span></div><Button size="small" variant="ghost" className="sf-grant-revoke" disabled={c.busy} aria-label={`${t('revoke')} · ${folder.label}`} onClick={()=>setRevoke(folder.id)}>{t('revoke')}</Button></li>)}</ul>
+        </>:<div className="sf-grants-empty"><AppIcon name="Folder" size={28}/><p>{zh?'尚未向这台设备授权文件夹。':'No folders are shared with this device yet.'}</p><Button variant="primary" disabled={c.busy} onClick={grantFolder}><AppIcon name="Plus" size={16}/>{t('grantLocal')}</Button></div>}
+        <div className="ui-modal-actions"><Button onClick={closeGrants} disabled={c.busy}>{t('done')}</Button></div>
       </>}
     </Dialog>}
   </section>;

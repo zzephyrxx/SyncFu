@@ -30,10 +30,13 @@ The acknowledgements page lists project credits and license links without intera
 
 ## Verification — 2026-11-15
 
-The current revision passed all **84 tests** in `npm test` and successfully built the **macOS arm64 application**. Browser checks used the `desktop-test` fixture at **1120 × 780** and **680 × 560**, including light and dark themes.
+The current revision passed all **85 tests** in `npm test` and successfully built the **macOS arm64 application**. Browser checks used the `desktop-test` fixture at **1120 × 780** and **680 × 560**, including light and dark themes.
 
 | Area | Observed result |
 | --- | --- |
+| Scanning | Current paths, file/byte counters and indeterminate/determinate progress render in light/dark and minimum windows; completed checks restore the sync button. Partial results show an explicit blocking reason. |
+| Rules | Compact columns and visible primary acceptance. Incoming proposals show accept/reject; outgoing confirmation refresh stays open and names the device still awaited. |
+| Device actions | Row-level unpairing requires confirmation with the device and affected tasks; cancellation preserves the device. Existing grants use a compact Add folder action. |
 | Select controls | The chevron stays inside the 35px trigger with an 11px right inset. Mouse selection, arrow-key selection and Escape focus restoration passed in settings; light/dark and 680 × 560 menus remain inside the viewport. |
 | New-task selections | Empty folder choices disable submission; valid folder choices restore it after a device relationship is selected. Escape closes the menu without closing the dialog. |
 | About and acknowledgements | The icon is centered; version 0.1.0, developer and slogan are visible. Acknowledgements contain project/license links with no demonstration buttons or input controls. |
@@ -49,7 +52,15 @@ These checks and screenshots use fixture devices and files. They are **not physi
 
 ## Screenshots
 
-All screenshots below show the `desktop-test` fixture rather than a live peer connection. The settings screenshots reflect the latest refinement; the workspace, devices and pairing images document the preceding UI pass.
+All screenshots below show the `desktop-test` fixture rather than a live peer connection. Scanning, rules and device-action screenshots reflect the latest fixes; the other images document preceding UI passes.
+
+| Scan progress | Rule confirmation |
+| --- | --- |
+| ![Per-device scan paths, counts and progress](screenshots/scan-progress.jpg) | ![Compact rules with visible accept and reject actions](screenshots/rules-confirmation.jpg) |
+
+| Folder grants | Unpair confirmation |
+| --- | --- |
+| ![Compact folder grants toolbar](screenshots/device-grants.jpg) | ![Explicit device and affected tasks](screenshots/device-unpair.jpg) |
 
 | Settings dropdown | About |
 | --- | --- |

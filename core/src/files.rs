@@ -9,12 +9,36 @@ use sha2::{Digest, Sha256};
 use std::{
     io::{self, Read, Write},
     path::{Path, PathBuf},
-    sync::Arc,
+    sync::{
+        atomic::{AtomicUsize, Ordering},
+        mpsc::sync_channel,
+    },
+    time::{Duration, Instant},
 };
 use unicode_normalization::UnicodeNormalization;
 
 pub const STAGE: &str = ".syncfu-stage";
 pub const LIMIT: usize = 20_000;
+
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum ScanPhase {
+    #[default]
+    Discovering,
+    Hashing,
+    Complete,
+}
+
+/// Counts describe observed work, never an estimate of undiscovered files.
+#[derive(Clone, Debug, Default, serde::Serialize, serde::Deserialize)]
+pub struct ScanProgress {
+    pub phase: ScanPhase,
+    pub current_path: String,
+    pub directories: u64,
+    pub files_total: u64,
+    pub files_hashed: u64,
+    pub bytes_hashed: u64,
+}
 
 pub fn portable_key(path: &str) -> String {
     path.nfc()
@@ -121,64 +145,97 @@ impl Root {
     }
 
     pub fn scan(&self) -> Manifest {
-        self.scan_with_workers(std::thread::available_parallelism().map_or(1, |n| n.get().min(4)))
+        self.scan_with_progress(|_| {})
     }
 
-    /// Every file is still content-hashed. Workers only overlap independent reads;
-    /// metadata is never treated as proof that file contents are unchanged.
+    pub fn scan_with_progress(&self, progress: impl FnMut(&ScanProgress)) -> Manifest {
+        self.scan_with_workers_and_progress(
+            std::thread::available_parallelism().map_or(1, |n| n.get().min(4)),
+            progress,
+        )
+    }
+
+    /// Every file is content-hashed. At most four workers overlap reads; queued
+    /// work contains paths, never directory/file handles. Each reopen resolves
+    /// every component relative to the authorized root without following links.
     pub fn scan_with_workers(&self, workers: usize) -> Manifest {
+        self.scan_with_workers_and_progress(workers, |_| {})
+    }
+
+    fn scan_with_workers_and_progress(
+        &self,
+        workers: usize,
+        mut report: impl FnMut(&ScanProgress),
+    ) -> Manifest {
         let mut out = Manifest::default();
-        let mut jobs = Vec::new();
-        let directory = match self.dir.try_clone() {
-            Ok(dir) => Arc::new(dir),
-            Err(error) => {
-                out.issues.push(error.to_string());
-                return out;
-            }
-        };
-        collect_scan(&directory, "", &mut out, &mut jobs, 0);
-        if jobs.is_empty() {
-            return out;
-        }
-        let workers = workers.clamp(1, 4).min(jobs.len());
-        let results = std::thread::scope(|scope| {
-            let handles = jobs
-                .chunks(jobs.len().div_ceil(workers))
-                .map(|chunk| {
-                    scope.spawn(move || {
+        let mut progress = ScanProgress::default();
+        report(&progress);
+        let jobs = collect_scan(self, &mut out, &mut progress, &mut report);
+        if !jobs.is_empty() {
+            progress.phase = ScanPhase::Hashing;
+            progress.current_path.clear();
+            report(&progress);
+            let workers = workers.clamp(1, 4).min(jobs.len());
+            let next = AtomicUsize::new(0);
+            std::thread::scope(|scope| {
+                // Bound both active filesystem reads and pending reports. A slow
+                // observer applies backpressure instead of growing a queue.
+                let (sender, receiver) = sync_channel(workers * 2);
+                let mut handles = Vec::with_capacity(workers);
+                for _ in 0..workers {
+                    let sender = sender.clone();
+                    let jobs = &jobs;
+                    let next = &next;
+                    handles.push(scope.spawn(move || {
                         let mut buffer = vec![0u8; 128 * 1024];
-                        chunk
-                            .iter()
-                            .map(|job| {
-                                let result = open_checked(&job.dir, &job.name, false)
-                                    .and_then(|file| hash_buffered(file, &mut buffer));
-                                (job.path.clone(), result)
-                            })
-                            .collect::<Vec<_>>()
-                    })
-                })
-                .collect::<Vec<_>>();
-            handles.into_iter().map(|h| h.join()).collect::<Vec<_>>()
-        });
-        for result in results {
-            match result {
-                Ok(files) => {
-                    for (path, result) in files {
-                        match result {
-                            Ok(entry) => {
-                                out.entries.insert(path, entry);
+                        while let Some(path) = jobs.get(next.fetch_add(1, Ordering::Relaxed)) {
+                            let result = self
+                                .parent(path)
+                                .and_then(|(dir, name)| open_checked(&dir, &name, false))
+                                .and_then(|file| {
+                                    hash_buffered(file, &mut buffer, |bytes| {
+                                        let _ = sender.send(HashEvent::Bytes(path.clone(), bytes));
+                                    })
+                                });
+                            if sender
+                                .send(HashEvent::Finished(path.clone(), result))
+                                .is_err()
+                            {
+                                return;
                             }
-                            Err(error) => {
-                                if out.issues.len() < 201 {
-                                    out.issues.push(format!("{path}：{error}"));
+                        }
+                    }));
+                }
+                drop(sender);
+                for event in receiver {
+                    match event {
+                        HashEvent::Bytes(path, bytes) => {
+                            progress.current_path = path;
+                            progress.bytes_hashed = progress.bytes_hashed.saturating_add(bytes);
+                        }
+                        HashEvent::Finished(path, result) => {
+                            progress.current_path = path.clone();
+                            match result {
+                                Ok(entry) => {
+                                    progress.files_hashed += 1;
+                                    out.entries.insert(path, entry);
                                 }
+                                Err(error) => push_scan_issue(&mut out, format!("{path}：{error}")),
                             }
                         }
                     }
+                    report(&progress);
                 }
-                Err(_) => out.issues.push("文件校验线程异常，检查未完成".into()),
-            }
+                for handle in handles {
+                    if handle.join().is_err() {
+                        push_scan_issue(&mut out, "文件校验线程异常，检查未完成".into());
+                    }
+                }
+            });
         }
+        progress.phase = ScanPhase::Complete;
+        progress.current_path.clear();
+        report(&progress);
         out
     }
 }
@@ -266,102 +323,209 @@ pub fn sync_dir(dir: &Dir) -> Result<()> {
     Ok(())
 }
 
-struct ScanJob {
-    dir: Arc<Dir>,
-    name: String,
-    path: String,
+enum HashEvent {
+    Bytes(String, u64),
+    Finished(String, Result<Entry>),
 }
-fn hash_buffered(mut file: impl Read, buffer: &mut [u8]) -> Result<Entry> {
+
+fn hash_buffered(
+    mut file: impl Read,
+    buffer: &mut [u8],
+    mut report: impl FnMut(u64),
+) -> Result<Entry> {
     let mut sha = Sha256::new();
     let mut bytes = 0u64;
+    let mut pending = 0u64;
+    let mut reported = Instant::now();
     loop {
-        let count = file.read(buffer)?;
+        let count = match file.read(buffer) {
+            Ok(count) => count,
+            Err(error) => {
+                if pending > 0 {
+                    report(pending);
+                }
+                return Err(error.into());
+            }
+        };
         if count == 0 {
             break;
         }
         bytes = bytes
             .checked_add(count as u64)
             .context("文件大小超出限制")?;
+        pending += count as u64;
         sha.update(&buffer[..count]);
+        if reported.elapsed() >= Duration::from_millis(150) {
+            report(pending);
+            pending = 0;
+            reported = Instant::now();
+        }
+    }
+    if pending > 0 {
+        report(pending);
     }
     Ok(Entry::File {
         sha256: hex::encode(sha.finalize()),
         bytes,
     })
 }
-fn collect_scan(
-    dir: &Arc<Dir>,
-    prefix: &str,
-    out: &mut Manifest,
-    jobs: &mut Vec<ScanJob>,
-    depth: usize,
-) {
-    if depth > 96 {
-        out.issues.push(format!("目录层级过深：{prefix}"));
-        return;
+
+fn push_scan_issue(out: &mut Manifest, issue: String) {
+    if out.issues.len() < 200 {
+        out.issues.push(issue);
+    } else if out.issues.len() == 200 {
+        out.issues
+            .push("扫描错误过多，检查未完成；请修复错误后重试".into());
     }
-    let entries = match dir.entries() {
-        Ok(entries) => entries,
-        Err(error) => {
-            out.issues.push(format!("无法读取目录 {prefix}：{error}"));
-            return;
+}
+
+fn collect_scan(
+    root: &Root,
+    out: &mut Manifest,
+    progress: &mut ScanProgress,
+    report: &mut impl FnMut(&ScanProgress),
+) -> Vec<String> {
+    let mut jobs = Vec::new();
+    let mut directories = vec![(String::new(), 0usize)];
+    while let Some((prefix, depth)) = directories.pop() {
+        if out.issues.len() >= 200 {
+            push_scan_issue(out, String::new());
+            break;
         }
-    };
-    for item in entries {
-        if out.entries.len() + jobs.len() >= LIMIT || out.issues.len() >= 200 {
-            if out.issues.len() < 201 {
-                out.issues.push("扫描达到条目上限".into());
-            }
-            return;
+        if depth > 96 {
+            push_scan_issue(out, format!("目录层级过深：{prefix}"));
+            continue;
         }
-        let item = match item {
-            Ok(item) => item,
+        progress.current_path.clone_from(&prefix);
+        report(progress);
+        let dir = if prefix.is_empty() {
+            root.dir.try_clone().map_err(Into::into)
+        } else {
+            root.parent(&prefix)
+                .and_then(|(parent, name)| parent.open_dir_nofollow(name).map_err(Into::into))
+        };
+        let dir = match dir {
+            Ok(dir) => dir,
             Err(error) => {
-                out.issues.push(error.to_string());
+                push_scan_issue(out, format!("无法读取目录 {prefix}：{error}"));
                 continue;
             }
         };
-        let name = item.file_name();
-        let Some(name) = name.to_str() else {
-            out.issues.push("发现非 Unicode 文件名".into());
-            continue;
-        };
-        if ignored(name) {
-            out.ignored += 1;
-            continue;
-        }
-        let path = if prefix.is_empty() {
-            name.to_owned()
-        } else {
-            format!("{prefix}/{name}")
-        };
-        let metadata = match validate_path(&path)
-            .and_then(|_| dir.symlink_metadata(name).map_err(Into::into))
-        {
-            Ok(metadata) => metadata,
+        let entries = match dir.entries() {
+            Ok(entries) => entries,
             Err(error) => {
-                out.issues.push(format!("{path}：{error}"));
+                push_scan_issue(out, format!("无法读取目录 {prefix}：{error}"));
                 continue;
             }
         };
-        if reparse(&metadata) || metadata.file_type().is_symlink() {
-            out.issues.push(format!("不是普通文件或目录：{path}"));
-            continue;
-        }
-        if metadata.is_dir() {
-            out.entries.insert(path.clone(), Entry::Directory);
-            match dir.open_dir_nofollow(name) {
-                Ok(child) => collect_scan(&Arc::new(child), &path, out, jobs, depth + 1),
-                Err(error) => out.issues.push(format!("{path}：{error}")),
+        for item in entries {
+            if out.issues.len() >= 200 {
+                push_scan_issue(out, String::new());
+                return jobs;
             }
-        } else if metadata.is_file() {
-            jobs.push(ScanJob {
-                dir: dir.clone(),
-                name: name.to_owned(),
-                path,
-            });
-        } else {
-            out.issues.push(format!("不是普通文件：{path}"));
+            let item = match item {
+                Ok(item) => item,
+                Err(error) => {
+                    push_scan_issue(out, error.to_string());
+                    continue;
+                }
+            };
+            let name = item.file_name();
+            let Some(name) = name.to_str() else {
+                push_scan_issue(out, "发现非 Unicode 文件名".into());
+                continue;
+            };
+            if ignored(name) {
+                out.ignored += 1;
+                continue;
+            }
+            if out.entries.len() + jobs.len() >= LIMIT {
+                push_scan_issue(
+                    out,
+                    format!("扫描超过 {LIMIT} 个文件和目录的当前上限，请拆分同步任务"),
+                );
+                return jobs;
+            }
+            let path = if prefix.is_empty() {
+                name.to_owned()
+            } else {
+                format!("{prefix}/{name}")
+            };
+            let metadata = match validate_path(&path)
+                .and_then(|_| dir.symlink_metadata(name).map_err(Into::into))
+            {
+                Ok(metadata) => metadata,
+                Err(error) => {
+                    push_scan_issue(out, format!("{path}：{error}"));
+                    continue;
+                }
+            };
+            if reparse(&metadata) || metadata.file_type().is_symlink() {
+                push_scan_issue(out, format!("不是普通文件或目录：{path}"));
+                continue;
+            }
+            if metadata.is_dir() {
+                out.entries.insert(path.clone(), Entry::Directory);
+                directories.push((path, depth + 1));
+                progress.directories += 1;
+            } else if metadata.is_file() {
+                jobs.push(path);
+                progress.files_total += 1;
+            } else {
+                push_scan_issue(out, format!("不是普通文件：{path}"));
+            }
+            report(progress);
         }
+        // `entries` and `dir` close here before the next directory is opened.
+    }
+    jobs
+}
+
+#[cfg(test)]
+mod scan_progress_tests {
+    use super::*;
+    use std::cell::Cell;
+
+    #[test]
+    fn slow_file_reports_bytes_before_eof() -> Result<()> {
+        struct SlowRead<'a> {
+            blocks: usize,
+            first: bool,
+            eof: &'a Cell<bool>,
+        }
+        impl Read for SlowRead<'_> {
+            fn read(&mut self, buffer: &mut [u8]) -> io::Result<usize> {
+                if self.blocks == 0 {
+                    self.eof.set(true);
+                    return Ok(0);
+                }
+                if self.first {
+                    self.first = false;
+                    std::thread::sleep(Duration::from_millis(170));
+                }
+                self.blocks -= 1;
+                buffer[..4].copy_from_slice(b"data");
+                Ok(4)
+            }
+        }
+        let eof = Cell::new(false);
+        let mut reports = Vec::new();
+        let result = hash_buffered(
+            SlowRead {
+                blocks: 3,
+                first: true,
+                eof: &eof,
+            },
+            &mut [0; 8],
+            |bytes| reports.push((bytes, eof.get())),
+        )?;
+        assert!(
+            reports
+                .iter()
+                .any(|(bytes, after_eof)| *bytes > 0 && !after_eof)
+        );
+        assert_eq!(reports.iter().map(|(bytes, _)| bytes).sum::<u64>(), 12);
+        assert_eq!(result, hash_file(&b"datadatadata"[..])?);
+        Ok(())
     }
 }

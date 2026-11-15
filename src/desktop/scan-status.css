@@ -1,0 +1,18 @@
+.sf-scan-status{margin:0 0 20px;padding:16px;border:1px solid var(--sf-border);border-radius:8px;background:var(--sf-soft)}
+.sf-scan-status>header,.sf-scan-status>header>div,.sf-scan-side-heading,.sf-scan-phase{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.sf-scan-status>header>div{justify-content:flex-start;min-width:0;font-size:13px}.sf-scan-status>header>span{flex:none;color:var(--sf-muted);font-size:11px}
+.sf-scan-sides{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin-top:14px}
+.sf-scan-side{min-width:0;padding:12px;border:1px solid var(--sf-border);border-radius:6px;background:var(--sf-panel)}
+.sf-scan-side-heading strong{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px;font-weight:550}.sf-scan-side-heading>span{flex:none;color:var(--sf-muted);font-size:10px}
+.sf-scan-phase{font-size:11px;color:var(--sf-muted);margin:10px 0 7px}
+.sf-scan-side progress{display:block;width:100%;height:5px;border:none;border-radius:5px;overflow:hidden;background:var(--sf-border);accent-color:var(--sf-info);appearance:none}
+.sf-scan-side progress::-webkit-progress-bar{background:var(--sf-border);border-radius:5px}.sf-scan-side progress::-webkit-progress-value{background:var(--sf-info);border-radius:5px}.sf-scan-side progress::-moz-progress-bar{background:var(--sf-info);border-radius:5px}
+.sf-scan-side progress:indeterminate{background:var(--sf-info);opacity:.45;animation:sf-scan-working 1.7s ease-in-out infinite}.sf-scan-side progress:indeterminate::-webkit-progress-bar{background:transparent}
+.sf-scan-counts{font-size:11px;margin:8px 0 6px;color:var(--sf-ink);font-variant-numeric:tabular-nums}.sf-scan-path{font-size:11px;color:var(--sf-muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin:0;min-height:17px}
+.sf-scan-help{font-size:11px;color:var(--sf-muted);line-height:1.6;margin:12px 0 0}
+.sf-scan-errors>strong{font-size:13px}.sf-scan-errors>p{font-size:12px;line-height:1.65;margin:5px 0 10px}.sf-scan-errors details{font-size:11px}.sf-scan-errors summary{cursor:pointer}.sf-scan-error-list{max-height:180px;overflow:auto;margin-top:8px;overflow-wrap:anywhere}.sf-scan-error-list p{margin:5px 0;line-height:1.6}
+.sf-sync-footer{flex-wrap:wrap}.sf-sync-footer>.sf-sync-block-reason{flex-basis:100%;margin:0;font-size:11px;line-height:1.5;color:var(--sf-muted);display:flex;align-items:center;gap:6px}
+@keyframes sf-scan-working{0%,100%{opacity:.3}50%{opacity:.7}}
+@media(prefers-reduced-motion:reduce){.sf-scan-side progress:indeterminate{animation:none}}
+[data-motion="off"] .sf-scan-side progress:indeterminate,[data-motion="reduced"] .sf-scan-side progress:indeterminate{animation:none}
+@media(max-width:850px){.sf-scan-status{padding:12px}.sf-scan-status>header{align-items:flex-start}.sf-scan-sides{gap:9px}}

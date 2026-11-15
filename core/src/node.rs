@@ -4,6 +4,7 @@ use crate::{
         ReviewNote,
     },
     engine::{self, Engine, Folder, Operation, PairState, Step, Work},
+    files::{ScanPhase, ScanProgress},
     model::*,
     pairing::{self, ClientHandshake, Identity, Invite, SERVER_NAME},
     policy::*,
@@ -35,6 +36,9 @@ const SERVICE: &str = "_syncfu._tcp.local.";
 pub const PROTOCOL: u8 = 4;
 const FRAME_LIMIT: usize = 32 * 1024 * 1024;
 const TIMEOUT: Duration = Duration::from_secs(90);
+// A full content scan can legitimately take minutes on large or slow volumes.
+// Other RPCs keep their short deadline; scan status travels on a separate session.
+const SCAN_TIMEOUT: Duration = Duration::from_secs(30 * 60);
 pub const DEFAULT_PORT: u16 = 47657;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -80,10 +84,25 @@ pub struct Snapshot {
     pub history: Vec<Batch>,
     pub dirty: Vec<String>,
     pub phase: Option<String>,
+    #[serde(default)]
+    pub scan: Option<ScanActivity>,
     pub network_error: Option<String>,
     pub policy_states: Vec<PolicyView>,
     pub paused_all: bool,
     pub automatic_supported: bool,
+}
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ScanActivity {
+    pub task: String,
+    pub local: Option<ScanProgress>,
+    pub remote: Option<ScanProgress>,
+    pub incoming: bool,
+}
+#[derive(Debug, Clone, Serialize, Deserialize)]
+struct GrantScanReport {
+    grant: String,
+    id: String,
+    progress: ScanProgress,
 }
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Code {
@@ -136,6 +155,7 @@ enum Rpc {
     Preflight(Work),
     ApproveRisk(Work),
     Scan(String),
+    ScanStatus(String),
     PreviewFile(PreviewRequest),
     State(String),
     Observe {
@@ -194,7 +214,12 @@ type Reply = std::result::Result<serde_json::Value, String>;
 struct Session(TlsStream<TcpStream>);
 impl Session {
     async fn call<T: DeserializeOwned>(&mut self, request: Rpc) -> Result<T> {
-        timeout(TIMEOUT, async {
+        let deadline = if matches!(&request, Rpc::Scan(_)) {
+            SCAN_TIMEOUT
+        } else {
+            TIMEOUT
+        };
+        timeout(deadline, async {
             send(&mut self.0, &request).await?;
             let reply: Reply = receive(&mut self.0).await?;
             Ok(serde_json::from_value(reply.map_err(anyhow::Error::msg)?)?)
@@ -216,6 +241,9 @@ pub struct Node {
     seen: Mutex<BTreeMap<String, Instant>>,
     plans: Mutex<BTreeMap<String, (Plan, PairState)>>,
     phase: Mutex<Option<String>>,
+    scan_gate: Mutex<()>,
+    scan_report: Mutex<Option<GrantScanReport>>,
+    scan_activity: Mutex<Option<ScanActivity>>,
     incoming: Mutex<Option<(String, String)>>,
     network_error: Mutex<Option<String>>,
     dirty: Mutex<BTreeMap<String, u64>>,
@@ -259,6 +287,9 @@ impl Node {
             seen: Mutex::new(BTreeMap::new()),
             plans: Mutex::new(BTreeMap::new()),
             phase: Mutex::new(None),
+            scan_gate: Mutex::new(()),
+            scan_report: Mutex::new(None),
+            scan_activity: Mutex::new(None),
             incoming: Mutex::new(None),
             network_error: Mutex::new(None),
             dirty: Mutex::new(BTreeMap::new()),
@@ -505,6 +536,20 @@ impl Node {
                 })
                 .map(|t| t.id.clone())
                 .collect(),
+            scan: lock(&self.scan_activity).clone().or_else(|| {
+                let report = lock(&self.scan_report);
+                let report = report.as_ref()?;
+                if matches!(report.progress.phase, ScanPhase::Complete) {
+                    return None;
+                }
+                let task = tasks.iter().find(|task| task.local == report.grant)?;
+                Some(ScanActivity {
+                    task: task.id.clone(),
+                    local: Some(report.progress.clone()),
+                    remote: None,
+                    incoming: true,
+                })
+            }),
             tasks,
             history: self.engine.history()?,
             phase: lock(&self.phase).clone().or_else(|| {
@@ -558,7 +603,18 @@ impl Node {
             .filter(|g| g.peer == peer)
         {
             self.engine.store.delete("grants", &grant.id)?;
+            let still_watched = self
+                .engine
+                .store
+                .list::<engine::Grant>("grants")?
+                .iter()
+                .any(|other| other.canonical == grant.canonical);
+            if !still_watched && let Some(watcher) = lock(&self.watcher).as_mut() {
+                let _ = watcher.unwatch(&grant.canonical);
+            }
+            lock(&self.dirty).remove(&grant.id);
         }
+        lock(&self.remote_dirty).remove(peer);
         for task in self.engine.tasks()?.into_iter().filter(|t| t.peer == peer) {
             self.engine.store.delete("tasks", &task.id)?;
         }
@@ -1233,6 +1289,7 @@ impl Node {
         ensure!(self.engine.active()?.is_none(), "请先核对未完成的批次");
         let task = self.engine.task(task_id)?;
         let _phase = Phase::new(&self.phase, "正在扫描和校验文件");
+        let _scan = ScanActivityGuard::new(&self.scan_activity, &task.id);
         let mut session = self.session(&self.peer(&task.peer)?).await?;
         let (a, b, expected) = self.manifests(&task, &mut session).await?;
         let policy = self.engine.policy_state(&task.id)?.ready()?.clone();
@@ -1312,11 +1369,77 @@ impl Node {
         }
         let node = self.clone();
         let local = task.clone();
-        let scan = tokio::task::spawn_blocking(move || node.scan_grant(&local.local, &local.peer));
-        let remote = session
-            .call::<Manifest>(Rpc::Scan(task.remote.clone()))
-            .await?;
-        let local = scan.await??;
+        let scan = tokio::task::spawn_blocking(move || {
+            node.scan_grant(&local.local, &local.peer, Some(&local.id))
+        });
+        // Status is optional and read-only: older peers still support the existing
+        // Scan request. Never let a missing progress channel fail a valid scan.
+        let progress_session = timeout(Duration::from_secs(3), async {
+            let mut status = self.session(&self.peer(&task.peer)?).await?;
+            let previous: Option<GrantScanReport> =
+                status.call(Rpc::ScanStatus(task.remote.clone())).await?;
+            Ok::<_, anyhow::Error>((status, previous.map(|report| report.id)))
+        })
+        .await
+        .ok()
+        .and_then(Result::ok);
+        let monitor = async {
+            if let Some((mut status, previous)) = progress_session {
+                loop {
+                    tokio::time::sleep(Duration::from_millis(400)).await;
+                    let report = timeout(
+                        Duration::from_secs(3),
+                        status
+                            .call::<Option<GrantScanReport>>(Rpc::ScanStatus(task.remote.clone())),
+                    )
+                    .await;
+                    match report {
+                        Ok(Ok(Some(report))) if Some(&report.id) != previous.as_ref() => {
+                            if let Some(activity) = lock(&self.scan_activity)
+                                .as_mut()
+                                .filter(|activity| activity.task == task.id)
+                            {
+                                activity.remote = Some(report.progress);
+                            }
+                        }
+                        Ok(Ok(_)) => (),
+                        _ => break,
+                    }
+                }
+            }
+            std::future::pending::<()>().await;
+        };
+        let remote_scan = async {
+            tokio::select! {
+                result = session.call::<Manifest>(Rpc::Scan(task.remote.clone())) => result,
+                _ = monitor => unreachable!(),
+            }
+        };
+        // Await both sides, including on error, so a failed remote request cannot
+        // leave an abandoned local scan running behind a new inspection.
+        let (local, remote) = tokio::join!(scan, remote_scan);
+        let local = local??;
+        let remote = remote?;
+        if let Some(activity) = lock(&self.scan_activity).as_mut() {
+            let files = remote
+                .entries
+                .values()
+                .filter(|entry| matches!(entry, Entry::File { .. }))
+                .count() as u64;
+            activity.remote = Some(ScanProgress {
+                phase: ScanPhase::Complete,
+                current_path: String::new(),
+                directories: remote.entries.len() as u64 - files,
+                files_total: files,
+                files_hashed: files,
+                bytes_hashed: remote.entries.values().fold(0u64, |total, entry| {
+                    total.saturating_add(match entry {
+                        Entry::File { bytes, .. } => *bytes,
+                        _ => 0,
+                    })
+                }),
+            });
+        }
         if remote.issues.is_empty()
             && let Some(ids) = lock(&self.remote_dirty).get_mut(&task.peer)
         {
@@ -1325,9 +1448,26 @@ impl Node {
         Ok((local, remote, expected))
     }
 
-    fn scan_grant(&self, grant: &str, peer: &str) -> Result<Manifest> {
+    fn scan_grant(&self, grant: &str, peer: &str, task: Option<&str>) -> Result<Manifest> {
+        // Bound process-wide scan descriptors even when several peers ask at once.
+        let _scan_gate = lock(&self.scan_gate);
         let epoch = lock(&self.dirty).get(grant).copied();
-        let manifest = self.engine.root(grant, peer)?.scan();
+        let root = self.engine.root(grant, peer)?;
+        let id = uuid::Uuid::new_v4().to_string();
+        let manifest = root.scan_with_progress(|progress| {
+            *lock(&self.scan_report) = Some(GrantScanReport {
+                grant: grant.into(),
+                id: id.clone(),
+                progress: progress.clone(),
+            });
+            if let Some(task) = task
+                && let Some(activity) = lock(&self.scan_activity)
+                    .as_mut()
+                    .filter(|activity| activity.task == task)
+            {
+                activity.local = Some(progress.clone());
+            }
+        });
         let mut dirty = lock(&self.dirty);
         if manifest.issues.is_empty() && dirty.get(grant).copied() == epoch {
             dirty.remove(grant);
@@ -1600,6 +1740,7 @@ impl Node {
         let work = self.engine.work(batch_id)?;
         let task = self.engine.task(&old.task)?;
         let _phase = Phase::new(&self.phase, "正在检查可撤销的文件");
+        let _scan = ScanActivityGuard::new(&self.scan_activity, &task.id);
         let mut session = self.session(&self.peer(&task.peer)?).await?;
         let (a, b, expected) = self.manifests(&task, &mut session).await?;
         let policy = self.engine.policy_state(&task.id)?.ready()?.clone();
@@ -2213,7 +2354,22 @@ impl Node {
                 self.validate_peer(peer, &request.task)?;
                 return json(self.engine.read_preview(&request, peer)?);
             }
-            Rpc::Scan(grant) => return json(self.scan_grant(&grant, peer)?),
+            Rpc::Scan(grant) => return json(self.scan_grant(&grant, peer, None)?),
+            Rpc::ScanStatus(grant) => {
+                ensure!(
+                    self.engine
+                        .grants(peer)?
+                        .iter()
+                        .any(|folder| folder.id == grant),
+                    "目录未授权"
+                );
+                return json(
+                    lock(&self.scan_report)
+                        .as_ref()
+                        .filter(|report| report.grant == grant)
+                        .cloned(),
+                );
+            }
             Rpc::Cancel(ticket) => {
                 if let Some(work) = self.engine.active()?
                     && work.batch.id == ticket.id
@@ -2435,6 +2591,24 @@ impl Drop for Incoming<'_> {
     }
 }
 
+struct ScanActivityGuard<'a>(&'a Mutex<Option<ScanActivity>>);
+impl<'a> ScanActivityGuard<'a> {
+    fn new(target: &'a Mutex<Option<ScanActivity>>, task: &str) -> Self {
+        *lock(target) = Some(ScanActivity {
+            task: task.into(),
+            local: None,
+            remote: None,
+            incoming: false,
+        });
+        Self(target)
+    }
+}
+impl Drop for ScanActivityGuard<'_> {
+    fn drop(&mut self) {
+        *lock(self.0) = None;
+    }
+}
+
 struct Phase<'a>(&'a Mutex<Option<String>>);
 impl<'a> Phase<'a> {
     fn new(target: &'a Mutex<Option<String>>, value: &str) -> Self {
@@ -2455,6 +2629,9 @@ impl Drop for Phase<'_> {
 fn lock<T>(mutex: &Mutex<T>) -> MutexGuard<'_, T> {
     mutex.lock().unwrap_or_else(|e| e.into_inner())
 }
+
+#[cfg(test)]
+mod scan_tests;
 fn find_op<'a>(work: &'a Work, id: &str) -> Result<&'a Operation> {
     work.ops
         .binary_search_by(|op| op.id.as_str().cmp(id))
