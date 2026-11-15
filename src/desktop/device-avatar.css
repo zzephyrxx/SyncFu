@@ -1,2 +1,9 @@
-.sf-device-avatar{display:inline-flex;align-items:center;justify-content:center;flex:none;width:52px;height:52px;border-radius:15px;border:1px solid var(--sf-border);background:var(--sf-soft);color:var(--sf-muted);font-size:29px;line-height:1}
-.sf-device-avatar.has-emoji{background:var(--sf-panel)}
+.sf-device-avatar{position:relative;display:inline-flex;align-items:center;justify-content:center;flex:none;width:48px;height:48px;border-radius:14px;background:#f0f3fb;color:var(--sf-ink);font-size:31px;line-height:1;isolation:isolate}
+.sf-device-avatar[data-tone="1"]{background:#f7f1e5}.sf-device-avatar[data-tone="2"]{background:#f4eff9}.sf-device-avatar[data-tone="3"]{background:#edf5f0}.sf-device-avatar[data-tone="4"]{background:#fbefeb}
+.sf-fluent-emoji{display:inline-flex;align-items:center;justify-content:center;width:1em;height:1em;flex:none;font-family:"Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif;line-height:1}
+.sf-fluent-emoji>img{display:block;object-fit:contain;width:100%;height:100%;max-width:none;user-select:none}
+.sf-device-avatar>.sf-fluent-emoji{width:78%;height:78%;font-size:inherit}
+.sf-device-type-badge{position:absolute;right:-3px;bottom:-3px;display:grid;place-items:center;width:19px;height:19px;border:2px solid var(--sf-panel);border-radius:7px;background:var(--sf-soft);color:var(--sf-muted)}
+:root[data-theme="dark"] .sf-device-avatar{background:#293345}
+:root[data-theme="dark"] .sf-device-avatar[data-tone="1"]{background:#3b3428}:root[data-theme="dark"] .sf-device-avatar[data-tone="2"]{background:#342d42}:root[data-theme="dark"] .sf-device-avatar[data-tone="3"]{background:#283a32}:root[data-theme="dark"] .sf-device-avatar[data-tone="4"]{background:#3f2e2a}
+@media(forced-colors:active){.sf-device-avatar{border:1px solid CanvasText}.sf-device-type-badge{border-color:CanvasText}}

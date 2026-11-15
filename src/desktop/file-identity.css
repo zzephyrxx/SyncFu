@@ -1,0 +1,8 @@
+.sf-file-identity>.sf-file-glyph{display:inline-flex;align-items:center;justify-content:center;flex:none;width:26px;min-height:30px;margin-right:1px;color:var(--sf-muted)}
+.sf-file-identity>.sf-file-glyph>svg{display:block;width:25px;height:30px;overflow:visible}
+.sf-file-identity>.sf-file-glyph.folder{width:26px}
+.sf-file-identity>.sf-file-glyph.folder>svg,.sf-file-identity>.sf-file-glyph.send>svg{height:24px}
+.sf-file-identity>.sf-file-glyph+.sf-file-copy{min-width:0}
+.sf-file-path-trigger.bui-dropdown-trigger{border:0;background:transparent;box-shadow:none;min-height:40px;padding:0;text-align:left;justify-content:flex-start}
+.sf-file-path-trigger.bui-dropdown-trigger:focus-visible{outline:2px solid var(--focus-line);outline-offset:2px;border-radius:5px}
+@media(max-width:560px){.sf-file-identity>.sf-file-glyph{width:22px;min-height:28px;margin-right:0}.sf-file-identity>.sf-file-glyph>svg{width:21px;height:27px}.sf-file-identity{gap:7px}}

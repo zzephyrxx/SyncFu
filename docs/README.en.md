@@ -14,23 +14,36 @@
 - **Recoverable operations:** backup before overwrite/deletion, per-operation receipts, protected undo and reconciliation after interruption.
 - **Local-first:** no cloud account or relay required; files move directly between LAN peers.
 - **LAN-first pairing:** choose a discovered device and enter its five-digit pairing code in separate digit boxes. Manual IP entry is available as a fallback.
-- **Recognizable devices and tasks:** save device aliases and emoji locally; original device names remain available. Colored folder icons identify tasks in a collapsible sidebar whose state persists.
+- **Recognizable devices and tasks:** save device aliases, Fluent Emoji avatars and optional device-type icons locally; custom emoji have a system-font fallback and original device names remain available. Colored folder icons identify tasks in a collapsible sidebar whose state persists.
 - **Clear synchronization endpoints:** device names, folders and transfer direction have separate places in the task workspace and compact task-creation form.
 - **Desktop navigation:** a dedicated usage overview, theme selection in Settings, and a single-row macOS toolbar with space for native window controls.
 - **Consistent controls:** light/dark themes, filename-first rows, accessible selection controls, and Simplified Chinese, Traditional Chinese, English, Japanese and Korean.
 
-| Task workspace | Dark theme, collapsed sidebar |
+| Task workspace | Dark theme |
 | --- | --- |
-| ![Task workspace with explicit device and folder endpoints](ui-refresh/screenshots/workspace.jpg) | ![Dark task workspace with a collapsed sidebar](ui-refresh/screenshots/dark-collapsed.jpg) |
+| ![Task workspace with explicit device and folder endpoints](shadcn-redesign/screenshots/workspace.jpg) | ![Dark task workspace](shadcn-redesign/screenshots/dark.jpg) |
 
-Screenshots use isolated test devices and folders, not a physical two-device synchronization session. See the [current UI and verification record](ui-refresh/README.md) for the implementation scope and validation limits.
+Screenshots use isolated test devices and folders, not a physical two-device synchronization session. See the [current desktop UI record](shadcn-redesign/README.md) for the implementation scope and validation limits.
+
+### Current UI implementation
+
+The existing Tauri/Rust application adopts tauri-ui desktop conventions for window layout, text selection and scrolling. The scaffolder is not rerun over this project. Vendored shadcn/ui components and Radix primitives supply buttons, fields, selection controls, dialogs and menus.
+
+| Element | Implementation |
+| --- | --- |
+| Device avatars | Local Microsoft Fluent Emoji 3D images, with a system-font fallback for custom emoji |
+| Device types, actions and task folders | Lucide, including colored flat folders for individual tasks |
+| Connectivity and task status | Phosphor Circle weights and colors, accompanied by status text |
+| File types and conflicts | react-file-icon file glyphs and red Lucide conflict warnings |
+
+BoardUI, Morphicons and EasyUI designs and provenance remain historical records; they no longer describe the components used by the current interface.
 
 ## Status and requirements
 
 | Area | Status |
 | --- | --- |
 | Windows | Target: Windows 10 22H2 / Windows 11 x64 with WebView2 |
-| macOS | Target: macOS 13+, Apple Silicon and Intel build targets; the current UI iteration was validated on Apple Silicon |
+| macOS | Target: macOS 13+, Apple Silicon and Intel build targets |
 | Linux / mobile | Not supported |
 | Automatic synchronization | Automatic **read-only checks** exist; automatic writes are not implemented |
 | Network | Mutually reachable IPv4 LAN; TCP `47657` by default; no relay or NAT traversal |
@@ -85,7 +98,7 @@ For an Apple Silicon application, run on an Apple Silicon Mac:
 npm run tauri -- build --bundles app
 ```
 
-Output: `target/release/bundle/macos/`. This is the architecture validated in the current UI iteration.
+Output: `target/release/bundle/macos/`.
 
 To build a universal application for both Apple Silicon and Intel:
 
@@ -115,15 +128,12 @@ The isolated acceptance app uses `org.syncfu.acceptance.p2`, not the normal `org
 
 ## Verification and limits
 
-The [2026-11-15 UI refresh record](ui-refresh/README.md) reports **81 frontend tests passing** through `npm test`, including TypeScript checking, the production build, synchronization selection/protection contracts and device-profile persistence. This is a recorded validation snapshot; use CI and the acceptance records for the revision you run.
+This tauri-ui/shadcn iteration passed all **83 tests** in `npm test` and successfully built the **macOS arm64 application**. Browser checks covered 1120 × 780 and 680 × 560 windows in light and dark themes. See the [desktop UI notes](shadcn-redesign/README.md) for the behavior checks and screenshots.
 
-- Browser fixtures were checked at 1120 × 780 and the minimum desktop size of 680 × 560, covering themes, sidebar persistence, long device names, offline states, usage overview, material previews, task creation and device-profile updates.
-- Pairing checks covered LAN selection, full-code paste, leading zeros, backspace, final-digit replacement, manual IP fallback, generation/copy feedback and simulated request completion.
-- A native macOS WKWebView preview with an isolated application identity was launched. The single-row toolbar and sidebar collapse were visually checked.
-- The current Apple Silicon / arm64 app build passed ad-hoc signature verification with `codesign --verify --deep --strict`; its ZIP passed integrity checks. It is not Developer ID signed or Apple notarized.
-- **Native Windows window behavior and physical two-device LAN synchronization have not been validated in this iteration.** Browser fixtures and native macOS visual checks do not establish cross-platform synchronization acceptance.
-
-The production build completes with a Vite warning about the desktop JavaScript chunk exceeding 500 KB. Earlier performance and core test records remain in the [documentation index](README.md); their results are not presented as validation of this revision.
+- The screenshots and browser checks use the `desktop-test` fixture, covering device-profile and sidebar persistence, pairing-code input, file selection, menus and dialogs without connecting to real peers.
+- The successful macOS application build does not establish acceptance of operating-system permissions or native interactions. The [previous UI refresh record](ui-refresh/README.md) retains its own macOS preview results.
+- **Native Windows window behavior and physical two-device LAN synchronization have not been validated in this iteration.**
+- A local build or ad-hoc signature verification is not Developer ID signing, Apple notarization or production acceptance.
 
 SyncFu uses PAKE pairing, mutual TLS, SHA-256 verification, authorized roots, write-time checks and deletion risk gates. It has not received an independent security audit. Undo protects later edits and reverses the recorded batch's changes; it is not a whole-folder snapshot restore. Synchronization is not a substitute for independent backups.
 
@@ -141,6 +151,8 @@ Current validation targets ordinary files/folders on internal disks at roughly 1
 
 See [CONTRIBUTING.md](../CONTRIBUTING.md) for checks and contribution boundaries, and [the documentation index](README.md) for architecture and historical records.
 
-First-party code is licensed under [Apache-2.0](../LICENSE); see [NOTICE](../NOTICE). The production UI uses BoardUI controls, EasyUI-derived task folders, Morphicons, Lucide icon data, Microsoft Fluent Emoji and Inter. Settings includes previews of the materials in use and their license links. React Bits was evaluated but no component source was copied. [BoardUI component provenance](boardui-redesign/sources.json) and [material provenance](material-redesign/sources.json) record pinned upstream sources; the original notices are retained. Dependency notices are collected into application distributions.
+First-party code is licensed under [Apache-2.0](../LICENSE); see [NOTICE](../NOTICE). The current interface adopts tauri-ui desktop conventions and uses vendored shadcn/ui/Radix controls, Microsoft Fluent Emoji, Lucide, Phosphor, react-file-icon and Inter. See the [current implementation record](shadcn-redesign/README.md), [shadcn license](../assets/shadcn-licenses/shadcn-MIT.txt), and [Fluent avatar provenance and checksums](../assets/fluent-emoji/sources.json).
+
+The licenses and provenance for earlier BoardUI, Morphicons and EasyUI implementations remain with the historical source. React Bits was evaluated but no component source was copied. Dependency notices accompany application distributions, and third-party components retain their original licenses.
 
 SyncFu is independent and is not affiliated with Syncthing or the referenced UI/asset projects.

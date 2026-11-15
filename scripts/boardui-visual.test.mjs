@@ -8,19 +8,26 @@ test('the original user logo and native icons are byte-for-byte preserved',()=>{
   for(const [file,expected] of Object.entries(checkpoint))assert.equal(createHash('sha256').update(readFileSync(new URL('../'+file,import.meta.url))).digest('hex'),expected,file);
   assert.match(read('src/desktop/Desktop.tsx'),/assets\/syncfu-icon\.svg/);assert.match(read('src/desktop/Desktop.tsx'),/src=\{logo\}/);
 });
-test('BoardUI production stylesheet contains no gradient functions or glass effects',()=>{
-  const css=read('src/desktop/boardui/index.css');assert.doesNotMatch(css,/(?:linear|radial|conic)-gradient\s*\(/i);assert.doesNotMatch(css,/backdrop-filter/);
-  assert.match(css,/source\(none\)/);
-  const glyph=read('src/desktop/boardui/vendor/checkbox-glyph.tsx');assert.doesNotMatch(glyph,/bg-linear|from-accent|to-accent/);
+test('production styles use solid neutral surfaces without gradients or glass effects',()=>{
+  for(const file of ['src/desktop/boardui/index.css','src/components/ui/tokens.css','src/components/ui/primitives.css','src/desktop/workspace.css']){
+    const css=read(file);assert.doesNotMatch(css,/(?:linear|radial|conic)-gradient\s*\(/i);assert.doesNotMatch(css,/backdrop-filter/);
+  }
+  assert.match(read('src/desktop/boardui/index.css'),/source\(none\)/);
 });
-test('BoardUI controls and EasyUI folder artwork compose the live desktop without a material chooser',()=>{
+test('the live desktop uses shadcn primitives without the old visual kits or a material chooser',()=>{
   const desktop=read('src/desktop/Desktop.tsx'),settings=read('src/desktop/LiveSettings.tsx');
-  assert.match(desktop,/boardui\/index\.css/);assert.match(desktop,/design-system\/TaskFolder/);assert.doesNotMatch(desktop,/design-system\/index\.css/);assert.doesNotMatch(settings,/MaterialPicker|materialTheme|materialNeo|materialLiquid/);
+  assert.match(desktop,/components\/ui\/primitives\.css/);assert.doesNotMatch(desktop,/design-system\//);assert.doesNotMatch(settings,/MaterialPicker|materialTheme|materialNeo|materialLiquid/);
+  for(const file of ['src/desktop/boardui/UI.tsx','src/desktop/boardui/SyncChangesTable.tsx','src/desktop/LiveDialogs.tsx'])assert.doesNotMatch(read(file),/from ['"][^'"]*(?:vendor\/|react-aria-components|morphicons)/);
+  assert.match(read('src/desktop/boardui/UI.tsx'),/components\/ui\/dialog/);
+  assert.match(read('src/desktop/boardui/UI.tsx'),/components\/ui\/dropdown-menu/);
   assert.match(read('src/main.tsx'),/import\.meta\.env\.DEV && parameters\.has\('prototype'\)/);
 });
-test('action icons use Morphicons with a reduced-motion policy and local font license',()=>{
-  const icons=read('src/desktop/boardui/icons.tsx');assert.match(icons,/from 'morphicons\/react'/);assert.match(icons,/reducedMotion=\{animate\?'user':'always'\}/);
-  for(const name of ['BoardUI-MIT.txt','Morphicons-MIT.txt','Lucide-ISC.txt','Inter-OFL.txt'])assert.ok(read('assets/boardui-licenses/'+name).length>500);
+test('action icons use Lucide and vendored component sources retain their licenses and hashes',()=>{
+  const icons=read('src/desktop/boardui/icons.tsx');assert.match(icons,/from 'lucide-react'/);assert.doesNotMatch(icons,/MorphIcon|morphicons/);
+  for(const name of ['Lucide-ISC.txt','Inter-OFL.txt'])assert.ok(read('assets/boardui-licenses/'+name).length>500);
+  for(const name of ['shadcn-MIT.txt','Radix-MIT.txt'])assert.ok(read('assets/shadcn-licenses/'+name).length>500);
+  const ledger=JSON.parse(read('docs/shadcn-redesign/sources.json'));
+  for(const entry of ledger.entries)assert.equal(createHash('sha256').update(read(entry.snapshot)).digest('hex'),entry.sha256,entry.snapshot);
 });
 test('table selection uses stable path IDs and never the upstream page-only select-all',()=>{
   const table=read('src/desktop/boardui/SyncChangesTable.tsx');assert.match(table,/getRowId:change=>rowKey\(change.path\)/);assert.doesNotMatch(table,/toggleAllPageRowsSelected|CUSTOMERS/);assert.match(table,/toggleGroup\(rows,old\)/);

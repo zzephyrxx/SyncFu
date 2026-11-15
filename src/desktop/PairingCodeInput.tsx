@@ -26,11 +26,11 @@ export function PairingCodeInput({digits,onChange,label,description,disabled=fal
       event.preventDefault();focus(event.key==='Home'?0:event.key==='End'?LENGTH-1:index+(event.key==='ArrowLeft'?-1:1));
     }
   };
-  return <fieldset className="sf-pair-code" disabled={disabled} aria-describedby={`${id}-help`}>
+  return <fieldset className="sf-pair-code" data-slot="input-otp" disabled={disabled} aria-describedby={`${id}-help`}>
     <legend>{label}</legend>
     <p id={`${id}-help`}>{description}</p>
-    <div className="sf-pair-code-fields">
-      {Array.from({length:LENGTH},(_,index)=><input key={index} ref={element=>{fields.current[index]=element;}} type="text" inputMode="numeric" autoComplete={index===0?'one-time-code':'off'} autoCapitalize="off" spellCheck={false} name={`pairing-code-${index+1}`} aria-label={`${label} ${index+1} / ${LENGTH}`} value={digits[index]??''} maxLength={LENGTH} pattern="[0-9]" required onFocus={event=>event.currentTarget.select()} onClick={event=>event.currentTarget.select()} onChange={event=>update(index,event.target.value)} onKeyDown={event=>navigate(event,index)} onPaste={event=>{event.preventDefault();update(index,event.clipboardData.getData('text'));}}/>) }
+    <div className="sf-pair-code-fields" data-slot="input-otp-group">
+      {Array.from({length:LENGTH},(_,index)=><input key={index} ref={element=>{fields.current[index]=element;}} data-slot="input-otp-slot" data-filled={Boolean(digits[index])} type="text" inputMode="numeric" autoComplete={index===0?'one-time-code':'off'} autoCapitalize="off" spellCheck={false} name={`pairing-code-${index+1}`} aria-label={`${label} ${index+1} / ${LENGTH}`} value={digits[index]??''} maxLength={LENGTH} pattern="[0-9]" required onFocus={event=>event.currentTarget.select()} onClick={event=>event.currentTarget.select()} onChange={event=>update(index,event.target.value)} onKeyDown={event=>navigate(event,index)} onPaste={event=>{event.preventDefault();update(index,event.clipboardData.getData('text'));}}/>) }
     </div>
   </fieldset>;
 }

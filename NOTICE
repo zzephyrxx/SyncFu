@@ -5,3 +5,27 @@ SyncFu is independently implemented. Its design research references
 Oink (https://github.com/oinkvm/oink) and Syncthing
 (https://github.com/syncthing/syncthing). Their source code and assets are not
 included in SyncFu. Third-party dependency notices accompany distributions.
+
+Current desktop UI
+
+The existing application adapts desktop conventions from tauri-ui
+(https://github.com/agmmnn/tauri-ui; author agmmnn; upstream package declares
+MIT). tauri-ui is a scaffolder, not a runtime component dependency.
+
+Vendored shadcn/ui components are adapted for SyncFu and use Radix primitives.
+shadcn/ui: Copyright (c) 2023 shadcn, MIT License.
+See assets/shadcn-licenses/ and docs/shadcn-redesign/ for source records.
+
+Microsoft Fluent Emoji 3D device artwork is used without modification.
+Copyright (c) Microsoft Corporation, MIT License.
+Source URLs and content hashes: assets/fluent-emoji/sources.json.
+License: assets/fluent-emoji/LICENSE.txt.
+
+The current interface also uses Lucide for device types and actions,
+Phosphor for state icons, react-file-icon for file types, and Inter for
+Latin typography. Their licenses and notices remain with the dependency
+distributions and the local assets/ license records.
+
+BoardUI, Morphicons and EasyUI notices remain for the earlier implementations
+and historical source retained in this repository. They do not identify the
+current desktop runtime's component selection.

@@ -22,8 +22,13 @@ for (const { name, version, folder } of packages) {
     copyFileSync(join(folder, item.name), join(out, basename(item.name)));
   }
 }
-for (const [source,name] of [['assets/prototype/LICENSE.txt','Microsoft-Fluent-Emoji'],['assets/streamline/LICENSE-Phosphor.txt','Phosphor-Icons']]) {
+for (const [source,name] of [['assets/fluent-emoji/LICENSE.txt','Microsoft-Fluent-Emoji'],['assets/streamline/LICENSE-Phosphor.txt','Phosphor-Icons']]) {
   const out=join(output,name);mkdirSync(out,{recursive:true});copyFileSync(source,join(out,'LICENSE.txt'));
+}
+copyFileSync('assets/fluent-emoji/sources.json',join(output,'Microsoft-Fluent-Emoji','sources.json'));
+const shadcnNotices=join(output,'Shadcn-Tauri-UI-sources');mkdirSync(shadcnNotices,{recursive:true});
+for(const entry of readdirSync('assets/shadcn-licenses',{withFileTypes:true})){
+  if(entry.isFile())copyFileSync(join('assets/shadcn-licenses',entry.name),join(shadcnNotices,entry.name));
 }
 const materialNotices=join(output,'Material-UI-sources');mkdirSync(materialNotices,{recursive:true});
 for(const name of readdirSync('assets/material-licenses'))copyFileSync(join('assets/material-licenses',name),join(materialNotices,name));

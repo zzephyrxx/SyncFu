@@ -31,7 +31,7 @@ SyncFu 把一次同步集中到一张清单：检查文件变化，选择新增�
 - **可恢复的文件操作**：覆盖或删除前备份，记录操作回执，支持受保护撤销和中断后的结果核对。
 - **本地优先**：无需云账户；文件在局域网内直接交换，不依赖中继服务器。
 - **局域网优先配对**：选择自动发现的设备，输入五位配对码；独立数字格支持整码粘贴，手动 IP 作为备用入口。
-- **设备识别**：支持本地设备备注和表情标识，仍以稳定设备 ID 识别对端。
+- **设备识别**：支持本地备注、Fluent Emoji 头像和可选类型图标；自定义 emoji 保留系统字体回退，仍以稳定设备 ID 识别对端。
 - **明确同步方向**：设备与文件夹独立展示，任务使用不同颜色的文件夹图标；新建任务表单清楚区分两端。
 - **清晰的桌面界面**：可折叠侧栏、独立使用总览、macOS 单行工具栏；主题在设置中切换，支持简中、繁中、英文、日文和韩文。
 
@@ -39,11 +39,24 @@ SyncFu 把一次同步集中到一张清单：检查文件变化，选择新增�
 
 下图使用隔离的演示数据，不包含真实同步目录或配对凭据。
 
-| 任务工作区 | 深色与折叠侧栏 |
+| 任务工作区 | 深色主题 |
 | --- | --- |
-| ![任务工作区，清楚展示设备和文件夹端点](docs/ui-refresh/screenshots/workspace.jpg) | ![深色主题与折叠侧栏](docs/ui-refresh/screenshots/dark-collapsed.jpg) |
+| ![任务工作区，清楚展示设备和文件夹端点](docs/shadcn-redesign/screenshots/workspace.jpg) | ![深色主题工作区](docs/shadcn-redesign/screenshots/dark.jpg) |
 
-更多界面与验证记录见 [本轮 UI 重构说明](docs/ui-refresh/README.md)。
+更多界面与验证范围见 [当前桌面 UI 说明](docs/shadcn-redesign/README.md)。
+
+### 当前界面实现
+
+保留现有 Tauri／Rust 应用，按 tauri-ui 的桌面交互约定调整窗口、选择与滚动行为；没有重新运行脚手架覆盖项目。按钮、输入框、复选框、弹窗和菜单使用本地维护的 shadcn/ui 组件及 Radix 交互原语。
+
+| 视觉元素 | 当前实现 |
+| --- | --- |
+| 设备头像 | 本地 Microsoft Fluent Emoji 3D 素材；自定义 emoji 可回退系统字体 |
+| 设备类型、操作与任务文件夹 | Lucide，任务使用不同颜色的平面文件夹 |
+| 在线、离线及任务状态 | Phosphor Circle 的不同字重与颜色，并保留状态文字 |
+| 文件类型与冲突 | react-file-icon 文件图标；Lucide 红色冲突警示 |
+
+BoardUI、Morphicons 和 EasyUI 的旧版设计及来源文件保留为历史记录，不再描述当前运行界面的组件选型。
 
 ## 平台与项目状态
 
@@ -135,17 +148,16 @@ npm run tauri -- build --target x86_64-pc-windows-msvc --bundles nsis --config s
 
 ## 验证与安全边界
 
-2026-11-15 的 UI 重构记录包含 **81 项前端测试通过**，覆盖类型检查、生产构建、同步选择与保护契约、设备备注持久化。该数字是验证快照，后续提交以 CI 结果为准；历史内核与性能记录见 [文档索引](docs/README.md)。
+本轮 tauri-ui／shadcn 界面已通过 `npm test` 的 **83 项测试**，并成功构建 **macOS arm64 应用**。浏览器验证覆盖 1120 × 780 与 680 × 560 窗口、浅色／深色主题；详细行为检查和截图见 [当前 UI 说明](docs/shadcn-redesign/README.md)。
 
-- 浏览器测试覆盖批选、普通一键执行、危险确认、暂停、部分结果等流程。
-- 10,003 项测试清单只渲染当前页 50 行，全选仍覆盖全部匹配项。
-- 本轮已启动独立标识的 macOS WKWebView 预览，检查单行工具栏与侧栏折叠；Apple Silicon / arm64 应用通过 ad-hoc 签名验证和 ZIP 完整性检查，未做 Developer ID 签名或 Apple 公证。
+- 本轮截图和浏览器检查均使用 `desktop-test` 夹具，覆盖设备自定义与侧栏折叠持久化、配对码输入、文件选择、菜单及对话框行为，不连接真实对端。
+- macOS 应用构建成功不代表系统权限或原生交互已完成验收；旧版 macOS 预览记录见 [上一轮 UI 重构记录](docs/ui-refresh/README.md)。
 - **本轮 Windows 原生窗口与实体双机 LAN 同步尚未完成验收。**
-- Vite 仍提示桌面 JavaScript 分块超过 500 KB，生产构建可正常完成。
+- 本地构建或 ad-hoc 验签不等于 Developer ID 签名、Apple 公证或生产验收。
 
 SyncFu 使用 PAKE 配对、双向 TLS、SHA-256 内容核验、授权根约束、写前检查和删除风险门禁，但尚未经过独立安全审计。同步不能代替独立备份；撤销只针对该次同步产生的修改，并保护后续编辑，不是整个目录的时间旅行恢复。
 
-当前主要面向内置磁盘上的普通文件与文件夹、约一万个文件规模的个人资料。活动数据库、应用资料库、NAS、移动盘和完整系统元数据保真不在当前验收范围。详见 [安全说明](SECURITY.md) 与 [验证记录](docs/ui-refresh/README.md)。
+当前主要面向内置磁盘上的普通文件与文件夹、约一万个文件规模的个人资料。活动数据库、应用资料库、NAS、移动盘和完整系统元数据保真不在当前验收范围。详见 [安全说明](SECURITY.md) 与 [当前界面说明](docs/shadcn-redesign/README.md)。
 
 ## 常见问题
 
@@ -160,7 +172,8 @@ SyncFu 使用 PAKE 配对、双向 TLS、SHA-256 内容核验、授权根约束�
 ```text
 core/                 Rust 同步、策略、备份与恢复内核
 src/desktop/          当前桌面业务界面
-src/desktop/boardui/  BoardUI 组件适配与纯色主题
+src/components/ui/    本地维护的 shadcn/Radix 组件
+src/desktop/boardui/   现有业务兼容入口，委托当前组件实现
 src-tauri/            Tauri 桌面入口和平台权限集成
 scripts/              测试、契约生成与验收工具
 docs/                 当前文档及明确标记的历史设计记录
@@ -173,6 +186,8 @@ assets/               原始品牌素材与第三方许可
 
 项目自有代码采用 [Apache-2.0](LICENSE)，另见 [NOTICE](NOTICE)。
 
-界面使用 BoardUI、Morphicons、Lucide 图标数据、Microsoft Fluent Emoji 和 Inter，并复用 EasyUI 的部分文件夹插画结构；保留各自许可证及来源记录。React Bits 仅做过评估，未复制其组件源码。详见 [当前组件来源](docs/boardui-redesign/sources.json) 与 [第三方许可文件](assets/boardui-licenses/)。构建时会收集依赖 notices 并随应用分发。
+当前界面采用 tauri-ui 的桌面约定、本地维护的 shadcn/ui／Radix 控件、Microsoft Fluent Emoji、Lucide、Phosphor、react-file-icon 和 Inter。详见 [当前实现说明](docs/shadcn-redesign/README.md)、[shadcn 许可证](assets/shadcn-licenses/shadcn-MIT.txt) 与 [Fluent 头像来源和内容哈希](assets/fluent-emoji/sources.json)。
+
+BoardUI、Morphicons、EasyUI 等旧版实现的许可证和来源记录仍保留，供历史代码追溯；React Bits 仅做过评估，未复制其组件源码。构建时会收集依赖 notices 并随应用分发，各第三方组件仍遵循各自许可。
 
 SyncFu 是独立项目，不隶属于 Syncthing 或上述素材／组件项目。

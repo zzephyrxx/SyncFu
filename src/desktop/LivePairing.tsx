@@ -64,14 +64,14 @@ export function LivePairing({c,onClose}:{c:DesktopController;onClose:()=>void}){
     catch(e){if(alive.current)setError(readableError(e));}
     finally{if(alive.current)setBusy(false);}
   };
-  return <Dialog title={text('title')} description={text('description')} className="sf-pair-modal" dismissDisabled={Boolean(approved&&!paired)} onClose={onClose}>
+  return <Dialog title={text('title')} description={text('description')} className={`sf-pair-modal ${mode==='start'&&!paired?'sf-pair-wide':''}`} dismissDisabled={Boolean(approved&&!paired)} onClose={onClose}>
     {error&&<Notice tone="error">{error}</Notice>}
     <div className="sf-pairing">
-      {!paired&&<div className="sf-pair-tabs" aria-label={text('title')}>
+      {!paired&&<div className="sf-pair-tabs" role="group" aria-label={text('title')}>
         {(['start','receive'] as const).map(value=><Button key={value} variant="ghost" disabled={busy||!!approved} aria-pressed={mode===value} onClick={()=>{setMode(value);setError('');setCopied(false);}}><AppIcon name={value==='start'?'Wifi':'Laptop'} size={16}/>{t(value==='receive'?'receivePair':'startPair')}{value==='receive'&&c.snapshot.pending.length>0&&<span className="sf-pair-count">{c.snapshot.pending.length}</span>}</Button>)}
       </div>}
       {paired?<div className="sf-pair-success"><SuccessMark/><h3>{t('paired')}</h3><p>{text('security')}</p><Button variant="primary" onClick={onClose}>{t('done')}</Button></div>:mode==='start'?<form className="sf-pair-start" onSubmit={event=>void send(event)}>
-        <section className="sf-pair-discovery" aria-labelledby="sf-pair-discovery-title">
+        <div className="sf-pair-discovery-pane"><section className="sf-pair-discovery" aria-labelledby="sf-pair-discovery-title">
           <header><div><h3 id="sf-pair-discovery-title">{text('select')}</h3><p>{text('scan')}</p></div><Button variant="ghost" size="small" disabled={busy||refreshing} aria-label={text('refresh')} onClick={()=>void refreshNearby()}>{refreshing?<Spinner/>:<AppIcon name="RefreshCw" size={16}/>}</Button></header>
           {c.snapshot.nearby.length?<fieldset className="sf-pair-devices" aria-label={text('select')} disabled={busy}>
             {c.snapshot.nearby.map(device=><label key={device.id} className={`sf-pair-device ${!manual&&deviceId===device.id?'is-selected':''}`}>
@@ -87,11 +87,15 @@ export function LivePairing({c,onClose}:{c:DesktopController;onClose:()=>void}){
           <summary onClick={event=>{event.preventDefault();if(!busy)setManual(value=>!value);}} aria-disabled={busy}><AppIcon name="ChevronRight" size={14}/>{text('manual')}</summary>
           <div><label htmlFor="sf-pair-address">{t('address')}</label><input id="sf-pair-address" value={address} disabled={busy||!manual} onChange={event=>setAddress(event.target.value)} autoComplete="off" autoCapitalize="off" spellCheck={false} placeholder="192.168.1.20:47657" required={manual}/><p>{text('manualHelp')}</p></div>
         </details>
-        <PairingCodeInput digits={digits} onChange={setDigits} label={t('pairCode')} description={text('codeHelp')} disabled={busy}/>
-        {selected&&!manual&&<p className="sf-pair-target"><AppIcon name="Link" size={14}/><span>{text('selected')} <strong>{deviceDisplayName(selected,profiles)}</strong></span></p>}
-        <Button className="sf-pair-submit" type="submit" variant="primary" disabled={busy||!/^\d{5}$/.test(code)||!targetAddress}>{busy?<Spinner/>:<AppIcon name="Link" size={17}/>} {t(busy?'pairWaiting':'sendRequest')}</Button>
+        </div>
+        <div className="sf-pair-verification">
+          <PairingCodeInput digits={digits} onChange={setDigits} label={t('pairCode')} description={text('codeHelp')} disabled={busy}/>
+          {selected&&!manual&&<p className="sf-pair-target"><AppIcon name="Laptop" size={14}/><span>{text('selected')} <strong>{deviceDisplayName(selected,profiles)}</strong></span></p>}
+          {manual&&targetAddress&&<p className="sf-pair-target"><AppIcon name="Link" size={14}/><span>{targetAddress}</span></p>}
+          <Button className="sf-pair-submit" type="submit" variant="primary" disabled={busy||!/^\d{5}$/.test(code)||!targetAddress}>{busy?<Spinner/>:<AppIcon name="Link" size={15}/>} {t(busy?'pairWaiting':'sendRequest')}</Button>
+        </div>
       </form>:<div className="sf-pair-receive">
-        <div className="sf-pair-this-device"><DeviceAvatar deviceId={c.snapshot.device.id} profiles={profiles} local/><strong title={c.snapshot.device.name}>{deviceDisplayName(c.snapshot.device,profiles)}</strong><p>{text('receiveHelp')}</p></div>
+        <div className="sf-pair-this-device"><DeviceAvatar deviceId={c.snapshot.device.id} profiles={profiles} local/><div><strong title={c.snapshot.device.name}>{deviceDisplayName(c.snapshot.device,profiles)}</strong><p>{text('receiveHelp')}</p></div></div>
         {approved||c.snapshot.pending.length>0?<p className="sf-pair-approval" role="status">{approved&&<Spinner/>}{approved?text('approvalWait'):text('review')}</p>:<>
         <h3 className="ui-code-heading">{t(busy||rolling?'rolling':expiry>0?'codeReady':'codeExpired')}</h3>
         <div className="ui-code-machine" data-phase={rolling?'spinning':ready?'ready':'inactive'}><div className="ui-reels" aria-hidden="true">{Array.from({length:5},(_,index)=><Reel classPrefix="ui" key={`${invite?.code??'none'}-${index}`} digit={Number(invite?.code[index]??0)} index={index} animate={rolling&&animate} expired={!invite||expiry===0||!!approved||Boolean(c.snapshot.pending.length)}/>)}</div></div>

@@ -1,0 +1,187 @@
+{
+  "description": "Fetched upstream source snapshots are content-pinned by SHA-256. Branch URLs identify source locations; no unverified commit SHA is claimed.",
+  "entries": [
+    {
+      "name": "button",
+      "project": "shadcn/ui",
+      "license": "MIT",
+      "source": "https://raw.githubusercontent.com/shadcn-ui/ui/main/apps/v4/registry/new-york-v4/ui/button.tsx",
+      "retrieved": "2026-11-15",
+      "snapshot": "docs/shadcn-redesign/upstream/button.tsx",
+      "sha256": "79dd6f75f8136394442202d6b8b922fb269eaad0a5dba579397c9d5b41f893bb",
+      "adaptedTo": "src/components/ui/button.tsx",
+      "adaptations": [
+        "Replace monorepo cn import with local clsx/tailwind-merge utility",
+        "Use separately installed @radix-ui/react-* modules instead of umbrella radix-ui"
+      ]
+    },
+    {
+      "name": "checkbox",
+      "project": "shadcn/ui",
+      "license": "MIT",
+      "source": "https://raw.githubusercontent.com/shadcn-ui/ui/main/apps/v4/registry/new-york-v4/ui/checkbox.tsx",
+      "retrieved": "2026-11-15",
+      "snapshot": "docs/shadcn-redesign/upstream/checkbox.tsx",
+      "sha256": "ba0ac64064e2d8fa7299d53e9e84b9a4772fef8dd4cf6170c56d3030a1d69941",
+      "adaptedTo": "src/components/ui/checkbox.tsx",
+      "adaptations": [
+        "Replace monorepo cn import with local clsx/tailwind-merge utility",
+        "Use separately installed @radix-ui/react-* modules instead of umbrella radix-ui",
+        "Render Minus for controlled indeterminate state"
+      ]
+    },
+    {
+      "name": "dialog",
+      "project": "shadcn/ui",
+      "license": "MIT",
+      "source": "https://raw.githubusercontent.com/shadcn-ui/ui/main/apps/v4/registry/new-york-v4/ui/dialog.tsx",
+      "retrieved": "2026-11-15",
+      "snapshot": "docs/shadcn-redesign/upstream/dialog.tsx",
+      "sha256": "2ade6074e5fad0a4eb171ead44c43d3301a3c83d186d7236fb1fdbea80ee556b",
+      "adaptedTo": "src/components/ui/dialog.tsx",
+      "adaptations": [
+        "Replace monorepo cn import with local clsx/tailwind-merge utility",
+        "Use separately installed @radix-ui/react-* modules instead of umbrella radix-ui",
+        "Expose overlayClassName and allow application-specific dialog widths"
+      ]
+    },
+    {
+      "name": "dropdown-menu",
+      "project": "shadcn/ui",
+      "license": "MIT",
+      "source": "https://raw.githubusercontent.com/shadcn-ui/ui/main/apps/v4/registry/new-york-v4/ui/dropdown-menu.tsx",
+      "retrieved": "2026-11-15",
+      "snapshot": "docs/shadcn-redesign/upstream/dropdown-menu.tsx",
+      "sha256": "d954efb735f13734751207ad22cb0cddd7f6ec53c59d16675d103dae08cb61fb",
+      "adaptedTo": "src/components/ui/dropdown-menu.tsx",
+      "adaptations": [
+        "Replace monorepo cn import with local clsx/tailwind-merge utility",
+        "Use separately installed @radix-ui/react-* modules instead of umbrella radix-ui"
+      ]
+    },
+    {
+      "name": "switch",
+      "project": "shadcn/ui",
+      "license": "MIT",
+      "source": "https://raw.githubusercontent.com/shadcn-ui/ui/main/apps/v4/registry/new-york-v4/ui/switch.tsx",
+      "retrieved": "2026-11-15",
+      "snapshot": "docs/shadcn-redesign/upstream/switch.tsx",
+      "sha256": "743676f33f823ffa8008bbd5eb94cb68e227599447d60e132a202291a395f8e4",
+      "adaptedTo": "src/components/ui/switch.tsx",
+      "adaptations": [
+        "Replace monorepo cn import with local clsx/tailwind-merge utility",
+        "Use separately installed @radix-ui/react-* modules instead of umbrella radix-ui"
+      ]
+    },
+    {
+      "name": "tooltip",
+      "project": "shadcn/ui",
+      "license": "MIT",
+      "source": "https://raw.githubusercontent.com/shadcn-ui/ui/main/apps/v4/registry/new-york-v4/ui/tooltip.tsx",
+      "retrieved": "2026-11-15",
+      "snapshot": "docs/shadcn-redesign/upstream/tooltip.tsx",
+      "sha256": "611e4305879b2773eafe76bf3c5caa69d8e47367fd97887a71634a27828f4433",
+      "adaptedTo": "src/components/ui/tooltip.tsx",
+      "adaptations": [
+        "Replace monorepo cn import with local clsx/tailwind-merge utility",
+        "Use separately installed @radix-ui/react-* modules instead of umbrella radix-ui"
+      ]
+    },
+    {
+      "name": "popover",
+      "project": "shadcn/ui",
+      "license": "MIT",
+      "source": "https://raw.githubusercontent.com/shadcn-ui/ui/main/apps/v4/registry/new-york-v4/ui/popover.tsx",
+      "retrieved": "2026-11-15",
+      "snapshot": "docs/shadcn-redesign/upstream/popover.tsx",
+      "sha256": "3f99d3add6c9fa4f03721e81297ee10e1310785ee1d9d9d4c82a114d84ab0757",
+      "adaptedTo": "src/components/ui/popover.tsx",
+      "adaptations": [
+        "Replace monorepo cn import with local clsx/tailwind-merge utility",
+        "Use separately installed @radix-ui/react-* modules instead of umbrella radix-ui"
+      ]
+    },
+    {
+      "name": "table",
+      "project": "shadcn/ui",
+      "license": "MIT",
+      "source": "https://raw.githubusercontent.com/shadcn-ui/ui/main/apps/v4/registry/new-york-v4/ui/table.tsx",
+      "retrieved": "2026-11-15",
+      "snapshot": "docs/shadcn-redesign/upstream/table.tsx",
+      "sha256": "bd1a9fc83a5a2149e504038e274bb7e5a0351af59f6896df52ac4d5b439695ac",
+      "adaptedTo": "src/components/ui/table.tsx",
+      "adaptations": [
+        "Replace monorepo cn import with local clsx/tailwind-merge utility",
+        "Use separately installed @radix-ui/react-* modules instead of umbrella radix-ui"
+      ]
+    },
+    {
+      "name": "input",
+      "project": "shadcn/ui",
+      "license": "MIT",
+      "source": "https://raw.githubusercontent.com/shadcn-ui/ui/main/apps/v4/registry/new-york-v4/ui/input.tsx",
+      "retrieved": "2026-11-15",
+      "snapshot": "docs/shadcn-redesign/upstream/input.tsx",
+      "sha256": "0c9457181f6ddc80969bcf854e92c362903a55b6e889fbef3fd85343ecc4af5b",
+      "adaptedTo": "src/components/ui/input.tsx",
+      "adaptations": [
+        "Replace monorepo cn import with local clsx/tailwind-merge utility",
+        "Use separately installed @radix-ui/react-* modules instead of umbrella radix-ui"
+      ]
+    },
+    {
+      "name": "textarea",
+      "project": "shadcn/ui",
+      "license": "MIT",
+      "source": "https://raw.githubusercontent.com/shadcn-ui/ui/main/apps/v4/registry/new-york-v4/ui/textarea.tsx",
+      "retrieved": "2026-11-15",
+      "snapshot": "docs/shadcn-redesign/upstream/textarea.tsx",
+      "sha256": "5cafcfeeee29534f449387a16b585f5923d2faab1a0cdc50a874416b175f59ce",
+      "adaptedTo": "src/components/ui/textarea.tsx",
+      "adaptations": [
+        "Replace monorepo cn import with local clsx/tailwind-merge utility",
+        "Use separately installed @radix-ui/react-* modules instead of umbrella radix-ui"
+      ]
+    },
+    {
+      "name": "tauri-ui-vite",
+      "project": "agmmnn/tauri-ui",
+      "license": "MIT (declared in upstream package.json)",
+      "source": "https://raw.githubusercontent.com/agmmnn/tauri-ui/master/packages/create-tauri-ui/src/adapters/vite.ts",
+      "retrieved": "2026-11-15",
+      "snapshot": "docs/shadcn-redesign/upstream/tauri-ui-vite.ts",
+      "sha256": "bf0d4d1b12b17eba08d0ab71072170587333eeb06f2410984a620090988d4d51",
+      "use": "Reference for Tauri + Vite + official shadcn composition; existing SyncFu backend retained"
+    },
+    {
+      "name": "tauri-ui-merge",
+      "project": "agmmnn/tauri-ui",
+      "license": "MIT (declared in upstream package.json)",
+      "source": "https://raw.githubusercontent.com/agmmnn/tauri-ui/master/packages/create-tauri-ui/src/merge.ts",
+      "retrieved": "2026-11-15",
+      "snapshot": "docs/shadcn-redesign/upstream/tauri-ui-merge.ts",
+      "sha256": "4fc79bc9f27e8e68533737b6071111e46955f759973194d8ad466992afcf7893",
+      "use": "Reference for Tauri + Vite + official shadcn composition; existing SyncFu backend retained"
+    },
+    {
+      "name": "tauri-ui-README",
+      "project": "agmmnn/tauri-ui",
+      "license": "MIT (declared in upstream package.json)",
+      "source": "https://raw.githubusercontent.com/agmmnn/tauri-ui/master/packages/create-tauri-ui/README.md",
+      "retrieved": "2026-11-15",
+      "snapshot": "docs/shadcn-redesign/upstream/tauri-ui-README.md",
+      "sha256": "06448c5b8ddad84b7976cc9b5df1c320512697817334344c45aa71e7c735184f",
+      "use": "Reference for Tauri + Vite + official shadcn composition; existing SyncFu backend retained"
+    },
+    {
+      "name": "tauri-ui-package",
+      "project": "agmmnn/tauri-ui",
+      "license": "MIT (declared in upstream package.json)",
+      "source": "https://raw.githubusercontent.com/agmmnn/tauri-ui/master/packages/create-tauri-ui/package.json",
+      "retrieved": "2026-11-15",
+      "snapshot": "docs/shadcn-redesign/upstream/tauri-ui-package.json",
+      "sha256": "95ab21a4db290c1611ba6eef02f8a09729dca3adf647a69220cab0a783c0bd94",
+      "use": "Reference for Tauri + Vite + official shadcn composition; existing SyncFu backend retained"
+    }
+  ]
+}

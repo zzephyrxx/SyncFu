@@ -2,6 +2,7 @@ import type { ReactNode } from 'react';
 import { usePrototype } from '../prototype/context';
 import { AppIcon } from './boardui/icons';
 import { fileIdentity } from './focus-model';
+import { TaskIcon, StatusDot } from './TaskIcon';
 import './sync-route.css';
 
 export interface SyncRouteProps {
@@ -41,9 +42,9 @@ export function SyncRoute({ localDevice, remoteDevice, localOriginalName, remote
       <div className="sf-route-device">
         <span className="sf-route-device-icon" aria-hidden="true">{(local ? localIcon : remoteIcon) ?? <AppIcon name={local ? 'Laptop' : 'Monitor'} size={22}/>}</span>
         <div><span className="sf-route-role">{local ? copy.local : copy.remote}{role && <span>{role}</span>}</span><strong title={name}>{name}</strong>{originalName && originalName !== name && <small className="sf-route-original-name" title={originalName}>{originalName}</small>}</div>
-        {!local && remoteOnline !== undefined && <span role="status" aria-label={t(remoteOnline ? 'online' : 'offline')} className={`sf-route-status ${remoteOnline ? 'online' : ''}`} title={t(remoteOnline ? 'online' : 'offline')}><i/><span>{t(remoteOnline ? 'online' : 'offline')}</span></span>}
+        {!local && remoteOnline !== undefined && <span role="status" aria-label={t(remoteOnline ? 'online' : 'offline')} className={`sf-route-status ${remoteOnline ? 'online' : ''}`} title={t(remoteOnline ? 'online' : 'offline')}><StatusDot status={remoteOnline?'online':'offline'}/><span>{t(remoteOnline ? 'online' : 'offline')}</span></span>}
       </div>
-      {content ?? (path && <div className="sf-route-folder"><AppIcon name="Folder" size={17}/><div><strong>{fileIdentity(path).name || path}</strong><span title={path}>{path}</span></div></div>)}
+      {content ?? (path && <div className="sf-route-folder"><TaskIcon size={19} tone={0}/><div><strong>{fileIdentity(path).name || path}</strong><span className="sf-route-folder-path" title={path}>{path}</span></div></div>)}
     </div>;
   };
   return <div className="sf-route" data-direction={mode}>

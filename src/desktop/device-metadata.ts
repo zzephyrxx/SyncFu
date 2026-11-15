@@ -1,4 +1,5 @@
-export interface DeviceProfile { alias: string; emoji: string }
+export type DeviceKind='laptop'|'desktop'|'phone';
+export interface DeviceProfile { alias: string; emoji: string; kind?:DeviceKind }
 export type DeviceProfiles = Record<string, DeviceProfile>;
 export const deviceProfileKey = 'syncfu-desktop:v1:device-profiles';
 interface StorageLike { getItem(key:string):string|null; setItem(key:string,value:string):void }
@@ -18,7 +19,8 @@ export function normaliseDeviceProfiles(value:unknown):DeviceProfiles {
     const data=raw as Record<string,unknown>;
     const alias=typeof data.alias==='string'?data.alias.trim().slice(0,60):'';
     const emoji=typeof data.emoji==='string'&&validDeviceEmoji(data.emoji)?data.emoji.trim():'';
-    if(alias||emoji)profiles[id]={alias,emoji};
+    const kind=data.kind==='laptop'||data.kind==='desktop'||data.kind==='phone'?data.kind:undefined;
+    if(alias||emoji||kind)profiles[id]={alias,emoji,...(kind?{kind}:{})};
   }
   return profiles;
 }

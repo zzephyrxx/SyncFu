@@ -1,5 +1,4 @@
-// BoardUI AppShell composition adapted for SyncFu. No Next routing, sample
-// organization/account, Pro upsell, notification fixtures, or AI/chat dependencies.
+// Tauri desktop shell composed with shadcn primitives and real synchronization state.
 import {useEffect,useRef,useState} from 'react';
 import {desktop} from '../api';
 import {PrototypeProvider,usePrototype} from '../prototype/context';
@@ -15,8 +14,13 @@ import {LiveSettings} from './LiveSettings';
 import {DevicesPage} from './views/Devices';
 import {HistoryPage,HandoffDialog} from './views/Activity';
 import {OverviewPage} from './views/Overview';
-import {FolderArtwork} from './design-system/TaskFolder';
+import {TaskIcon,StatusDot} from './TaskIcon';
+import {DeviceAvatar} from './DeviceAvatar';
+import {useDeviceProfiles} from './useDeviceProfiles';
+import {deviceDisplayName} from './device-metadata';
 import './boardui/index.css';
+import '../components/ui/tokens.css';
+import '../components/ui/primitives.css';
 import './workspace.css';
 type Page='tasks'|'overview'|'devices'|'history'|'settings';
 const taskTone=(id:string)=>[...id].reduce((hash,char)=>(hash*31+char.charCodeAt(0))>>>0,0)%4;
@@ -24,7 +28,7 @@ const logo=new URL('../../assets/syncfu-icon.svg',import.meta.url).href;
 export default function Desktop({transport,testMode=false}:{transport?:Transport;testMode?:boolean}){return <PrototypeProvider mode="desktop">{desktop||transport?<DesktopApp transport={transport} testMode={testMode}/>:<BrowserBoundary/>}</PrototypeProvider>;}
 function BrowserBoundary(){const {t}=usePrototype();return <div className="board-app"><main className="ui-centered"><img src={logo} alt="SyncFu" width={64}/><h1>SyncFu</h1><p>{t('browserOnly')}</p>{import.meta.env.DEV&&<a href="/?desktop-test">{t('demo')}</a>}</main></div>;}
 function DesktopApp({transport,testMode}:{transport?:Transport;testMode:boolean}){
-  const {t,prefs,setPref}=usePrototype();const c=useDesktopController(transport);const [page,setPage]=useState<Page>(prefs.startup);const collapsed=prefs.sidebarCollapsed;const setCollapsed=(value:boolean)=>setPref('sidebarCollapsed',value);
+  const {t,prefs,setPref}=usePrototype();const {profiles}=useDeviceProfiles();const c=useDesktopController(transport);const [page,setPage]=useState<Page>(prefs.startup);const collapsed=prefs.sidebarCollapsed;const setCollapsed=(value:boolean)=>setPref('sidebarCollapsed',value);
   const [dialog,setDialog]=useState<'new'|'pair'|'rules'|'ignored'|'handoff'|null>(null);const [conflict,setConflict]=useState<string[]|null>(null);const [taskView,setTaskView]=useState<LiveTaskView>({filter:'all',search:'',page:0});
   const workspace=useRef<HTMLDivElement>(null),focusPage=useRef(false);
   useEffect(()=>setTaskView({filter:'all',search:'',page:0}),[c.active]);
@@ -48,18 +52,27 @@ function DesktopApp({transport,testMode}:{transport?:Transport;testMode:boolean}
         <div className="sf-wordmark" data-tauri-drag-region={desktop?'':undefined}><img src={logo} alt=""/><strong>SyncFu</strong></div>
       </div>
       <div className="sf-toolbar-context" data-tauri-drag-region={desktop?'':undefined}>
-        <h1 data-tauri-drag-region={desktop?'':undefined}>{page==='tasks'&&task?(c.plan?.undo_of?t('undoPreview'):task.label):t(labels[page])}</h1>
+        <div className="sf-breadcrumb" data-tauri-drag-region={desktop?'':undefined}><span>{t(labels[page])}</span>{page==='tasks'&&task&&<><AppIcon name="ChevronRight" size={14}/><strong>{c.plan?.undo_of?t('undoPreview'):task.label}</strong></>}</div>
         <Dropdown><DropdownTrigger className="sf-more-button" aria-label={t('moreTools')}><AppIcon name="MoreHorizontal" size={19}/></DropdownTrigger><DropdownPopover label={t('moreTools')}><DropdownItem disabled={c.busy||!c.snapshot.tasks.length} onSelect={()=>setDialog('handoff')}><AppIcon name="ArrowUpRight"/>{t('handoff')}</DropdownItem></DropdownPopover></Dropdown>
       </div>
     </header>
     <div className="sf-shell">
       <aside className="sf-sidebar" id="app-sidebar" aria-label={t('moreTools')}>
         <Button className="sf-new-task" disabled={c.busy} onClick={newTask} aria-label={t('newTask')} title={t('newTask')}><AppIcon name="Plus" size={19}/><span>{t('newTask')}</span></Button>
-        <nav className="sf-primary-nav" aria-label={t('overview')}><NavItem active={page==='overview'} onClick={()=>go('overview')} aria-label={t('overview')} title={t('overview')}><AppIcon name="BarChart3" size={19}/><span>{t('overview')}</span></NavItem></nav>
+        <nav className="sf-primary-nav" aria-label={t('overview')}>{([{id:'overview',icon:'LayoutDashboard'},{id:'devices',icon:'Laptop'},{id:'history',icon:'History'}] as const).map(item=><NavItem key={item.id} active={page===item.id} onClick={()=>go(item.id)} aria-label={t(labels[item.id])} title={t(labels[item.id])}><AppIcon name={item.icon} size={18}/><span>{t(labels[item.id])}</span>{item.id==='devices'&&<small className="sf-nav-count">{c.snapshot.peers.length+1}</small>}</NavItem>)}</nav>
         <div className="sf-sidebar-heading"><span>{t('tasks')}</span><span className="sf-task-count">{c.snapshot.tasks.length}</span></div>
-        <nav className="sf-task-nav" aria-label={t('tasks')}>{c.snapshot.tasks.map(item=>{const state=c.snapshot.policy_states.find(p=>p.task===item.id);return <NavItem key={item.id} active={page==='tasks'&&task?.id===item.id} disabled={c.busy&&item.id!==c.active} aria-label={item.label} title={item.label} onClick={()=>goTask(item.id)}><span className="sf-task-folder"><FolderArtwork tone={taskTone(item.id)}/></span><span className="sf-task-label"><strong>{item.label}</strong><small>{t(state?.state.pending?'pendingPolicy':state?.paused?'paused':c.snapshot.dirty.includes(item.id)?'changes':'notScanned')}</small></span>{(state?.state.pending||c.snapshot.dirty.includes(item.id))&&<i className="sf-task-attention"/>}</NavItem>;})}</nav>
-        <nav className="sf-sidebar-bottom" aria-label={t('moreTools')}>{([{id:'devices',icon:'Laptop'},{id:'history',icon:'History'},{id:'settings',icon:'Settings2'}]as const).map(item=><NavItem key={item.id} active={page===item.id} onClick={()=>go(item.id)} aria-label={t(item.id==='settings'?'settings':labels[item.id])} title={t(labels[item.id])}><AppIcon name={item.icon} size={19}/><span>{t(item.id==='settings'?'settings':labels[item.id])}</span></NavItem>)}</nav>
-        <div className="sf-local" title={c.snapshot.device.name}><AppIcon name="Laptop" size={16}/><span>{c.snapshot.device.name}</span><i className="sf-local-dot"/></div>
+        <nav className="sf-task-nav" aria-label={t('tasks')}>{c.snapshot.tasks.map(item=>{
+          const state=c.snapshot.policy_states.find(p=>p.task===item.id),remote=c.snapshot.peers.find(p=>p.id===item.peer);
+          const direction=state?.state.current.direction;
+          const status=state?.state.pending?'pending':state?.paused?'paused':!remote?.online?'offline':c.snapshot.dirty.includes(item.id)?'changes':'idle';
+          return <NavItem key={item.id} active={page==='tasks'&&task?.id===item.id} disabled={c.busy&&item.id!==c.active} aria-label={item.label} title={item.label} onClick={()=>goTask(item.id)}>
+            <TaskIcon tone={taskTone(item.id)} size={21} active={page==='tasks'&&task?.id===item.id}/>
+            <span className="sf-task-label"><strong>{item.label}</strong><small><AppIcon name={!direction||direction.mode==='bidirectional'?'ArrowLeftRight':direction.source_device===item.peer?'ArrowDownLeft':'ArrowUpRight'} size={12}/>{remote?deviceDisplayName(remote,profiles):item.peer}</small></span>
+            <StatusDot status={status} label={t(status==='pending'?'pendingPolicy':status==='changes'?'changes':status==='idle'?'notScanned':status)}/>
+          </NavItem>;
+        })}</nav>
+        <nav className="sf-sidebar-bottom" aria-label={t('settings')}><NavItem active={page==='settings'} onClick={()=>go('settings')} aria-label={t('settings')} title={t('settings')}><AppIcon name="Settings2" size={18}/><span>{t('settings')}</span></NavItem></nav>
+        <div className="sf-local" title={c.snapshot.device.name}><DeviceAvatar deviceId={c.snapshot.device.id} profiles={profiles} local/><span><strong>{deviceDisplayName(c.snapshot.device,profiles)}</strong><small>{t('local')}</small></span><StatusDot status="online" label={t('online')}/></div>
       </aside>
       <main className="sf-main">
         <div className="sf-workspace" ref={workspace} tabIndex={-1} role="region" aria-label={`${t(labels[page])}${page==='tasks'&&task?` · ${task.label}`:''}`}>

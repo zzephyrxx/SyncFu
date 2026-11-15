@@ -1,0 +1,20 @@
+.sf-task-icon{display:inline-flex;align-items:center;justify-content:center;flex:none;--task-stroke:#3979c9;--task-fill:#b6d4f5;color:var(--task-stroke)}
+.sf-task-icon>svg{fill:var(--task-fill);stroke:var(--task-stroke)}
+.sf-task-icon[data-tone="1"]{--task-stroke:#a77624;--task-fill:#f3d18d}
+.sf-task-icon[data-tone="2"]{--task-stroke:#8a68bc;--task-fill:#d7c3ed}
+.sf-task-icon[data-tone="3"]{--task-stroke:#39836a;--task-fill:#afdccb}
+.sf-task-icon[data-tone="4"]{--task-stroke:#c16d54;--task-fill:#f1c5b5}
+.sf-task-icon[data-tone="5"]{--task-stroke:#a5608d;--task-fill:#e9bdd9}
+:root[data-theme="dark"] .sf-task-icon{--task-stroke:#9ac7ff;--task-fill:#355578}
+:root[data-theme="dark"] .sf-task-icon[data-tone="1"]{--task-stroke:#e5bf78;--task-fill:#695533}
+:root[data-theme="dark"] .sf-task-icon[data-tone="2"]{--task-stroke:#c8a7f4;--task-fill:#59456f}
+:root[data-theme="dark"] .sf-task-icon[data-tone="3"]{--task-stroke:#93d5bb;--task-fill:#365e50}
+:root[data-theme="dark"] .sf-task-icon[data-tone="4"]{--task-stroke:#e5ab95;--task-fill:#704b3e}
+:root[data-theme="dark"] .sf-task-icon[data-tone="5"]{--task-stroke:#e0a5cb;--task-fill:#68465d}
+.sf-status-dot{display:inline-flex;align-items:center;justify-content:center;flex:none;color:var(--sf-muted)}
+.sf-status-dot[data-status="online"]{color:var(--sf-green)}
+.sf-status-dot[data-status="syncing"],.sf-status-dot[data-status="changes"]{color:var(--sf-info)}
+.sf-status-dot[data-status="pending"]{color:var(--sf-warn)}
+.sf-status-dot[data-status="conflict"]{color:var(--sf-danger)}
+.sf-status-dot[data-status="paused"],.sf-status-dot[data-status="idle"]{opacity:.7}
+@media(forced-colors:active){.sf-task-icon>svg{fill:Canvas;stroke:CanvasText}.sf-status-dot{color:CanvasText}}
