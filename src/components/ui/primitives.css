@@ -35,8 +35,9 @@
 .sfu-selection-card-description{font-size:11px;color:var(--muted-foreground)}
 .sfu-switch[data-slot="switch"],.bui-dialog button.sfu-switch[data-slot="switch"]{display:inline-flex;align-items:center;flex:none;width:34px;height:20px;min-height:20px;padding:2px;border:0;border-radius:999px;background:var(--input);box-shadow:none;cursor:pointer}
 .sfu-switch[data-state="checked"],.bui-dialog button.sfu-switch[data-state="checked"]{background:var(--primary)}
-.sfu-switch [data-slot="switch-thumb"]{display:block;flex:none;width:16px;height:16px;border-radius:50%;background:var(--background);transform:translateX(0);transition:transform 120ms;box-shadow:none}
-.sfu-switch[data-state="checked"] [data-slot="switch-thumb"]{transform:translateX(14px);background:var(--primary-foreground)}
+/* shadcn's translate utility owns thumb movement; an extra transform would add to it. */
+.sfu-switch [data-slot="switch-thumb"]{display:block;flex:none;width:16px;height:16px;border-radius:50%;background:var(--background);transition:translate 120ms;box-shadow:none}
+.sfu-switch[data-state="checked"] [data-slot="switch-thumb"]{background:var(--primary-foreground)}
 .sfu-switch:focus-visible{outline:2px solid var(--ring);outline-offset:3px}
 .sfu-switch:disabled{opacity:.4;cursor:default}
 .bui-overlay.sfu-dialog-overlay{display:block;position:fixed;inset:0;padding:0;z-index:250;background:rgb(0 0 0 / .35)}
