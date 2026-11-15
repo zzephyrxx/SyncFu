@@ -1,0 +1,95 @@
+{
+  "colorProfile": "srgb",
+  "currentPage": 1,
+  "dirty": false,
+  "history": {
+    "redo": 0,
+    "undo": [
+      "SyncFu core workflow and reusable components"
+    ]
+  },
+  "id": 2,
+  "images": 0,
+  "kind": "design",
+  "name": "SyncFu — Focused transfer",
+  "pages": [
+    {
+      "children": [
+        {
+          "childCount": 10,
+          "id": 2,
+          "name": "File row/light/create",
+          "type": "COMPONENT",
+          "visible": true
+        },
+        {
+          "childCount": 10,
+          "id": 13,
+          "name": "File row/light/update",
+          "type": "COMPONENT",
+          "visible": true
+        },
+        {
+          "childCount": 9,
+          "id": 24,
+          "name": "File row/light/conflict",
+          "type": "COMPONENT",
+          "visible": true
+        },
+        {
+          "childCount": 10,
+          "id": 34,
+          "name": "File row/dark/create",
+          "type": "COMPONENT",
+          "visible": true
+        },
+        {
+          "childCount": 10,
+          "id": 45,
+          "name": "File row/dark/update",
+          "type": "COMPONENT",
+          "visible": true
+        },
+        {
+          "childCount": 9,
+          "id": 56,
+          "name": "File row/dark/conflict",
+          "type": "COMPONENT",
+          "visible": true
+        },
+        {
+          "childCount": 43,
+          "id": 66,
+          "name": "Core — Light",
+          "type": "FRAME",
+          "visible": true
+        },
+        {
+          "childCount": 43,
+          "id": 172,
+          "name": "Core — Dark",
+          "type": "FRAME",
+          "visible": true
+        },
+        {
+          "childCount": 45,
+          "id": 278,
+          "name": "Conflict — Light",
+          "type": "FRAME",
+          "visible": true
+        }
+      ],
+      "id": 1,
+      "name": "Page 1",
+      "type": "PAGE",
+      "visible": true
+    }
+  ],
+  "path": "docs/design-streamline/SyncFu-Focused-Transfer.figcraft",
+  "selection": [
+    368
+  ],
+  "styles": [],
+  "textEdit": null,
+  "variables": 0
+}

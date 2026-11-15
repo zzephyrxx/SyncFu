@@ -1,0 +1,218 @@
+{
+  "boardui": [
+    {
+      "repo": "BoardUI/boardui",
+      "commit": "ec5c5eb3e29c2441be63b9422cd54f411ef23466",
+      "file": "LICENSE",
+      "url": "https://raw.githubusercontent.com/BoardUI/boardui/ec5c5eb3e29c2441be63b9422cd54f411ef23466/LICENSE",
+      "license": "MIT",
+      "sha256": "7a28c78354f8f88d8773f72bf37fb9c037817f8abd2fa5a63694d6c946a5ce80",
+      "bytes": 1090,
+      "status": "license-retained",
+      "adaptedTo": null
+    },
+    {
+      "repo": "BoardUI/boardui",
+      "commit": "ec5c5eb3e29c2441be63b9422cd54f411ef23466",
+      "file": "components/application/app-shell/app-shell.tsx",
+      "url": "https://raw.githubusercontent.com/BoardUI/boardui/ec5c5eb3e29c2441be63b9422cd54f411ef23466/components/application/app-shell/app-shell.tsx",
+      "license": "MIT",
+      "sha256": "1e0d7181184c1e3860ff6bb164c18cedb091321480837e572335fd338d715993",
+      "bytes": 7517,
+      "status": "adapted",
+      "adaptedTo": "src/desktop/Desktop.tsx"
+    },
+    {
+      "repo": "BoardUI/boardui",
+      "commit": "ec5c5eb3e29c2441be63b9422cd54f411ef23466",
+      "file": "components/application/data-table/data-table.tsx",
+      "url": "https://raw.githubusercontent.com/BoardUI/boardui/ec5c5eb3e29c2441be63b9422cd54f411ef23466/components/application/data-table/data-table.tsx",
+      "license": "MIT",
+      "sha256": "c3aa01e583a449bee3de9cfca159a67dffdec94af6ea42c603ca095b5a8d1644",
+      "bytes": 21640,
+      "status": "adapted",
+      "adaptedTo": "src/desktop/boardui/SyncChangesTable.tsx"
+    },
+    {
+      "repo": "BoardUI/boardui",
+      "commit": "ec5c5eb3e29c2441be63b9422cd54f411ef23466",
+      "file": "components/base/buttons/button.tsx",
+      "url": "https://raw.githubusercontent.com/BoardUI/boardui/ec5c5eb3e29c2441be63b9422cd54f411ef23466/components/base/buttons/button.tsx",
+      "license": "MIT",
+      "sha256": "b147c988c73dd8c226ab6ede3d7019eac9a7125191bbd646fcdd25bea803ca41",
+      "bytes": 7880,
+      "status": "adapted",
+      "adaptedTo": "src/desktop/boardui/vendor/button.tsx"
+    },
+    {
+      "repo": "BoardUI/boardui",
+      "commit": "ec5c5eb3e29c2441be63b9422cd54f411ef23466",
+      "file": "components/base/buttons/icon-button.tsx",
+      "url": "https://raw.githubusercontent.com/BoardUI/boardui/ec5c5eb3e29c2441be63b9422cd54f411ef23466/components/base/buttons/icon-button.tsx",
+      "license": "MIT",
+      "sha256": "f418df039e41ab65368500c6bd05719fe196c7cc1057f2a30cda2b0411aae662",
+      "bytes": 3325,
+      "status": "read-only-reference",
+      "adaptedTo": null
+    },
+    {
+      "repo": "BoardUI/boardui",
+      "commit": "ec5c5eb3e29c2441be63b9422cd54f411ef23466",
+      "file": "components/base/buttons/button-group.tsx",
+      "url": "https://raw.githubusercontent.com/BoardUI/boardui/ec5c5eb3e29c2441be63b9422cd54f411ef23466/components/base/buttons/button-group.tsx",
+      "license": "MIT",
+      "sha256": "65417bb324cb951a6cf203e0b2c6fdc15b8b1d4b4ab02b34a0c407e1bb726ae7",
+      "bytes": 4245,
+      "status": "read-only-reference",
+      "adaptedTo": null
+    },
+    {
+      "repo": "BoardUI/boardui",
+      "commit": "ec5c5eb3e29c2441be63b9422cd54f411ef23466",
+      "file": "components/base/checkbox/checkbox.tsx",
+      "url": "https://raw.githubusercontent.com/BoardUI/boardui/ec5c5eb3e29c2441be63b9422cd54f411ef23466/components/base/checkbox/checkbox.tsx",
+      "license": "MIT",
+      "sha256": "592651a10aaf0e186a08862391fa99fa7d45ee75e8bfd0bc134408bb1c076f5e",
+      "bytes": 2133,
+      "status": "adapted",
+      "adaptedTo": "src/desktop/boardui/vendor/checkbox.tsx"
+    },
+    {
+      "repo": "BoardUI/boardui",
+      "commit": "ec5c5eb3e29c2441be63b9422cd54f411ef23466",
+      "file": "components/base/checkbox/checkbox-card.tsx",
+      "url": "https://raw.githubusercontent.com/BoardUI/boardui/ec5c5eb3e29c2441be63b9422cd54f411ef23466/components/base/checkbox/checkbox-card.tsx",
+      "license": "MIT",
+      "sha256": "71b89328017d7b2b76cc69ac1409443af9271efa9935906dd3e3abf9b054c723",
+      "bytes": 2210,
+      "status": "adapted",
+      "adaptedTo": "src/desktop/boardui/vendor/checkbox-card.tsx"
+    },
+    {
+      "repo": "BoardUI/boardui",
+      "commit": "ec5c5eb3e29c2441be63b9422cd54f411ef23466",
+      "file": "components/base/checkbox/checkbox-glyph.tsx",
+      "url": "https://raw.githubusercontent.com/BoardUI/boardui/ec5c5eb3e29c2441be63b9422cd54f411ef23466/components/base/checkbox/checkbox-glyph.tsx",
+      "license": "MIT",
+      "sha256": "e71bdc6f0dd28e792be233950df90f7f8ee68252a63e3f2da46d19f84bdf7584",
+      "bytes": 2336,
+      "status": "adapted",
+      "adaptedTo": "src/desktop/boardui/vendor/checkbox-glyph.tsx"
+    },
+    {
+      "repo": "BoardUI/boardui",
+      "commit": "ec5c5eb3e29c2441be63b9422cd54f411ef23466",
+      "file": "components/base/table/table.tsx",
+      "url": "https://raw.githubusercontent.com/BoardUI/boardui/ec5c5eb3e29c2441be63b9422cd54f411ef23466/components/base/table/table.tsx",
+      "license": "MIT",
+      "sha256": "f960c50c679e3473328fb7e1c9c35f746a65c73011248c827274c1433a482419",
+      "bytes": 1815,
+      "status": "adapted",
+      "adaptedTo": "src/desktop/boardui/vendor/table.tsx"
+    },
+    {
+      "repo": "BoardUI/boardui",
+      "commit": "ec5c5eb3e29c2441be63b9422cd54f411ef23466",
+      "file": "components/base/segmented-control/segmented-control.tsx",
+      "url": "https://raw.githubusercontent.com/BoardUI/boardui/ec5c5eb3e29c2441be63b9422cd54f411ef23466/components/base/segmented-control/segmented-control.tsx",
+      "license": "MIT",
+      "sha256": "629b165aadfb42fcd2ed7a77e338f1b1aeb2e906533fcd78be5f11e729447878",
+      "bytes": 5075,
+      "status": "read-only-reference",
+      "adaptedTo": null
+    },
+    {
+      "repo": "BoardUI/boardui",
+      "commit": "ec5c5eb3e29c2441be63b9422cd54f411ef23466",
+      "file": "components/base/dropdown/dropdown.tsx",
+      "url": "https://raw.githubusercontent.com/BoardUI/boardui/ec5c5eb3e29c2441be63b9422cd54f411ef23466/components/base/dropdown/dropdown.tsx",
+      "license": "MIT",
+      "sha256": "8e93b25f00ab487f2b8590f4155845f09c935b2ec6232043af684364545ffe00",
+      "bytes": 7588,
+      "status": "adapted",
+      "adaptedTo": "src/desktop/boardui/UI.tsx"
+    },
+    {
+      "repo": "BoardUI/boardui",
+      "commit": "ec5c5eb3e29c2441be63b9422cd54f411ef23466",
+      "file": "components/base/tooltip/tooltip.tsx",
+      "url": "https://raw.githubusercontent.com/BoardUI/boardui/ec5c5eb3e29c2441be63b9422cd54f411ef23466/components/base/tooltip/tooltip.tsx",
+      "license": "MIT",
+      "sha256": "77e8c8fb6f01639bd4f6c80a689865d11e34facc1e0163a43ecaed90f6241a5a",
+      "bytes": 5908,
+      "status": "adapted",
+      "adaptedTo": "src/desktop/boardui/UI.tsx"
+    },
+    {
+      "repo": "BoardUI/boardui",
+      "commit": "ec5c5eb3e29c2441be63b9422cd54f411ef23466",
+      "file": "components/base/pagination/pagination.tsx",
+      "url": "https://raw.githubusercontent.com/BoardUI/boardui/ec5c5eb3e29c2441be63b9422cd54f411ef23466/components/base/pagination/pagination.tsx",
+      "license": "MIT",
+      "sha256": "944b90dbb2bd2b16c1438fc4382c8c0643b1cfb954c984b96a169407f3f52644",
+      "bytes": 5893,
+      "status": "read-only-reference",
+      "adaptedTo": null
+    },
+    {
+      "repo": "BoardUI/boardui",
+      "commit": "ec5c5eb3e29c2441be63b9422cd54f411ef23466",
+      "file": "styles/globals.css",
+      "url": "https://raw.githubusercontent.com/BoardUI/boardui/ec5c5eb3e29c2441be63b9422cd54f411ef23466/styles/globals.css",
+      "license": "MIT",
+      "sha256": "61eb0d742c68f3fe7914626d1a31f97a9e242f084191098bbc27379b5d683183",
+      "bytes": 29538,
+      "status": "adapted",
+      "adaptedTo": "src/desktop/boardui/index.css"
+    },
+    {
+      "repo": "BoardUI/boardui",
+      "commit": "ec5c5eb3e29c2441be63b9422cd54f411ef23466",
+      "file": "styles/theme.css",
+      "url": "https://raw.githubusercontent.com/BoardUI/boardui/ec5c5eb3e29c2441be63b9422cd54f411ef23466/styles/theme.css",
+      "license": "MIT",
+      "sha256": "3c7fcc7710b0f44be0d86bc8e822e88f737d0269d207e9e2f4d2e73fd6da8f34",
+      "bytes": 56472,
+      "status": "adapted",
+      "adaptedTo": "src/desktop/boardui/index.css"
+    },
+    {
+      "repo": "BoardUI/boardui",
+      "commit": "ec5c5eb3e29c2441be63b9422cd54f411ef23466",
+      "file": "styles/typography.css",
+      "url": "https://raw.githubusercontent.com/BoardUI/boardui/ec5c5eb3e29c2441be63b9422cd54f411ef23466/styles/typography.css",
+      "license": "MIT",
+      "sha256": "dfd4e9b446998d063efe96a47fc31fd2492639bf641d0da1b60645fe4dcc32a1",
+      "bytes": 11100,
+      "status": "adapted",
+      "adaptedTo": "src/desktop/boardui/index.css"
+    }
+  ],
+  "morphicons": {
+    "repository": "https://github.com/guillermolg00/morphicons",
+    "commit": "8c3e3c7cd717b2381f8f35cf6c245afd80d8d7df",
+    "package": "morphicons",
+    "version": "2.0.2",
+    "license": "MIT",
+    "adapter": "src/desktop/boardui/icons.tsx"
+  },
+  "icons": {
+    "package": "lucide",
+    "version": "0.548.0",
+    "license": "ISC"
+  },
+  "font": {
+    "package": "@fontsource-variable/inter",
+    "version": "5.3.0",
+    "subset": "latin wght normal",
+    "license": "OFL-1.1"
+  },
+  "notes": [
+    "Only selected free BoardUI code is used; no Next, AI/chat, accounts, Pro offers or customer samples.",
+    "Original selected-checkbox and button fills were changed to solid colour; no surface effects.",
+    "Native HTML onClick/disabled preserved for buttons; React Aria checkbox controls preserve mixed-state semantics.",
+    "Row identities are injective full-path keys prefixed to avoid object prototype slots.",
+    "React Bits was evaluated; no restricted component source is copied. Helpful motion is provided by Morphicons and the existing pairing reels.",
+    "Original Microsoft Fluent Emoji assets and license remain local."
+  ]
+}

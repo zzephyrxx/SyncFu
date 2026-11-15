@@ -1,0 +1,28 @@
+name: Feature request / 功能建议
+description: Propose a focused improvement to the synchronization workflow.
+title: "[Feature]: "
+labels: ["enhancement"]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: User problem / 要解决的问题
+      description: Describe the workflow and who is affected, rather than starting with a particular library.
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed behavior / 建议行为
+      description: Explain the expected result and any new user choices.
+    validations:
+      required: true
+  - type: textarea
+    id: safety
+    attributes:
+      label: Safety and compatibility / 安全与兼容性
+      description: Does this change permissions, automatic writes, deletions, backup, recovery or protocol compatibility?
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives / 替代方案

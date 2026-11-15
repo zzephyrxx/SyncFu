@@ -1,0 +1,7 @@
+SyncFu
+Copyright 2026 SyncFu contributors
+
+SyncFu is independently implemented. Its design research references
+Oink (https://github.com/oinkvm/oink) and Syncthing
+(https://github.com/syncthing/syncthing). Their source code and assets are not
+included in SyncFu. Third-party dependency notices accompany distributions.

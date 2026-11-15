@@ -1,0 +1,30 @@
+{
+  "contract": "../README.md — BoardUI 单清单、三类批选、普通一键同步、危险再确认；浅深纯色，原Logo不变。",
+  "targetViewports": ["1120x780", "1440x900", "680x560", "390x844"],
+  "accessibility": {"status":"pass","evidence":"BoardUI/React Aria checkbox支持mixed、键盘和标签，表格保持原始collection primitives；冲突选择后焦点返回比较入口，Escape可关闭弹层。Morphicons显式采用user/always减少动效策略。正文主要表面对比度：浅15.52、次级5.30，深14.43、次级7.11，主按钮5.26；图标按钮有名称/tooltip。未做独立屏幕阅读器认证。"},
+  "responsive": {"status":"pass","evidence":"四个视口无整页横向溢出；1120×780有6条完整文件行与主按钮。680×560主按钮在视口内；修复隐藏checkbox的定位/尺寸后document尺寸与viewport一致。390×844英文表头使用短标签且未溢出，主按钮仍完整可见。"},
+  "contentStates": {
+    "loading":{"status":"pass","evidence":"延迟inspect 500ms，检查按钮aria-busy=true；8条旧行保留，执行受锁保护。"},
+    "empty":{"status":"pass","evidence":"无匹配搜索显示空态，同时披露筛选外已选数；查看已选清除搜索并恢复3条选中行。"},
+    "error":{"status":"pass","evidence":"failNext inspect产生alert，旧计划不可执行；跨1750ms无自动重试循环，手动重试恢复。"},
+    "partial":{"status":"pass","evidence":"部分结果3/6使用warning，显示5项剩余及原始夹具错误；未显示全部成功。"},
+    "success":{"status":"pass","evidence":"普通项连点两次仅1个preview和1个execute，无确认框，显示6/6及2项剩余。另测风险明确勾选后仅1个approveRisk:true执行。"},
+    "permission":{"status":"pass","evidence":"共享非owner的三种方向菜单项禁用。删除风险确认前execute=0；冲突版本决定后仍无写入，点击同步进入确认。预检期间切到设置再返回当前任务并暂停，阻止执行；恢复后仍0写入。"}
+  },
+  "renderedEvidence":[
+    {"viewport":"1120x780","artifact":"light-1120.jpg","observation":"原Logo、白底纯色、三类卡默认新增/更新选中，6条完整行；与深色同一夹具。"},
+    {"viewport":"1120x780","artifact":"dark-1120.jpg","observation":"只有亮暗变化，没有材质分支；更新文字采用可读的浅蓝，主按钮保持原品牌蓝/白字。"},
+    {"viewport":"1440x900","artifact":"dark-1440.jpg","observation":"完整8行清单，document与viewport均1440×900；运行时渐变元素0。"},
+    {"viewport":"680x560","artifact":"dark-680.jpg","observation":"最小桌面尺寸，导航收缩；三个批选块和主操作可见，随后修正隐藏输入的外层滚动并复测document=680×560。"},
+    {"viewport":"390x844","artifact":"dark-en-390.jpg","observation":"英文降级，To/Action表头不重叠，纯色计数卡和主按钮完整，无水平/文档溢出。"}
+  ],
+  "interactionEvidence": {
+    "largeList":{"items":10003,"renderedRows":50,"selectedAfterHeader":10003,"selectedOnNextPage":50,"extraWrites":0,"specialPaths":["__proto__","constructor","toString"]},
+    "scope":{"sendClipsIncoming":true,"wideningDoesNotReselect":true,"mixedState":true,"extraScans":0,"extraWrites":0},
+    "oneWayAfterReceiveScope":{"rows":6,"target":"Windows PC","scope":"send","writes":0},
+    "logo":{"files":18,"hashMismatches":0},
+    "gradients":{"runtimeCss":0,"runtimeSvg":0,"productionCssFunctions":0},
+    "secondaryPages":["devices","pairing","history","undo preview","settings","real usage statistics"]
+  },
+  "limits":["所有浏览器数据来自DEV-only transport，不是实际文件操作","Windows和原生WKWebView外观未实测","未声明FPS或独立WCAG/屏幕阅读器审计通过"]
+}

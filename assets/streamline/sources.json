@@ -1,0 +1,13 @@
+{
+  "source": "https://github.com/phosphor-icons/core",
+  "license": "MIT; Copyright (c) 2023 Phosphor Icons",
+  "sha256": {
+    "folder-simple.svg": "66ae9431d42c48e2d2d98de837174e96ca48e65417e4b54ec062f6bbe9706ad5",
+    "file-text.svg": "6b0867a397af11f3c0a66091a4e17e3c172a42f48812ba99fc8157d9093cb7ea",
+    "file-image.svg": "1497ced443096e5c07c3ae89891c46952bd9aa9a05fae7e148c19d5839a482d2",
+    "arrows-left-right.svg": "da988a32d798a3c56f745d7f24315efbdc7704c46ae9deaf5d00cecd896d5189",
+    "paper-plane-tilt.svg": "a8eb912cee783545493f39946640bf1d93768051addfbab56b040d552e519c52",
+    "file-code.svg": "730c27ca9c598f83d7a4bd07fb6b2c18e1930e214fdb70573d4175a9a79a92d2",
+    "file-pdf.svg": "451b593fba4a0ae151561d77eb1517fa50d8ddfcf8517afc817fa8972fd3b5bb"
+  }
+}

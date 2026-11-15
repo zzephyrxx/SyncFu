@@ -1,0 +1,24 @@
+{
+  "suite": "syncfu-boardui-protocol-4",
+  "recordType": "historical-verification-snapshot",
+  "verifiedAt": "2026-11-14",
+  "scope": "This record describes the named pre-publication acceptance build, not every later source-manifest or Git commit. Consult CI and current acceptance results for later revisions.",
+  "buildId": "341bb2c15442db219e2e",
+  "version": "0.2.0-board.1",
+  "overall": "LOCAL_VERIFIED_PHYSICAL_DEVICES_NOT_RUN",
+  "normalAppDataTouched": false,
+  "checks": [
+    {"id":"CORE","status":"PASS","evidence":"67 correctness tests; 3 prior performance cases ignored by default. No Rust core source changes in this UI iteration."},
+    {"id":"FRONTEND","status":"PASS","evidence":"77 node tests; TypeScript/Vite production build; legacy prototypes and DEV fixtures excluded from production."},
+    {"id":"BOARDUI-FLOW","status":"PASS","evidence":"Ordinary double-click produced exactly one preview and execution. Deletes/conflict overrides/undo require review; pause during preflight vetoes execution."},
+    {"id":"BATCH-SELECTION","status":"PASS","evidence":"10,003-item fixture renders 50 rows. Cross-page selection covers all matches; scope clipping and prototype-named paths verified."},
+    {"id":"LOGO","status":"PASS","evidence":"Original SVG and 17 native icon assets: 18 SHA-256 matches."},
+    {"id":"VISUAL","status":"PASS","evidence":"Pure light/dark BoardUI. Runtime CSS/SVG gradients zero; evidence under docs/boardui-redesign/evidence."},
+    {"id":"MAC-BUILD","status":"PASS","evidence":"universal arm64+x86_64 / SyncFu Acceptance / 0.2.0-board.1 / org.syncfu.acceptance.p2"},
+    {"id":"MAC-INTEGRITY","status":"PASS","evidence":"codesign --verify --deep --strict passed; ad-hoc only, not notarized."},
+    {"id":"WINDOWS-BUILD-SIZE","status":"NOT_RUN","evidence":"macOS host; matching source and lightweight-runtime build entry provided. Existing Windows proxy/mirror issue not changed or claimed fixed."},
+    {"id":"NATIVE-WINDOWS-WKWEBVIEW","status":"NOT_RUN","evidence":"No existing application identity/database was opened for visual testing."},
+    {"id":"PHYSICAL-LAN","status":"NOT_RUN","evidence":"Browser fixtures and loopback tests do not prove physical two-device acceptance."}
+  ],
+  "privacy": "No real pairing codes, identity keys or ordinary user synchronization folders were accessed."
+}

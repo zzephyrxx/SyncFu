@@ -1,0 +1,41 @@
+{
+  "contract": "README.md#设计契约；P0 任务侧栏与方向轴，使用现有令牌和组件。仅内存样例，不挂载正式 App，不连接设备、不读写同步目录。执行区独立占用布局行，不能覆盖滚动清单。",
+  "targetViewports": ["1120x780", "680x560", "1440x900"],
+  "accessibility": {
+    "status": "pass",
+    "evidence": "浏览器快照确认导航、文件清单、复选框、开关、对话框、文本框及筛选均有名称。实际以 Escape 关闭忽略对话框后焦点回到入口，打开对话框焦点位于其中；共享规则 fieldset 内单选匹配 :disabled，点击后值不变。检查了可见 focus outline 和减少动画 CSS 规则。此结果仅覆盖这些基础检查，不代表完整 WCAG 合规。",
+    "limits": "未执行 axe 或屏幕阅读器测试，未模拟系统 reduced-motion 媒体偏好；仅核验了对应样式规则。"
+  },
+  "responsive": {
+    "status": "pass",
+    "evidence": "在 1120x780、680x560 和 1440x900 实际渲染并截图。680 和 1120 无文档/工作区横向溢出；1440 深色长中英任务名可换行，工作区无横向溢出。最终布局工作区 bottom 与执行区 top 相等，不覆盖文件；复选框实测 17px。窄桌面任务栏收为图标，任务可访问名称保留。"
+  },
+  "contentStates": {
+    "loading": {"status": "pass", "evidence": "点击重新检查触发有限扫描状态；执行确认后实际看到“正在准备示例备份”，经过三个演示阶段完成；没有虚构传输百分比。"},
+    "empty": {"status": "pass", "evidence": "首次使用场景显示连接设备并新建任务；文件一致场景无清单；无匹配文件提供清除筛选。"},
+    "error": {"status": "pass", "evidence": "离线和目录权限场景明确归属并禁用执行，提供模拟重连/重新授权，不把目录不可读当作源端清空。"},
+    "partial": {"status": "pass", "evidence": "实际演示执行 6 项后剩余删除和 1 项冲突，结果明确仍有待决定；中断场景要求核对而非重放旧清单。"},
+    "success": {"status": "pass", "evidence": "执行后历史显示本次 6 项演示操作，明确无真实写入；演示撤销后回到任务并保持暂停。"},
+    "permission": {"status": "pass", "evidence": "新建向导未授权时下一步禁用，模拟对端授权后可前进；共享接收端规则只读，固定源端拉取可用、行操作均指向本机，不能反写。"}
+  },
+  "renderedEvidence": [
+    {"viewport":"1120x780","artifact":"overview-1120x780.jpg","observation":"最终默认浅色任务页，主标题 25px、品牌按钮 rgb(99,58,214)、复选框 17px；内存示例标识、侧栏、方向及操作区清楚。"},
+    {"viewport":"680x560","artifact":"compact-680x560.jpg","observation":"最终最小桌面布局；图标侧栏、压缩任务头、横向无溢出，操作区与工作区分别占行。清单在工作区滚动。"},
+    {"viewport":"1440x900","artifact":"dark-long-name-1440x900.jpg","observation":"最终深色宽窗口与长中英文名称；标题换行、侧栏截断、工作区无横向溢出，执行区独立布局。"},
+    {"viewport":"1120x780","artifact":"conflict-1120x780.jpg","observation":"实际打开 Markdown 冲突比较对话框，分别显示本机/对端样例内容、差异行、明确覆盖方向和三种不处理方式；内容均已标记为演示。"}
+  ],
+  "checks": {
+    "build": "npm run build：成功，TypeScript 检查与 Vite 生产构建通过。",
+    "modelTests": "Node v26.13.0，node --test scripts/prototype.test.mjs：12/12 通过，0 失败。",
+    "wizard": "三步实际点击完成：未授权阻断→模拟授权→单向镜像+自动→确认摘要→创建示例任务。",
+    "conflict": "实际选择 MacBook 版后已选数从 5 变 6；执行后残留 1 冲突和 1 未选择删除。二进制比较回退元信息。",
+    "ignore": "分别对 Markdown 忽略当前版本、对 docx 排除路径，忽略列表显示不同标签及撤销操作。",
+    "deletionGuard": "103 项镜像删除默认阻断，未勾核对清单不能批准；勾选并批准后已选 103 项，仍需演示执行确认。",
+    "handoff": "有变化/风险未处理时检查结果为“不能确认已带齐”，未假报交接成功。",
+    "shared": "接收端规则单选继承 fieldset 禁用，无法改变方向；可按固定源端规则演示获取更新，所有普通动作指向本机。",
+    "legacyRoutes": "/?preview 仍显示旧示例清单且没有 p-app；/ 仍显示原连接页及浏览器边界提示。仅做浏览器冒烟，不代表桌面壳复测。",
+    "console": "最后检查浏览器错误日志为空；资源检查无外部 HTTP 资源。开发服务器自身的本地模块/HMR 不属于设备连接。",
+    "sourceProtection": "与实施前源码归档比较，原有业务源码和 Rust core 未变；原有文件仅 src/main.tsx 入口和 README.md 有修改。其余为新原型、配置、测试、文档及构建产物。"
+  },
+  "untested": ["真实 Tauri 桌面壳与 macOS/Windows 双机", "新权限/协议/自动调度/熔断及真实备份恢复（尚未实现）", "Rust 测试本轮未重跑", "屏幕阅读器、完整键盘遍历和系统减少动画偏好的运行时模拟", "Node 22 环境下的原型测试脚本（本机仅以 Node 26 运行）"]
+}

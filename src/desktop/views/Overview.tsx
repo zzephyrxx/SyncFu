@@ -1,0 +1,19 @@
+import {useMemo,useState} from 'react';
+import {BarChart3,Table2} from '../boardui/glyphs';
+import {usePrototype} from '../../prototype/context';
+import {summariseUsage,usageScale,type UsageEvent} from '../../prototype/usage';
+import {Art,Button,Help,Panel} from '../boardui/UI';
+// Existing real-record aggregation is unchanged; only the desktop presentation owns this view.
+export function OverviewPage({events,enabled,onSettings}:{events:UsageEvent[];enabled:boolean;onSettings:()=>void}){
+  const {t,bytes,number,date}=usePrototype();const [range,setRange]=useState<7|30>(7);const [table,setTable]=useState(false);const [hover,setHover]=useState<number|null>(null);
+  const report=useMemo(()=>summariseUsage(events,range),[events,range]);const maximum=usageScale(report.rows.map(row=>row.bytes));
+  return <section className="sf-page"><header className="ui-page-heading"><h1>{t('overview')}</h1><span className="ui-chip">{t('realStats')}</span></header>
+    {!enabled?<div className="ui-centered"><Art kind="shield" size="large"/><h2>{t('statsOff')}</h2><Button onClick={onSettings}>{t('openSettings')}</Button></div>:<>
+      <div className="ui-overview-filter"><div className="ui-segment" role="group" aria-label={t('dateLabel')}>{([7,30]as const).map(days=><button key={days} aria-pressed={range===days} className={range===days?'active':''} onClick={()=>{setRange(days);setHover(null);}}>{t(days===7?'week':'month')}</button>)}</div><span>{date(report.rows[0].timestamp)} — {date(report.rows.at(-1)!.timestamp)}</span></div>
+      <dl className="ui-metrics"><div><dt>{t('transferBytes')}</dt><dd>{bytes(report.bytes)}</dd></div><div><dt>{t('syncCount')}</dt><dd>{number(report.syncs)}</dd></div><div><dt>{t('fileCount')}</dt><dd>{number(report.files)}</dd></div></dl>
+      <Panel title={t('dailyBytes')} actions={<Button className="ui-text-button" aria-pressed={table} onClick={()=>{setTable(!table);setHover(null);}}>{table?<BarChart3 size={16}/>:<Table2 size={16}/>} {t(table?'chart':'table')}</Button>}>
+        {!report.syncs?<div className="ui-centered compact"><Art kind="folder"/><h2>{t('noStats')}</h2></div>:table?<div className="ui-table-scroll"><table className="ui-data-table"><thead><tr><th>{t('dateLabel')}</th><th>{t('syncCount')}</th><th>{t('fileCount')}</th><th>{t('transferBytes')}</th></tr></thead><tbody>{report.rows.map(row=><tr key={row.key}><td>{date(row.timestamp)}</td><td>{number(row.syncs)}</td><td>{number(row.files)}</td><td>{bytes(row.bytes)}</td></tr>)}</tbody></table></div>:<div className="ui-chart-frame" role="group" aria-label={t('dailyBytes')}><div className="ui-chart-ticks">{[maximum,maximum/2,0].map(value=><span key={value}>{bytes(value)}</span>)}</div><div className="ui-chart-scroll"><div className="ui-chart" style={{minWidth:range*28}}><div className="ui-chart-grid" aria-hidden="true"><i/><i/><i/></div><div className="ui-chart-columns">{report.rows.map((row,index)=><button key={row.key} className={`ui-bar-hit ${hover===index?'highlight':''}`} aria-label={`${date(row.timestamp)}: ${bytes(row.bytes)}, ${t('syncCount')} ${number(row.syncs)}`} onMouseEnter={()=>setHover(index)} onMouseLeave={()=>setHover(null)} onFocus={()=>setHover(index)} onBlur={()=>setHover(null)}><span className="ui-bar" style={{height:`${row.bytes/maximum*100}%`}}/>{hover===index&&<span role="tooltip" className={`ui-chart-tooltip ${index<2?'start':index>report.rows.length-3?'end':''}`}><strong>{bytes(row.bytes)}</strong><span>{date(row.timestamp)}</span></span>}</button>)}</div><div className="ui-chart-dates">{report.rows.map((row,index)=><span key={row.key}>{range===7||index%5===0||index===range-1?date(row.timestamp,{month:'numeric',day:'numeric'}):''}</span>)}</div></div></div></div>}
+      </Panel><Help>{t('usageHelp')}</Help><p className="ui-body-copy">{t('statsSince')}</p>
+    </>}
+  </section>;
+}

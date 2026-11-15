@@ -1,0 +1,54 @@
+{
+  "stage": "P1",
+  "status": "backend_foundation_verified",
+  "sourceCheckpoint": "docs/p1-source-checkpoint.json",
+  "scope": "策略、协商、方向、授权、暂停、删除风险、保守迁移、生成契约与桌面命令。未进入 P2 新 UI 接线或 P3 自动调度。",
+  "rollbackAudit": {
+    "baseline": "artifacts/SyncFu-before-P1-m77pou",
+    "verifiedCheckpoint": "artifacts/SyncFu-P1-rollback-verified-1RU8NH",
+    "method": "读取归档并与当前源文件逐字节比较，不提取或运行其他模型备份中的代码；原有文件没有缺失。",
+    "finding": "回滚后保留的是尚未收尾的 P1 基础。迁移专项、生成契约、桌面接线等在当前代码上重新完成，没有整包恢复 P2 备份。",
+    "danglingReferences": "检查 generated/contracts、旧 examples/contracts 等缺失路径，当前源码/CI/文档没有悬空引用。"
+  },
+  "checks": [
+    {"id":"P1-CORE","command":"cargo test --locked -p syncfu-core","result":"pass","passed":52,"failed":0,"ignored":1,"note":"19 单元、3 迁移、15 策略、15 同步/双端集成；默认忽略的性能样本另行运行。"},
+    {"id":"P1-PERF","command":"cargo test --locked -p syncfu-core --test sync many_small_files -- --ignored --nocapture","result":"pass","passed":1,"files":10001,"firstScanSeconds":1.353156625,"unchangedScanSeconds":1.460594791,"changedScanSeconds":1.470452,"selectedSyncSeconds":7.261753208,"testSeconds":13.29,"note":"本机 debug 回环样本，非 Windows/真实双机吞吐量，非相对旧版本速度提升证明。"},
+    {"id":"P1-FMT","command":"cargo fmt --all --check","result":"pass"},
+    {"id":"P1-CLIPPY","command":"cargo clippy --locked -p syncfu-core --all-targets -- -D warnings","result":"pass","note":"对原有 bound_context 八个显式密码学输入保留一处有说明的参数数量豁免，不改变绑定输入或顺序。"},
+    {"id":"P1-CONTRACT","command":"cargo run --locked -p syncfu-core --features bindings --example export_policy_contract -- --check","result":"pass","note":"ts-rs 对 deny_unknown_fields 发出类型导出提示，服务端 Serde 拒绝未知字段的限制未移除。"},
+    {"id":"P1-DESKTOP","command":"cargo check --locked -p syncfu","result":"pass","platform":"host macOS aarch64","note":"只编译，未启动桌面应用或迁移实际状态库。"},
+    {"id":"P1-FRONTEND","command":"node --test scripts/prototype.test.mjs scripts/prototype-v2.test.mjs scripts/p1-contract.test.mjs","result":"pass","passed":31,"failed":0},
+    {"id":"P1-BUILD","command":"npm run build","result":"pass"},
+    {"id":"P1-BROWSER","result":"pass","note":"浏览器原入口仍显示连接页，/?preview 显示旧示例清单，/?prototype 显示隔离第二版；浏览器未连接真实设备。"}
+  ],
+  "safetyEvidence": {
+    "directions":"实际回环文件测试证明单向更新保留接收端额外文件、不反写；镜像的删除需批准，备份可恢复。",
+    "authority":"首次分类需对端同意；shared 非 owner 改规则/批准风险失败；伪造 body.owner 不能代替认证身份。",
+    "conflictForgery":"双向目标端也有变化时，不能把首轮/双改冲突伪装为普通更新；新增入站回归证明双方原内容不变。",
+    "policyCAS":"拒绝/重复/并发版本预留/部分提交后重启与确认均有回归；pending 状态不能开始新工作。",
+    "immutableWork":"重算摘要也不能修改已准备批次的路径；真实 Seal/Apply 要匹配已存记录。",
+    "deletionBudget":"103 项完整计划拆成 9 项仍触发风险；连续 9 项批次、重复预留、序列化重启和时钟回拨不清零预算。",
+    "permits":"批准绑定批次、内容、策略及有效期，Begin 原子消费，换批次/过期/重放不能复用。",
+    "pause":"接收端暂停阻止远端执行；暂停后重启/解除暂停不重新授权旧批次；一项完成后暂停可准确保存 partial，不推进未完成项基线。",
+    "migration":"包含已提交 WAL 的 SQLite 快照、旧任务保守默认、未知 schema 和损坏策略失败关闭；legacy active 只能核对保护性恢复，不恢复新版写入授权。",
+    "shadowLinks":"重复 Link 不覆盖现有策略，换 remote ID 的同根影子关联被拒，无效 Begin 不先取消有效本机批次。"
+  },
+  "impactAlignment": {
+    "code":"新增 policy/risk/safety，沿用现有 Engine/Node/Store 与备份恢复链；配对密码学和原型视觉未重写。",
+    "data":"schema 2 与独立策略/窗口/permit/停止标记；旧 Task/历史 payload 保留。",
+    "interfaces":"协议 2、生成 Rust→TS DTO 和夹具、7 个新桌面命令及 execute_plan 的默认 false 风险批准参数。",
+    "documentation":"README 与既有升级路线更新 P1 状态，契约/回退说明见 docs/p1-contracts.md。",
+    "release":"未提交、推送、发布、生成新安装包或在实际应用数据库运行迁移；两端以后须同版本一起更新。",
+    "scopeDrift":"没有混入 P2 冲突决定/界面接线或 P3 后台调度。on_change 仅保存意图，automatic_supported 仍为 false。"
+  },
+  "unverified": ["真实 Windows 构建与 CI 运行结果", "macOS/Windows 实体双机", "用户实际数据库升级/回退", "真实 WebView invoke 交互流程", "签名、公证和发行包"],
+  "selfEvaluation": {
+    "accuracy":{"score":4,"evidence":"结果对应实际退出状态与测试输出，未把回环或编译当成实体双机验收。"},
+    "completeness":{"score":4,"evidence":"已完成本轮批准的 P1 后端范围，P2/P3 保持阶段边界；平台实测仍需后续环境。"},
+    "clarity":{"score":4,"evidence":"契约说明区分策略生效、待核对、配置意图和真正调度；接口细节较多，需按阶段阅读。"},
+    "actionability":{"score":4,"evidence":"有可重跑命令、生成检查、typed facade、快照与兼容说明；未提供已验收的端到端新 UI。"},
+    "conciseness":{"score":4,"evidence":"复用现有 crate/存储/执行链，只添加可选类型生成依赖，安全检查集中在独立模块。"},
+    "overall":4.0,
+    "verdict":"可交付 P1 源码与契约，不能声称完整新同步产品已发布。"
+  }
+}

@@ -1,0 +1,15 @@
+# Keep source-manifest hashes reproducible across Windows and macOS checkouts.
+* text=auto eol=lf
+# Preserve checked-in batch-file bytes (CRLF) for acceptance manifest hashes.
+*.cmd -text whitespace=blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol
+*.bat -text whitespace=blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol
+# Retain terminal output exactly, including final empty lines.
+docs/performance-streamline/*.log whitespace=-blank-at-eof
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.ico binary
+*.icns binary
+*.woff binary
+*.woff2 binary
+*.zip binary

@@ -1,0 +1,38 @@
+[package]
+name = "syncfu-core"
+version = "0.1.0"
+edition = "2024"
+license = "Apache-2.0"
+
+[features]
+bindings = ["dep:ts-rs"]
+
+[[example]]
+name = "export_policy_contract"
+required-features = ["bindings"]
+
+[dependencies]
+ts-rs = { version = "11", optional = true }
+anyhow = "1"
+argon2 = "0.5"
+base64 = "0.22"
+cap-std = "3"
+cap-fs-ext = "3"
+fs2 = "0.4"
+hex = "0.4"
+if-addrs = "0.15"
+mdns-sd = "0.18"
+notify = "8"
+opaque-ke = { version = "4.0.1", features = ["argon2"] }
+rand = "0.8"
+rcgen = { version = "0.13", default-features = false, features = ["ring", "crypto"] }
+rusqlite = { version = "0.40", features = ["bundled"] }
+rustls = { version = "0.23", default-features = false, features = ["std", "ring"] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+sha2 = "0.10"
+tempfile = "3"
+tokio = { version = "1", features = ["rt-multi-thread", "net", "macros", "io-util", "sync", "time"] }
+tokio-rustls = { version = "0.26", default-features = false, features = ["ring"] }
+unicode-normalization = "0.1"
+uuid = { version = "1", features = ["v4", "serde"] }

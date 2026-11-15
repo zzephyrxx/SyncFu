@@ -1,0 +1,52 @@
+{
+  "contract": "README.md: P0 第二版桌面传送台。仅样例数据；同系列本地 3D 素材、五位数字滚轮、统计与设置、五语言。正文/关键动作可读、辅助解释由新手模式控制、安全后果常显；执行区独立占行。",
+  "targetViewports": ["1120x780", "680x560", "1440x900"],
+  "accessibility": {
+    "status": "pass",
+    "evidence": "沿用 Radix Modal/Checkbox/Switch；补齐窄窗口规则按钮和忽略按钮的可访问名称，方向图含本机/对端及方向名称。图表通过键盘 focus 显示与鼠标相同的值，另有等价表格。配对仅朗读最终码，生成时不可复制。",
+    "limits": "仅基础交互检查，不代表完整 WCAG 或屏幕阅读器审计。系统 reduced-motion 优先级有单元测试；未真实切换操作系统偏好。"
+  },
+  "responsive": {
+    "status": "pass",
+    "evidence": "实际渲染 680x560 英文、1120x780 中文和 1440x900 深色日文；文档级无横向溢出。1120 文件行字体实测 14px，执行区 top 等于工作区 bottom。680 下清单需在工作区滚动；30 日图表允许自身横向滚动而不撑破页面。"
+  },
+  "contentStates": {
+    "loading": { "status": "pass", "evidence": "配对刷新实际出现 spinning、五个 reel strip，首列 transform 已改变而后列仍待启动；复制按钮禁用。同步实际经过备份/传输/核验三阶段。" },
+    "empty": { "status": "pass", "evidence": "首次使用与文件一致场景可切换；总览空记录、统计关闭和筛选无结果有独立状态，不生成伪造数据。" },
+    "error": { "status": "pass", "evidence": "离线、目录不可读和中断场景阻止执行，显示相应恢复动作；mock 剪贴板拒绝时提供手动复制提示。非法备份数值显示允许范围并保持原有效偏好。" },
+    "partial": { "status": "pass", "evidence": "实测完成 6 项后保留 1 个未选删除与 1 个未决冲突，消息明确仍有待决定项。忽略或排除不被表述为全部一致。" },
+    "success": { "status": "pass", "evidence": "实测同步总览次数从 13 到 14、处理项从 645 到 651；历史可撤销且撤销后暂停。接收/发起两种模拟配对均可完成，并明确没有真实文件写入。" },
+    "permission": { "status": "pass", "evidence": "新建任务未获对端示例授权时下一步禁用；共享端规则单选继承 fieldset disabled，固定源端拉取可用但不能反写。103 项删除需单独核对同意，执行前仍确认清单。" }
+  },
+  "renderedEvidence": [
+    { "viewport": "1120x780", "artifact": "tasks-1120x780.jpg", "observation": "最终中文任务页，设备关系居中、字号放大、无常驻帮助段落，底部操作独立布局。" },
+    { "viewport": "1120x780", "artifact": "overview-1120x780.jpg", "observation": "三项可计算的示例统计与单系列日传输柱图；值随日期和本轮操作变化。" },
+    { "viewport": "1120x780", "artifact": "pairing-1120x780.jpg", "observation": "最终五列数字滚轮停稳后的配对页；码仅供演示，复制、刷新和过期倒计时有明确状态。" },
+    { "viewport": "680x560", "artifact": "compact-en-680x560.jpg", "observation": "英文最小桌面窗口，标签和筛选可换行、主执行动作保留，清单在工作区内滚动，无页面横向溢出。" },
+    { "viewport": "1440x900", "artifact": "settings-ja-dark-1440x900.jpg", "observation": "深色日文设置，主题预览、密度、强调色、3D 开关和动效可配置。" }
+  ],
+  "checks": {
+    "build": "npm run build 成功（最终代码）。",
+    "tests": "node --test scripts/prototype.test.mjs scripts/prototype-v2.test.mjs：27/27 成功，0 失败。",
+    "locales": "五语言 key、非空翻译和插值占位符匹配；浏览器逐一切换五语言，document.lang 与独立存储一致，任务名/文件名不翻译。设置切换语言后当前任务筛选、工作搜索与结果 1 行保持不变。",
+    "preferences": "实际切换新手模式：帮助数量从 0 到 2，帮助字体 13px；切主题/密度/3D/动效实际生效；启动页设总览后刷新进入总览。新任务实际继承 mirror+automatic。非法天数 0 不覆盖原 30，恢复默认不删除示例任务。",
+    "pairing": "刷新生成期间复制禁用；mock clipboard 捕获值与最终显示的五位码一致，拒绝可恢复。无动效时无 reel strip 且 Modal animationName=none。全动效时 5 条滚轮，第一列先移动。滚动中关闭后等待超出动画周期也不重新弹出。前导零发送流程成功。",
+    "pairingLimit": "未读取或改写系统真实剪贴板；未实际等待完整 60 秒倒计时，过期与 stale-generation 边界由状态测试覆盖。",
+    "statistics": "范围统一，7/30 天柱数与表格行数一致。关闭统计时操作历史从 2 到 3 而统计维持 15 次/657 项；撤销不增加统计。删除不计传输字节。keyboard focus tooltip 显示 1.1GB/对应日期，位于 plot 内。",
+    "deletion": "103 项默认阻断，重新检查仍可用；未勾同意不能批准；批准后 103 项进入选择，确认页明确 103 删除与备份，方向箭头为 →，未执行真实删除。",
+    "handoff": "未完成、离线、暂停、风险或不允许向目标写入的方向均阻止完整交接声明。忽略项独立披露，不声称全一致。",
+    "palette": "dataviz validator：light #6250d6 on #ffffff、dark #9085e9 on #20232c 全部检查通过。实际深色图表 series rgb(144,133,233)、surface rgb(32,35,44)。单系列无颜色分类，柱宽 24px。",
+    "isolation": "原 / 和 /?preview 浏览器冒烟通过，未挂载 p-app，根节点无 prototype 样式作用域。Rust core 9 文件与第一轮归档逐字节一致；正式 App/PairDialog/API/i18n 与 P0 第一版快照一致。共享 Modal 只新增可选关闭标签。",
+    "assets": "4 PNG 类型、尺寸、SHA-256 与 MIT 文件核验通过；完整许可文本已确认进入 Vite 产物，图片均本地加载，最终资源检查无外部资源。"
+  },
+  "untested": ["真实 Tauri 桌面壳及 macOS/Windows 双机", "Rust 测试本轮未重跑", "真实新协议/权限/自动调度/备份/熔断：尚未实现", "完整键盘遍历、屏幕阅读器与 WCAG 审计", "操作系统实际 reduced-motion 切换", "系统真实剪贴板读写及完整 60 秒到期等待", "母语者本地化审校"],
+  "selfEvaluation": {
+    "overall": 4.0,
+    "accuracy": { "score": 4, "evidence": "构建、27 测试、浏览器交互与素材许可均有证据；不把原型结果当真实后端验收。" },
+    "completeness": { "score": 4, "evidence": "本次批准的原型功能齐备；视觉效果及翻译语气仍需用户体验确认。" },
+    "clarity": { "score": 4, "evidence": "默认收起辅助解释，风险常显；最小窗口需滚动阅读完整清单。" },
+    "actionability": { "score": 4, "evidence": "有可运行入口、截图、可重跑测试和验证说明；本地服务需保持运行。" },
+    "conciseness": { "score": 4, "evidence": "无重型 3D/图表依赖，只有 motion 与小型本地素材；原型按需 JS gzip 约 83KB，较第一版增加了动效和五语言成本。" },
+    "verdict": "可交付原型体验，不等于可发布同步产品；下一步由用户决定是否继续调整或进入 P1。"
+  }
+}

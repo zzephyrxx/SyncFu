@@ -1,0 +1,194 @@
+{
+  "layoutReference": "https://panic.com/transmit/",
+  "downloadedFiles": 17,
+  "totalSourceBytes": 187669,
+  "entries": [
+    {
+      "repo": "deeplethe/solid-glass",
+      "commit": "6e8903e494a15491ceda38fafea5056c95a74d44",
+      "license": "MIT",
+      "file": "LICENSE",
+      "url": "https://raw.githubusercontent.com/deeplethe/solid-glass/6e8903e494a15491ceda38fafea5056c95a74d44/LICENSE",
+      "sha256": "eb9d03950a82b3fa15b16bd05163f6691843be957e69ce8eb6f062913848be87",
+      "bytes": 1066,
+      "adaptedTo": "assets/material-licenses/",
+      "notes": "Original license/notice retained."
+    },
+    {
+      "repo": "deeplethe/solid-glass",
+      "commit": "6e8903e494a15491ceda38fafea5056c95a74d44",
+      "license": "MIT",
+      "file": "NOTICE.md",
+      "url": "https://raw.githubusercontent.com/deeplethe/solid-glass/6e8903e494a15491ceda38fafea5056c95a74d44/NOTICE.md",
+      "sha256": "0e75616b3b3f1bd27319e9414f2f3484c1165dadadba10b84558af8ecd8bfbdf",
+      "bytes": 2799,
+      "adaptedTo": "assets/material-licenses/",
+      "notes": "Original license/notice retained."
+    },
+    {
+      "repo": "deeplethe/solid-glass",
+      "commit": "6e8903e494a15491ceda38fafea5056c95a74d44",
+      "license": "MIT",
+      "file": "src/solid-glass.css",
+      "url": "https://raw.githubusercontent.com/deeplethe/solid-glass/6e8903e494a15491ceda38fafea5056c95a74d44/src/solid-glass.css",
+      "sha256": "c3c9e4e739f2b3f991d2412c07970f53df4a54f9d416ec3e8e1c0d5261e84bc3",
+      "bytes": 55827,
+      "adaptedTo": "src/desktop/design-system/materials.css",
+      "notes": "Retained thickness/rim/contact/lift surface model; scoped and adapted colours, fallback fills and Radix states."
+    },
+    {
+      "repo": "deeplethe/solid-glass",
+      "commit": "6e8903e494a15491ceda38fafea5056c95a74d44",
+      "license": "MIT",
+      "file": "src/blocks/agent-workspace.tsx",
+      "url": "https://raw.githubusercontent.com/deeplethe/solid-glass/6e8903e494a15491ceda38fafea5056c95a74d44/src/blocks/agent-workspace.tsx",
+      "sha256": "bc376ab6ca91dbb9aa15f00272848aad9713af60b2b753fbb58bc185158549e6",
+      "bytes": 32730,
+      "adaptedTo": "src/desktop/Desktop.tsx",
+      "notes": "Adapted navigation/central workspace/footer composition; removed all agent fixtures and actions."
+    },
+    {
+      "repo": "deeplethe/solid-glass",
+      "commit": "6e8903e494a15491ceda38fafea5056c95a74d44",
+      "license": "MIT",
+      "file": "src/components/ui/panel.tsx",
+      "url": "https://raw.githubusercontent.com/deeplethe/solid-glass/6e8903e494a15491ceda38fafea5056c95a74d44/src/components/ui/panel.tsx",
+      "sha256": "af8e720b49589abf0720486c3d92f9291633bbb6ab3512f3c38ae6454e152f01",
+      "bytes": 2449,
+      "adaptedTo": "src/desktop/design-system/UI.tsx",
+      "notes": "Adapted Panel composition and title/actions anatomy."
+    },
+    {
+      "repo": "Surajmaurya1/easyui",
+      "commit": "f7193ce6f96d38fb39734c0ed8be43567a7eee4a",
+      "license": "MIT",
+      "file": "LICENSE",
+      "url": "https://raw.githubusercontent.com/Surajmaurya1/easyui/f7193ce6f96d38fb39734c0ed8be43567a7eee4a/LICENSE",
+      "sha256": "44812848f920dd3a9bbe27918ae4e92d548ac788846955fe88b953e57e716e22",
+      "bytes": 1069,
+      "adaptedTo": "assets/material-licenses/",
+      "notes": "Original license/notice retained."
+    },
+    {
+      "repo": "Surajmaurya1/easyui",
+      "commit": "f7193ce6f96d38fb39734c0ed8be43567a7eee4a",
+      "license": "MIT",
+      "file": "src/components/ui/MacOSFolderCards.tsx",
+      "url": "https://raw.githubusercontent.com/Surajmaurya1/easyui/f7193ce6f96d38fb39734c0ed8be43567a7eee4a/src/components/ui/MacOSFolderCards.tsx",
+      "sha256": "32967c2388379424487a88fbe2f2dbceeef9f393f2e0ac72c8dbd0e1ed745bba",
+      "bytes": 11217,
+      "adaptedTo": "src/desktop/design-system/TaskFolder.tsx",
+      "notes": "Retained back, tab, emerging sheets and hinged flap; real task callbacks, native keyboard button, no fake previews."
+    },
+    {
+      "repo": "Surajmaurya1/easyui",
+      "commit": "f7193ce6f96d38fb39734c0ed8be43567a7eee4a",
+      "license": "MIT",
+      "file": "src/components/ui/GlassNavbar.tsx",
+      "url": "https://raw.githubusercontent.com/Surajmaurya1/easyui/f7193ce6f96d38fb39734c0ed8be43567a7eee4a/src/components/ui/GlassNavbar.tsx",
+      "sha256": "89b6c065c20ffd41f56439c134c6d8f1e9a0d3d7ef85862eca4564ec0279584d",
+      "bytes": 11557,
+      "adaptedTo": "src/desktop/design-system/UI.tsx",
+      "notes": "Adapted shared motion selection primitive; removed marketing/mobile navigation, identity bug and scroll lock."
+    },
+    {
+      "repo": "Surajmaurya1/easyui",
+      "commit": "f7193ce6f96d38fb39734c0ed8be43567a7eee4a",
+      "license": "MIT",
+      "file": "src/components/ui/PressButton.tsx",
+      "url": "https://raw.githubusercontent.com/Surajmaurya1/easyui/f7193ce6f96d38fb39734c0ed8be43567a7eee4a/src/components/ui/PressButton.tsx",
+      "sha256": "6f985aaeb7482ebe43844f637d279a487bb2623fbcadd71c3400207af8ac083c",
+      "bytes": 3479,
+      "adaptedTo": "src/desktop/design-system/UI.tsx",
+      "notes": "Adapted controlled button press feedback; added shared material tokens and reduced-motion gate."
+    },
+    {
+      "repo": "Surajmaurya1/easyui",
+      "commit": "f7193ce6f96d38fb39734c0ed8be43567a7eee4a",
+      "license": "MIT",
+      "file": "src/components/ui/LiquidToggle.tsx",
+      "url": "https://raw.githubusercontent.com/Surajmaurya1/easyui/f7193ce6f96d38fb39734c0ed8be43567a7eee4a/src/components/ui/LiquidToggle.tsx",
+      "sha256": "e42922a6423d0bc46c27d7cfa093f82302bb3976e306d5f835c94ba2bb3580e3",
+      "bytes": 10709,
+      "adaptedTo": "src/desktop/design-system/blob.ts",
+      "notes": "Adapted 12-anchor quadratic contour; bounded shape and event-driven spring, no idle interval."
+    },
+    {
+      "repo": "charles-postiaux/caffeine-day",
+      "commit": "38fbdbb11b8e3b9b9e44d157334f30705efbc874",
+      "license": "MIT",
+      "file": "LICENSE",
+      "url": "https://raw.githubusercontent.com/charles-postiaux/caffeine-day/38fbdbb11b8e3b9b9e44d157334f30705efbc874/LICENSE",
+      "sha256": "2608e16d9d64bfc45f83627db61ca11e384f163da9f71007407e3a04981056a0",
+      "bytes": 1073,
+      "adaptedTo": "assets/material-licenses/",
+      "notes": "Original license/notice retained."
+    },
+    {
+      "repo": "charles-postiaux/caffeine-day",
+      "commit": "38fbdbb11b8e3b9b9e44d157334f30705efbc874",
+      "license": "MIT",
+      "file": "caffeine.js",
+      "url": "https://raw.githubusercontent.com/charles-postiaux/caffeine-day/38fbdbb11b8e3b9b9e44d157334f30705efbc874/caffeine.js",
+      "sha256": "5e7cae775d491b7a8775daef1bc61ff8679c156e5632ba72efe074725002abc0",
+      "bytes": 35629,
+      "adaptedTo": "src/desktop/design-system/DotStatus.tsx",
+      "notes": "Adapted 14-level luminance ramp and batch paint; real phase only, no chart model, idle/hidden render loop."
+    },
+    {
+      "repo": "adamgiebl/neumorphism",
+      "commit": "8ab93a6bea6493cc464d45a334b5fb7a90d34308",
+      "license": "BSD-3-Clause",
+      "file": "LICENSE.md",
+      "url": "https://raw.githubusercontent.com/adamgiebl/neumorphism/8ab93a6bea6493cc464d45a334b5fb7a90d34308/LICENSE.md",
+      "sha256": "5350a263873db4ebd136a84fe14af86094b8b06c52268f358619d667b790c758",
+      "bytes": 1518,
+      "adaptedTo": "assets/material-licenses/",
+      "notes": "Original license/notice retained."
+    },
+    {
+      "repo": "adamgiebl/neumorphism",
+      "commit": "8ab93a6bea6493cc464d45a334b5fb7a90d34308",
+      "license": "BSD-3-Clause",
+      "file": "src/utils.js",
+      "url": "https://raw.githubusercontent.com/adamgiebl/neumorphism/8ab93a6bea6493cc464d45a334b5fb7a90d34308/src/utils.js",
+      "sha256": "d6173e1f855032b73ad1b9c0a6330d4a551ee0314130f20ed50298b65af801b2",
+      "bytes": 1700,
+      "adaptedTo": "src/desktop/design-system/materials.css",
+      "notes": "Reference for precomputed paired shadow colours; helper not copied or imported at runtime."
+    },
+    {
+      "repo": "adamgiebl/neumorphism",
+      "commit": "8ab93a6bea6493cc464d45a334b5fb7a90d34308",
+      "license": "BSD-3-Clause",
+      "file": "src/Configuration.js",
+      "url": "https://raw.githubusercontent.com/adamgiebl/neumorphism/8ab93a6bea6493cc464d45a334b5fb7a90d34308/src/Configuration.js",
+      "sha256": "d528475610faa3ec64b6a1e1c0090f518d4e4ee7eebfb64d6e2b17c396319f2e",
+      "bytes": 9606,
+      "adaptedTo": "src/desktop/design-system/materials.css",
+      "notes": "Reference for raised/inset opposing shadow construction, not generator application."
+    },
+    {
+      "repo": "shadcn-ui/ui",
+      "commit": "e62c9435fff729a175f38983dee73b2cb4f6a069",
+      "license": "MIT",
+      "file": "LICENSE.md",
+      "url": "https://raw.githubusercontent.com/shadcn-ui/ui/e62c9435fff729a175f38983dee73b2cb4f6a069/LICENSE.md",
+      "sha256": "1564074e13439397221ffd522e2e504d56561994a23d371aa5e3ad43e4f5423f",
+      "bytes": 1063,
+      "adaptedTo": "assets/material-licenses/",
+      "notes": "Original license/notice retained."
+    },
+    {
+      "repo": "shadcn-ui/ui",
+      "commit": "e62c9435fff729a175f38983dee73b2cb4f6a069",
+      "license": "MIT",
+      "file": "apps/v4/registry/new-york-v4/ui/sheet.tsx",
+      "url": "https://raw.githubusercontent.com/shadcn-ui/ui/e62c9435fff729a175f38983dee73b2cb4f6a069/apps/v4/registry/new-york-v4/ui/sheet.tsx",
+      "sha256": "ea473d38a26a9b0b879e5a13139899ad45e9782e896b3fa205c7763a6c506876",
+      "bytes": 4178,
+      "adaptedTo": "src/desktop/design-system/UI.tsx",
+      "notes": "Adapted Radix portal/overlay/content/title/description/close anatomy; retained focus restoration and translated labels."
+    }
+  ]
+}

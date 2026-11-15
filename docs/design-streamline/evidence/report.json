@@ -1,0 +1,23 @@
+{
+  "contract": "../DIRECTION.md — 双槽交换台，文件优先，原位冲突审阅与底部确认；DEV-only fixture，不是实体双机验收。",
+  "targetViewports": ["1120x780", "1440x900", "680x560", "390x844"],
+  "accessibility": {"status":"pass","evidence":"语义化 radio/checkbox/menu；实际打开冲突抽屉后焦点进入，Escape关闭并恢复到比较按钮。主按钮46px。实测浅色正文14.63:1、路径5.03:1、端点4.64:1、主按钮6.08:1；深色正文12.41:1、路径7.27:1、按钮7.81:1。通过设置关闭动效后方向/列表仍正常，现有系统 reduced-motion 优先级测试通过。未进行独立屏幕阅读器审计。"},
+  "responsive": {"status":"pass","evidence":"四个视口均无 document 水平溢出；1120首屏6条完整文件行。680主按钮位于窗口内；390英文深色仍显示方向/文件名/目标/主按钮。展开回执后 workspace.bottom 与 receipt.top 均为476.671875，未覆盖列表。"},
+  "contentStates": {
+    "loading":{"status":"pass","evidence":"夹具延迟inspect 700ms：检查按钮aria-busy=true，8条旧文件行保留，暂不可执行。"},
+    "empty":{"status":"pass","evidence":"输入不存在的文件名显示过滤空态，清除过滤恢复8条列表。"},
+    "error":{"status":"pass","evidence":"failNext inspect产生可见alert、禁用旧清单执行；跨1600ms轮询周期未自动重试，手动重试恢复。"},
+    "partial":{"status":"pass","evidence":"夹具3/6部分结果显示warning回执、待处理数量、真实错误文本和撤销入口，没有成功色。"},
+    "success":{"status":"pass","evidence":"比较采用本机版本后，预检只读且选择锁定；显式确认才产生一次execute_plan。回执显示7/7及1个未选项，不称全部一致。"},
+    "permission":{"status":"pass","evidence":"共享非owner的方向fieldset禁用；离线禁用执行；镜像选择前不提交；有删除风险时最终按钮禁用，明确勾选后才启用。首次信任仍由内核双端协商，浏览器不作为协议安全证明。"}
+  },
+  "renderedEvidence":[
+    {"viewport":"1120x780","artifact":"desktop-1120-light.jpg","observation":"主工作台、basename/父路径、6行完整文件与固定主按钮；默认检查只出现inspect_task，无execute。"},
+    {"viewport":"1440x900","artifact":"desktop-1440-dark.jpg","observation":"深色同结构、完整8行清单、独立语义状态，无水平溢出。"},
+    {"viewport":"680x560","artifact":"desktop-680-light.jpg","observation":"最小桌面尺寸缩短导航、隐藏大小列，主按钮完整可点击。"},
+    {"viewport":"390x844","artifact":"browser-390-en-dark.jpg","observation":"浏览器降级：设备在上、方向居中，英文标签与文件去向换行，主按钮保留；动效关闭。"},
+    {"viewport":"1120x780","artifact":"conflict-drawer.jpg","observation":"原位侧边抽屉、文件名标题和父路径、两侧真实夹具文本差异、明确来源选择。"},
+    {"viewport":"1120x780","artifact":"review-receipt.jpg","observation":"后端预检后在底部展开最终确认，占真实布局行；不是直接写入。"}
+  ],
+  "limits":["浏览器夹具不是原生文件系统或实体LAN验证","未运行独立屏幕阅读器审计","未实施P3自动同步"]
+}

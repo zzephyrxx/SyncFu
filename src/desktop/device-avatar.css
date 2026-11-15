@@ -1,0 +1,2 @@
+.sf-device-avatar{display:inline-flex;align-items:center;justify-content:center;flex:none;width:52px;height:52px;border-radius:15px;border:1px solid var(--sf-border);background:var(--sf-soft);color:var(--sf-muted);font-size:29px;line-height:1}
+.sf-device-avatar.has-emoji{background:var(--sf-panel)}

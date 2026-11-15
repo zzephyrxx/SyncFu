@@ -1,0 +1,58 @@
+{
+  "stage": "P2",
+  "status": "source_implemented_local_verification_passed",
+  "scope": "真实桌面入口、手动同步/冲突闭环、授权文件预览、本机审阅、策略排除、依赖展开、真实统计与设置；不含 P3 自动调度。",
+  "startCheckpoint": "artifacts/SyncFu-before-P2-verified-xtoWDN",
+  "finalSourceCheckpoint": "docs/p2/source-checkpoint.json",
+  "baseline": "开始前重新检查 P1 source checkpoint，29 个记录均无漂移。",
+  "protocol": 3,
+  "schema": 3,
+  "checks": [
+    {"command":"cargo test --locked -p syncfu-core","result":"pass","passed":63,"failed":0,"ignored":1,"detail":"23 单元、4 迁移、15 策略、21 真实回环同步用例。默认忽略性能样本另行跑通。"},
+    {"command":"cargo test --locked -p syncfu-core --test sync many_small_files -- --ignored --nocapture","result":"pass","passed":1,"files":10001,"firstScanSeconds":1.318075416,"unchangedScanSeconds":1.478451,"changedScanSeconds":1.438313042,"selectedSyncSeconds":7.145164417,"totalSeconds":13.12,"detail":"本机 debug 回环样本，非实体双机吞吐量或优化提升证明。"},
+    {"command":"cargo fmt --all --check","result":"pass"},
+    {"command":"cargo clippy --locked -p syncfu-core --all-targets -- -D warnings","result":"pass"},
+    {"command":"cargo check --locked -p syncfu","result":"pass","detail":"本机 macOS 编译；未运行实际桌面数据库。"},
+    {"command":"cargo run --locked -p syncfu-core --features bindings --example export_policy_contract -- --check","result":"pass","detail":"ts-rs 对 deny_unknown_fields 的导出提示仍存在；Rust 拒绝未知字段的限制未删除。"},
+    {"command":"npm run build","result":"pass"},
+    {"command":"node --test scripts/prototype.test.mjs scripts/prototype-v2.test.mjs scripts/p1-contract.test.mjs scripts/p2-ui.test.mjs","result":"pass","passed":42,"failed":0},
+    {"name":"Production bundle isolation","result":"pass","detail":"正式 dist JS 不包含 __SYNCFU_TEST__、Fixture Mac 或测试 transport 命令错误标识。开发联调入口受 import.meta.env.DEV 约束。"}
+  ],
+  "coreEvidence": {
+    "conflicts":"真实回环测试中比较两端文本→指定稳定 source ID→新计划→覆盖→受保护撤销恢复原版本；旧 Plan ID/digest 不能重用。",
+    "deleteModify":"删改冲突采用缺失端版本后仍进入删除风险批准，恢复时读取原备份，不把冲突决策当作删除保护豁免。",
+    "authority":"shared 非 owner 不能 resolve；在入站 Work 中伪造完整 conflict resolution 也不能放宽管理权。结构冲突不能强制覆盖。",
+    "preview":"每端 256 KiB 上限、UTF-8/NUL 检查、授权路径/穿越防护、指纹一致；接收端复核 peer identity/Entry/text，伪造文本和身份被拒绝。",
+    "reviewNotes":"忽略绑定双端内容/策略指纹，内容变更重新出现；稍后保持待决定；记录跨重启保存，批量写失败原子回滚，均不推进共同基线。",
+    "dependencies":"仅选择 a/b/file 的执行预检返回 a、a/b、a/b/file 三项，实际复制成功，确认之前已可见最终选择。",
+    "statistics":"成功同步产生真实统计，目录不计文件、删除不计载荷、撤销不重计；关闭后新的历史仍存在但不新增统计，清空不删历史。",
+    "migration":"schema 2 数据在升级到 3 前有一致性快照，旧授权格式只可核对不恢复写入，协议 1/2 明确拒绝。"
+  },
+  "uiEvidence": {
+    "environment":"Vite dev + DesktopHarness，正式 React controller/view 使用内存 transport。并非真实 WebView IPC 或实体设备；每页顶部明确 fixture 标识。",
+    "flows":["检查→比较→选版→后端最终清单→执行→历史→撤销预览", "执行故障显示错误、清单仍保留、不假报成功", "决策故障在弹窗内显示错误且弹窗不消失", "风险清单未勾同意时执行按钮禁用，最终发送 approveRisk=true 和准确 selected", "切换日文后当前 task 的搜索 draft、结果 1 行保留", "真实统计视图使用 fixture 后端返回的记录：执行两项后显示 22 B / 1 次 / 2 项", "撤销预览默认选择可安全撤销项，包括逆向删除；后续编辑仍不选"],
+    "viewports":["1120x780 日文比较", "680x560 英文错误反馈"],
+    "layout":"680 下无文档/工作区横向溢出，footer top 等于 workspace bottom；较高弹窗可以内部滚动。",
+    "routes":"普通浏览器 / 仅显示桌面版边界且不挂载真实 controller；/?preview 保留旧示例；/?prototype 保留 P0，均不出现测试 transport。",
+    "console":"最后读取错误日志为空。",
+    "screenshots":["conflict-ja-1120x780.jpg","conflict-error-en-680x560.jpg","usage-bytes-1120x780.jpg"],
+    "chart":"真实总览不会以固定 GB 坐标隐藏小文件：12 B 样例生成 20/10/0 B 刻度和 120px 柱。浅/深配色分别 #6250d6 on #ffffff、#9085e9 on #20232c，dataviz validator 全部通过。"
+  },
+  "impactAlignment": {
+    "code":"复用 P1 policy/preflight/backup/undo，新增 conflicts 与 usage；新增 desktop controller/view，复用已认可视觉、五语言、偏好、3D 素材和滚轮组件。",
+    "data":"schema 3、版本化工作授权、独立本机 review_notes/usage 记录；没有改动用户真实应用数据。",
+    "contracts":"Rust 生成的冲突/预览/统计类型和真实序列化夹具，扩展执行预检 selected 与 Snapshot.protocol；前端核对生成的 wireProtocol。",
+    "release":"未提交、推送、发布或制作安装包；当前二进制版本不得与旧协议混用。",
+    "remaining":"P3 自动调度、完整一键交接执行/配置迁移，以及任务重命名/单独移除等管理收尾仍按后续路线执行。"
+  },
+  "unverified":["Windows 实际构建及远端 CI", "macOS/Windows 实体双机", "真实 WebView IPC 点击流程", "系统权限提升和物理剪贴板交互", "用户实际数据库升级/回退", "完整 WCAG/屏幕阅读器审计", "母语者翻译审校", "新安装包签名与公证"],
+  "selfEvaluation": {
+    "accuracy":{"score":4,"evidence":"区分真实临时文件回环测试、编译和 UI fixture，不把三者冒充实体双机。"},
+    "completeness":{"score":4,"evidence":"手动同步与冲突闭环已接线；实体双机验收仍需两台设备，不掩盖后续 P3/P4 范围。"},
+    "clarity":{"score":4,"evidence":"预览/批准/执行有明确状态，风险常显、语言切换保留审阅上下文；诊断错误仍可能是后端原文。"},
+    "actionability":{"score":4,"evidence":"有真实命令、生成契约、可复跑测试、截图及迁移说明；下一步需隔离测试目录实机验收。"},
+    "conciseness":{"score":4,"evidence":"复用已有库和视觉，无 P2 新运行依赖；真实界面与演示保持不同 controller，避免伪能力。"},
+    "overall":4.0,
+    "verdict":"可交付 P2 源码并进入实体双机验收，不等于已发布或已验证完整自动同步。"
+  }
+}

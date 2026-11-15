@@ -1,0 +1,13 @@
+    Finished `release` profile [optimized] target(s) in 0.06s
+     Running tests/sync.rs (target/release/deps/sync-9d507dea9e03dc29)
+
+running 3 tests
+test direction_switch_benchmark ... BENCH direction_switch personal_roundtrip_ms=[1, 1, 1, 1, 1, 1]
+ok
+test large_transfer_benchmark ... BENCH large_transfer bytes=134217728 scan_ms=209 transfer_ms=1538
+ok
+test many_small_files ... 10001 files, first scan 184.745416ms, unchanged 188.12575ms, 1% changes scan 194.023583ms, selected sync 2.666911959s
+ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 21 filtered out; finished in 6.65s
+
