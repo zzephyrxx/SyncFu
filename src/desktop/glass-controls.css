@@ -2,7 +2,7 @@
    --sf-panel transparent: they also supply switch thumbs and action text. */
 .sf-menu-viewport,.sf-popover-viewport{display:contents}
 :root[data-surface="desktop"][data-material="glass"]{
-  --glass-toggle-on:#356ab1;--glass-toggle-thumb:#f2f7ff;--glass-toggle-ink:#fff;
+  --glass-toggle-on:#686868;--glass-toggle-thumb:#fff;--glass-toggle-ink:#fff;
 }
 @supports ((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))){
   /* Keep the optical shell stationary. The wrapper is box-less in Solid mode,
@@ -35,7 +35,7 @@
     background:var(--glass-toggle-on);box-shadow:inset 0 1px 0 var(--glass-inner-rim);
   }
   :root[data-surface="desktop"][data-material="glass"] .sfu-switch [data-slot="switch-thumb"]{
-    background:var(--glass-toggle-thumb);box-shadow:0 1px 2px rgb(10 25 50 / .20);
+    background:var(--glass-toggle-thumb);box-shadow:0 1px 2px rgb(0 0 0 / .20);
   }
   :root[data-surface="desktop"][data-material="glass"] .sfu-checkbox[data-slot="checkbox"]{
     background:var(--glass-control);border-color:var(--glass-edge);color:var(--glass-ink);
@@ -195,7 +195,7 @@
     .sf-pair-device.is-selected .sf-pair-device-icon
   ){
     background:var(--glass-selected);color:var(--glass-ink);
-    box-shadow:inset 0 1px 0 var(--glass-inner-rim),0 0 0 1px var(--sf-info);
+    box-shadow:inset 0 1px 0 var(--glass-inner-rim),0 0 0 1px var(--glass-muted);
   }
   :root[data-surface="desktop"][data-material="glass"] .sf-device-type-badge{
     background:var(--glass-control);color:var(--glass-muted);border-color:var(--glass-edge);
@@ -208,12 +208,12 @@
   :root[data-surface="desktop"][data-material="glass"] .sfu-dialog-content :is(
     .sf-new-task-choice>input[type="radio"]:checked,.sf-rules-mode input[type="radio"]:checked
   ){
-    border-color:var(--glass-toggle-on);
+    border-color:var(--glass-ink);
   }
   :root[data-surface="desktop"][data-material="glass"] .sfu-dialog-content :is(
     .sf-new-task-choice>input[type="radio"]:checked,.sf-rules-mode input[type="radio"]:checked
   )::after{
-    background:var(--glass-toggle-on);
+    background:var(--glass-ink);
   }
   :root[data-surface="desktop"][data-material="glass"] .bui-notice.warning{
     background:color-mix(in srgb,var(--sf-warn) 10%,var(--glass-control));

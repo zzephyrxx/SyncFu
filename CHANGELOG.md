@@ -17,7 +17,7 @@ Development release. A versioned package is not a claim of production acceptance
 - Uncapped task entry counts, bounded 256-file scan batches and live discovery/verification progress; no manual task splitting for large directories.
 - Per-file transfer and application status, completed-file marks and paged progress updates alongside total byte and item counts.
 - Daily processed-file heatmaps alongside byte charts, with shared 7/30-day real-record aggregation and portal tooltips that remain outside clipped chart containers.
-- Optional light/dark glass surfaces in Settings, with solid material as the default and reduced-transparency/contrast fallbacks.
+- Optional neutral light/dark glass surfaces in Settings with Soft / Clear (柔和 / 通透) levels. Solid remains the default; existing glass preferences migrate to Soft, and the level persists independently of the material. Five-language labels, settings search and reduced-transparency/contrast fallbacks are included.
 
 ### Project organization
 
@@ -29,8 +29,9 @@ Development release. A versioned package is not a claim of production acceptance
 
 ### Fixes
 
-- Rework liquid-glass dialogs and dropdowns with a live 4px-blurred center and a narrow, genuinely displaced image rim. Capture only SyncFu's own WebView into memory before opening, then apply an ordinary SVG image filter on macOS WKWebView and Windows WebView2; no desktop capture, screen-recording permission or image files are needed.
-- Keep glass capture within a 240ms opening deadline, discard late/cancelled results, and invalidate stale edge images after theme, viewport or background-scroll changes. Preserve clear foreground controls, scrollable dialog bodies, solid material and accessibility fallbacks.
+- Remove the blue glass tint from canvas, highlights and primary actions in favor of black, white and gray. Soft uses an 8px live blur, 64% face fill and a 12px rim with approximately 3.2px maximum inward displacement; Clear uses a 3px blur, 22% light / 28% dark face fill and a 16px rim with approximately 8px maximum displacement.
+- Rework liquid-glass dialogs and dropdowns with a live center and a narrow, genuinely displaced image rim. Capture only SyncFu's own WebView into memory before opening, then apply an ordinary SVG image filter on macOS WKWebView and Windows WebView2; no desktop capture, screen-recording permission or image files are needed.
+- Keep glass capture within a 240ms opening deadline, discard late/cancelled results, and invalidate stale edge images after theme, glass-level, viewport or background-scroll changes. Preserve clear foreground controls, scrollable dialog bodies, solid material and accessibility fallbacks.
 
 - Prevent directory-handle exhaustion during broad or deep scans by queuing paths and limiting concurrent file reads.
 - Remove the 20,000-entry scan/plan limit while preserving complete-scan validation and authorization checks. Keep the queued hashing work and read buffers bounded; full manifests and plans still use O(n) memory.
@@ -52,5 +53,6 @@ Development release. A versioned package is not a claim of production acceptance
 - UI checks and their scope are recorded in [the UI guide](docs/ui/README.md); automated checks belong to their corresponding revision and CI run.
 - Automatic write scheduling is not implemented.
 - Native Windows window behavior and physical two-device LAN synchronization still require acceptance testing.
-- Native macOS optical-grid inspection confirms sampled edge-pixel displacement; a measured capture completed in 144ms, and dialogs and nested dropdowns obtained snapshots within the 240ms production deadline. The native-grid screenshot is archived in the UI guide. Frontend tests report 103 passes; three native-capture tests and Clippy pass. Native Windows glass appearance still requires verification.
+- The current neutral Soft/Clear revision passes 105 frontend tests, including preference migration and independent level persistence. Native macOS visual acceptance is pending while the Mac is locked; native Windows glass appearance also remains unverified.
+- Historical native macOS checks at `7a0f3e9` (the preceding blue glass revision) confirmed sampled edge-pixel displacement and a 144ms capture sample within the 240ms opening deadline. That revision passed 103 frontend tests, three native-capture tests and Clippy. Its linked screenshots in the UI guide are historical evidence, not the current neutral appearance.
 - Local builds and ad-hoc signature checks do not imply Windows code signing, Developer ID signing or Apple notarization.

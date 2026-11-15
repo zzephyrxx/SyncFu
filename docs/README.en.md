@@ -13,7 +13,7 @@
 - Cross-page selection of additions, updates and deletions; compare conflicts, choose versions, defer or exclude paths.
 - Write-time preflight, backup before overwrite/deletion, explicit risk approval, protected undo and interrupted-result reconciliation.
 - LAN-first discovery and five-digit pairing codes, with manual IP entry as a fallback. No cloud account or relay required.
-- A collapsible sidebar, separate usage overview with daily byte charts and file-count heatmaps, light/dark themes, optional glass surfaces, device aliases, Fluent Emoji avatars and five interface languages.
+- A collapsible sidebar, separate usage overview with daily byte charts and file-count heatmaps, neutral light/dark themes, optional Soft/Clear glass surfaces, device aliases, Fluent Emoji avatars and five interface languages.
 
 | Task workspace | Dark theme |
 | --- | --- |

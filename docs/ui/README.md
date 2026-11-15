@@ -33,19 +33,30 @@ The acknowledgements page lists project credits and license links without intera
 
 ## Optional surface material
 
-Settings → Appearance offers **Solid / Liquid glass**, persisted as a local preference. Solid remains the default. Dialogs, selectors and other floating menus combine a live CSS face with a separately sampled, geometrically refracted edge:
+Settings → Appearance offers **Solid / Liquid glass**, persisted as a local preference. Solid remains the default. Selecting Liquid glass reveals **Soft / Clear (柔和 / 通透)**. Soft is the default glass level; existing glass users retain glass with Soft selected, and changing material preserves the selected level. Both levels have translated labels and descriptions in all five interface languages and are discoverable through settings search.
+
+The glass palette is black, white and gray, with a flat `#f5f5f5` light canvas or `#242424` dark canvas. Page backgrounds and primary actions no longer have the preceding blue tint. Directional edge highlights use only neutral light and shadow.
+
+| Floating-surface level | Live center blur | Face fill, light / dark | Sampled edge band | Maximum inward pixel displacement |
+| --- | --- | --- | --- | --- |
+| Soft · 柔和 | 8px | white at 64% / gray `#2e2e2e` at 64% | 12px | approximately 3.2px |
+| Clear · 通透 | 3px | white at 22% / gray `#2e2e2e` at 28% | 16px | approximately 8px |
+
+These are normal-size dialog/menu values; very small surfaces narrow the edge band. Dialogs, selectors and other floating menus combine a live CSS face with a separately sampled, geometrically refracted edge:
 
 - Before a floating surface appears, `src-tauri/src/glass_capture.rs` requests an in-memory image of SyncFu's own main WebView: WKWebView on macOS and WebView2 on Windows. It does not capture the desktop or other applications, request screen-recording permission, or write the image to disk.
-- `src/desktop/glass/Glass.tsx` positions that image behind the floating surface and applies an ordinary SVG image filter. Only the inner 12–16px edge band is displayed, narrowed for very small surfaces. Its rounded-rectangle displacement map bends sampled pixels inward by up to approximately 8px; the center has no geometric magnification.
+- `src/desktop/glass/Glass.tsx` positions that image behind the floating surface and applies an ordinary SVG image filter. Only the inner edge band is displayed. Its rounded-rectangle displacement follows the chosen glass level; the center has no geometric magnification.
 - `src/desktop/glass/optics.ts` generates the RG displacement field and independent B-channel edge mask at the actual surface geometry. Maps share a bounded cache and use proportional resolution reduction. The interface's text, icons, inputs and focus rings remain outside the image filter.
-- The center continues to sample the live page with a light **4px** CSS backdrop blur and modest saturation. Thin directional highlights and the softer overlay add a visible glass edge without replacing the whole dialog with a frozen image.
-- Captures have a **240ms opening deadline**. Unsupported capture, failure, timeout or cancellation uses the CSS glass surface; late results are discarded after the surface has opened. A changed theme, viewport resize or scrolling background invalidates an old edge image. Scrolling the dialog's own content does not require a new background image.
-- Route cards, pairing-code inputs, device-avatar controls, selectors and menus share translucent control tokens. Primary and destructive actions keep distinct colors. The shell and close button remain stationary while long dialog bodies scroll; long titles/paths have a bounded header area.
+- The center continues to sample the live page with the selected **8px / 3px** CSS backdrop blur. Neutral directional highlights and a restrained overlay add a visible glass edge without replacing the whole dialog with a frozen image.
+- Captures have a **240ms opening deadline**. Unsupported capture, failure, timeout or cancellation uses the CSS glass surface; late results are discarded after the surface has opened. A changed theme or glass level, viewport resize or scrolling background invalidates an old edge image. Scrolling the dialog's own content does not require a new background image.
+- Route cards, pairing-code inputs, device-avatar controls, selectors and menus share translucent control tokens. Primary actions use contrasting neutral fills; destructive actions retain their semantic warning color. The shell and close button remain stationary while long dialog bodies scroll; long titles/paths have a bounded header area.
 - Solid material bypasses the optical capture. Reduced transparency, increased contrast and forced colors restore solid surfaces and disable the sampled rim. Unsupported CSS backdrop filters retain the original solid UI.
 
 The independent implementation references [SemiDone's Surface component](https://github.com/zzephyrxx/SemiDone/blob/d6d7ef3fcc94ac552e4bad1e417a65bc84f7aaef/src/ui/Surface.tsx), [rounded-rectangle optical geometry](https://github.com/zzephyrxx/SemiDone/blob/d6d7ef3fcc94ac552e4bad1e417a65bc84f7aaef/src/ui/glassGeometry.ts) and [surface CSS](https://github.com/zzephyrxx/SemiDone/blob/d6d7ef3fcc94ac552e4bad1e417a65bc84f7aaef/src/styles/liquidGlassSurfaces.css). The reviewed `feature/macos-support` branch is pinned to commit `d6d7ef3fcc94ac552e4bad1e417a65bc84f7aaef`. SyncFu uses a real image as the SVG filter input rather than relying on [SVG backdrop filters](https://bugs.webkit.org/show_bug.cgi?id=245510) or [combining an SVG filter with a CSS backdrop filter on the same element](https://bugs.webkit.org/show_bug.cgi?id=297770), which have unresolved WebKit limitations.
 
-The rim is an opening-time image, not a continuously recaptured view; live background data changes do not animate inside that narrow band. The center stays live. Native macOS grid inspection has demonstrated actual sampled-pixel bending. A measured 1024 × 714 capture completed in 144ms, and both a dialog and its nested dropdown obtained a snapshot within the production 240ms deadline. This is an observed development sample, not a latency guarantee. Windows has an implementation of the same image/filter path, but native Windows visual verification is still pending.
+The rim is an opening-time image, not a continuously recaptured view; live background data changes do not animate inside that narrow band. The center stays live. Native macOS inspection at **`7a0f3e9`, the preceding blue glass revision**, demonstrated sampled-pixel bending: one 1024 × 714 capture completed in 144ms, and a dialog and nested dropdown obtained snapshots within the 240ms deadline. This historical sample is not a latency guarantee or visual acceptance of the current neutral levels. Windows implements the same image/filter path; its native appearance still requires verification.
+
+The current neutral two-level revision passes **105 frontend tests**. Preference checks cover independent material/level persistence, old-glass migration, invalid-level defaults and preservation of unrelated preferences. Its native macOS visual check remains pending because the Mac is currently locked; the screenshots below are historical and must not be used as evidence of the current appearance.
 
 ## Verification — 2026-11-15
 
@@ -104,34 +115,44 @@ Current large-task UI proof (development fixtures, not user sync history):
 - [Completed files and progress](screenshots/sync-completed-files.jpg)
 - [File-count heatmap with complete tooltip](screenshots/overview-heatmap.jpg)
 - [New task rules, relationship icons and primary action](screenshots/new-task-rules.jpg)
-- [Optional glass appearance](screenshots/glass-appearance.jpg)
+- [Historical glass appearance, retained with the `7a0f3e9` blue-version record](screenshots/glass-appearance.jpg)
 
 Both chart tooltips also fit within the 680 × 560 minimum window. A completed run retains its file list; a new inspection dismisses the old batch before accepting new results, so completed marks cannot be reused for a new plan.
 
-### Earlier CSS glass dialog refinement — 2026-11-15
+### Historical CSS glass checks — retained with `7a0f3e9`
+
+These screenshots precede the current neutral Soft/Clear design and are retained only as historical links in the blue-version record. The checks below were completed on 2026-11-15 before native edge refraction was added.
 
 Checked the rendered UI with development fixtures at 1120 × 780 in both themes and 680 × 560 for scrolling/keyboard access. New-task, pairing, task-rule, device-profile and unpair confirmation dialogs show the same material; the device selector opens above the dialog without clipping. At the minimum window, the body scrolls to the primary action while the header stays fixed. Switching back to Solid restores the original white surface, 10px new-task corner radius and no backdrop filter or rim pseudo-elements. No pairing, deletion or synchronization was performed during this visual pass.
 
 `npm test`: 90 passed, including production CSS scoping and fixture exclusion. Accessibility fallback selectors were reviewed for both light/dark specificity; OS-level contrast and reduced-transparency modes were not interactively emulated. Windows native visual inspection remains a separate device check.
 
-| Pairing · light glass | Pairing · dark glass |
-| --- | --- |
-| ![Translucent pairing dialog in light mode](screenshots/glass-pairing-light.jpg) | ![Glass edges and legible controls in dark mode](screenshots/glass-pairing-dark.jpg) |
+- [Historical pairing dialog, light](screenshots/glass-pairing-light.jpg)
+- [Historical pairing dialog, dark](screenshots/glass-pairing-dark.jpg)
+- [Historical new task with translucent controls](screenshots/glass-dialog-light.jpg)
+- [Historical task rules over the file list](screenshots/glass-rules-light.jpg)
 
-- [New task with translucent inner controls](screenshots/glass-dialog-light.jpg)
-- [Task rules floating over the file list](screenshots/glass-rules-light.jpg)
+### Historical native glass verification — `7a0f3e9` blue version
 
-### Native edge-refraction verification — 2026-11-15
+The following results and screenshots belong to the preceding blue glass revision on 2026-11-15, not the current neutral Soft/Clear design. The native macOS development grid was inspected with sampled edge refraction enabled, confirming pixel displacement rather than only a painted highlight. Geometry and capture-lifecycle checks passed, including neutral centers, inward edge direction, rounded-corner symmetry, bounded maps/cache, cancellation, deadlines and rejection of stale results. At that revision, the frontend suite reported 103 passing tests; the three native-capture tests and Clippy also passed. See [the testing record](../testing/README.md) for the measured capture timing and remaining platform checks.
 
-The native macOS development grid has been inspected with sampled edge refraction enabled, confirming pixel displacement rather than only a painted highlight. Geometry and capture-lifecycle checks pass, including neutral centers, inward edge direction, rounded-corner symmetry, bounded maps/cache, cancellation, deadlines and rejection of stale results. The full frontend suite reports 103 passing tests; the three native-capture tests and Clippy also pass. See [the testing record](../testing/README.md) for the measured capture timing and remaining platform checks.
-
-![Native macOS optical grid with captured-pixel edge refraction](screenshots/glass-optics-native.png)
+[Historical native macOS optical grid — `7a0f3e9`](screenshots/glass-optics-native.png)
 
 This image is a dedicated development optical scene. The glass screenshots in the preceding section show the earlier CSS pass; neither set represents a live peer connection or Windows native validation.
 
-Current native application fixtures (1120 × 780; simulated devices/files):
+Historical native application fixtures from `7a0f3e9` (1120 × 780; simulated devices/files; blue glass palette):
 
 - [Light new-task dialog](screenshots/glass-dialog-light-native.png)
 - [Dark new-task dialog and corrected selected rows](screenshots/glass-dialog-dark-native.png)
 - [Dark settings dropdown and switch](screenshots/glass-menu-dark-native.png)
 - [Long dropdown scrolled to item 40 with End](screenshots/glass-long-menu-native.png) — the optical shell stays fixed while its inner viewport scrolls.
+
+### Neutral appearance browser verification — 2026-11-15
+
+The development fixture was checked at 680 × 560 and 1120 × 780 in the in-app browser. Light/dark canvases report `background-image: none` and `rgb(245,245,245)` / `rgb(36,36,36)`. The new two-level control fits the minimum window, switches the actual popup material, and retains the chosen level after reload. Observed dark Soft dialog: 8px blur and 0.64 gray fill; light Clear dialog: 3px blur and 0.22 white fill; dark Clear menu: 3px blur and 0.40 gray fill.
+
+- [Neutral dark settings and Clear menu](screenshots/glass-neutral-menu-dark.png)
+- [Neutral dark Soft dialog](screenshots/glass-neutral-soft-dark.png)
+- [Neutral light Clear dialog](screenshots/glass-neutral-clear-light.png)
+
+These current screenshots show the browser's CSS fallback with fixture data. The Mac was locked during this pass, so they do not establish native refraction strength for the two new levels. The underlying native capture implementation is unchanged from the preceding verified revision.
